@@ -1,0 +1,2896 @@
+# ============================================================
+# BLOCK 1: PROJECT CONFIGURATION AND IMPORTS
+# RBF-EdgeCover-DDQN for 5G RAN Slicing
+# Traffic: eMBB, uRLLC, MTM, IoT, Vehicular
+# ============================================================
+
+import os
+import sys
+import random
+import sqlite3
+import importlib.util
+from pathlib import Path
+from collections import Counter
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+# ------------------------------------------------------------
+# PROJECT PATHS
+# ------------------------------------------------------------
+
+BASE_DIR = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3"
+)
+
+DATASET_FILE = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db"
+)
+
+# Expected simulator location; verified in a later block.
+PY5CHESIM_DIR = BASE_DIR / "py5chesim"
+
+RESULT_DIR = BASE_DIR / "results" / "RBF_EdgeCover_DDQN"
+FIGURE_DIR = RESULT_DIR / "figures"
+CSV_DIR = RESULT_DIR / "csv"
+CHECKPOINT_DIR = RESULT_DIR / "models"
+
+for folder in (
+    RESULT_DIR,
+    FIGURE_DIR,
+    CSV_DIR,
+    CHECKPOINT_DIR,
+):
+    folder.mkdir(parents=True, exist_ok=True)
+
+# ------------------------------------------------------------
+# EXPERIMENT CONFIGURATION
+# ------------------------------------------------------------
+
+SEED =1220#520#42#420
+
+TRAFFIC_CLASSES = [
+    "eMBB",
+    "uRLLC",
+    "MTM",
+    "IoT",
+    "Vehicular",
+]
+
+ALGORITHMS = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN",
+]
+
+USER_COUNTS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+NUM_EPISODES = 1000
+MAX_STEPS_PER_EPISODE = 100
+EVALUATION_EPISODES = 20
+
+# ------------------------------------------------------------
+# REPRODUCIBILITY
+# ------------------------------------------------------------
+
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(SEED)
+
+DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+
+# ------------------------------------------------------------
+# PLOTTING CONFIGURATION
+# ------------------------------------------------------------
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 19,
+    "axes.labelsize": 20,
+    "xtick.labelsize": 17,
+    "ytick.labelsize": 17,
+    "legend.fontsize": 15,
+    "lines.linewidth": 2.2,
+    "axes.linewidth": 1.2,
+    "savefig.dpi": 600,
+    "figure.dpi": 150,
+    "axes.grid": True,
+    "grid.linestyle": "--",
+    "grid.alpha": 0.30,
+})
+
+# ------------------------------------------------------------
+# CONFIGURATION REPORT
+# ------------------------------------------------------------
+
+print("=" * 76)
+print("RBF-EDGE-COVER-DDQN: PROJECT CONFIGURATION")
+print("=" * 76)
+
+print("Python executable :", sys.executable)
+print("Python version    :", sys.version.split()[0])
+print("Project directory :", BASE_DIR)
+print("Database file     :", DATASET_FILE)
+print("Database exists   :", DATASET_FILE.is_file())
+print("Database size MB  :",
+      round(DATASET_FILE.stat().st_size / (1024 ** 2), 3)
+      if DATASET_FILE.is_file() else "NOT FOUND")
+
+print("Py5cheSim folder  :", PY5CHESIM_DIR)
+print("Py5cheSim exists  :", PY5CHESIM_DIR.exists())
+print("PyTorch version   :", torch.__version__)
+print("Compute device    :", DEVICE)
+print("Random seed       :", SEED)
+print("Traffic classes   :", TRAFFIC_CLASSES)
+print("Algorithms        :", ALGORITHMS)
+print("User counts       :", USER_COUNTS)
+print("Results directory :", RESULT_DIR)
+
+print("=" * 76)
+
+if not DATASET_FILE.is_file():
+    raise FileNotFoundError(
+        f"Dataset database not found: {DATASET_FILE}"
+    )
+
+
+# ============================================================
+# BLOCK 2: DATASET SCHEMA AND PY5CHESIM INSPECTION
+# ============================================================
+
+print("\n" + "=" * 76)
+print("BLOCK 2: DATABASE AND SIMULATOR INSPECTION")
+print("=" * 76)
+
+# ------------------------------------------------------------
+# PART A: INSPECT SQLITE DATABASE
+# ------------------------------------------------------------
+
+with sqlite3.connect(str(DATASET_FILE)) as conn:
+
+    table_info = pd.read_sql_query(
+        """
+        SELECT name, type
+        FROM sqlite_master
+        WHERE type IN ('table', 'view')
+        ORDER BY name
+        """,
+        conn,
+    )
+
+    print("\nDATABASE TABLES")
+    if table_info.empty:
+        print("No tables or views were found.")
+    else:
+        print(table_info.to_string(index=False))
+
+    for table_name in table_info["name"]:
+
+        # Escape double quotes in SQLite identifiers.
+        safe_name = table_name.replace('"', '""')
+
+        schema = pd.read_sql_query(
+            f'PRAGMA table_info("{safe_name}")',
+            conn,
+        )
+
+        row_count = pd.read_sql_query(
+            f'SELECT COUNT(*) AS total_rows '
+            f'FROM "{safe_name}"',
+            conn,
+        ).iloc[0]["total_rows"]
+
+        print("\n" + "-" * 76)
+        print("TABLE NAME:", table_name)
+        print("ROW COUNT :", f"{row_count:,}")
+        print("\nCOLUMN SCHEMA")
+        print(schema.to_string(index=False))
+
+        sample = pd.read_sql_query(
+            f'SELECT * FROM "{safe_name}" LIMIT 5',
+            conn,
+        )
+
+        print("\nSAMPLE RECORDS")
+        print(sample.to_string(index=False))
+
+        # Save the discovered schema for later inspection.
+        schema.to_csv(
+            CSV_DIR / f"schema_{table_name}.csv",
+            index=False,
+        )
+
+# ------------------------------------------------------------
+# PART B: CHECK PY5CHESIM PYTHON MODULE
+# ------------------------------------------------------------
+
+print("\n" + "-" * 76)
+print("PY5CHESIM MODULE CHECK")
+
+module_found = False
+
+for module_name in ("py5chesim", "Py5CheSim", "Py5CHESim"):
+    try:
+        module_spec = importlib.util.find_spec(module_name)
+
+        if module_spec is not None:
+            module_found = True
+            print(
+                f"{module_name}: FOUND at "
+                f"{module_spec.origin}"
+            )
+        else:
+            print(f"{module_name}: NOT FOUND")
+    except (ImportError, ValueError, ModuleNotFoundError) as exc:
+        print(f"{module_name}: inspection error: {exc}")
+
+# ------------------------------------------------------------
+# PART C: CHECK PROJECT FILES
+# ------------------------------------------------------------
+
+print("\nPROJECT DIRECTORY CHECK")
+print("Project exists:", BASE_DIR.exists())
+
+if BASE_DIR.exists():
+    candidates = []
+
+    for path in BASE_DIR.rglob("*"):
+        if not path.is_file():
+            continue
+
+        if any(
+            part.lower() in {
+                ".git", "__pycache__", "venv", ".venv"
+            }
+            for part in path.parts
+        ):
+            continue
+
+        lower_name = path.name.lower()
+
+        if (
+            "py5chesim" in lower_name
+            or "simulator" in lower_name
+            or "environment" in lower_name
+            or "oran_environment" in lower_name
+        ):
+            candidates.append(path)
+
+    if candidates:
+        print("Potential simulator/environment files:")
+        for path in candidates[:100]:
+            print(" ", path)
+    else:
+        print("No likely simulator files found in the project.")
+
+# ------------------------------------------------------------
+# PART D: CHECK DATASET FEATURE NAMES
+# ------------------------------------------------------------
+
+print("\nDATASET FEATURE CHECK")
+
+with sqlite3.connect(str(DATASET_FILE)) as conn:
+    if "lower_layer_data" in table_info["name"].values:
+        feature_info = pd.read_sql_query(
+            'PRAGMA table_info("lower_layer_data")',
+            conn,
+        )
+
+        columns = feature_info["name"].tolist()
+
+        print("Table: lower_layer_data")
+        print("Number of columns:", len(columns))
+        print("Column names:")
+        for index, column in enumerate(columns, start=1):
+            print(f"  {index:02d}. {column}")
+    else:
+        print(
+            "The expected table 'lower_layer_data' was not found. "
+            "Use the table list above to identify the correct table."
+        )
+
+print("\n" + "=" * 76)
+print("BLOCK 2 COMPLETED")
+print("Schema files saved to:", CSV_DIR)
+print("=" * 76)
+
+# ============================================================
+# BLOCK 3: LOAD REAL RADIO DATA FROM SQLITE
+# ============================================================
+
+import sqlite3
+import pandas as pd
+import numpy as np
+
+print("\n" + "=" * 76)
+print("BLOCK 3: LOADING DATASET")
+print("=" * 76)
+
+with sqlite3.connect(str(DATASET_FILE)) as conn:
+
+    table_list = pd.read_sql_query(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table'
+        ORDER BY name
+        """,
+        conn,
+    )["name"].tolist()
+
+    print("Available tables:", table_list)
+
+    if "lower_layer_data" in table_list:
+        TABLE_NAME = "lower_layer_data"
+    else:
+        candidates = [
+            name for name in table_list
+            if "lower" in name.lower()
+            or "layer" in name.lower()
+            or "radio" in name.lower()
+        ]
+
+        if len(candidates) == 1:
+            TABLE_NAME = candidates[0]
+        else:
+            raise RuntimeError(
+                "Cannot safely identify the radio dataset table. "
+                f"Available tables: {table_list}"
+            )
+
+    # Read the identified table.
+    # This does not modify the original database.
+    DATA_RAW = pd.read_sql_query(
+        f'SELECT * FROM "{TABLE_NAME.replace(chr(34), chr(34)*2)}"',
+        conn,
+    )
+
+print("\nSelected table:", TABLE_NAME)
+print("Dataset shape:", DATA_RAW.shape)
+
+if DATA_RAW.empty:
+    raise ValueError("The selected dataset table contains no records.")
+
+print("\nColumn names:")
+for i, column in enumerate(DATA_RAW.columns, start=1):
+    print(f"{i:02d}. {column}")
+
+print("\nFirst five records:")
+print(DATA_RAW.head().to_string(index=False))
+
+print("\nData types:")
+print(DATA_RAW.dtypes.to_string())
+
+print("\nMissing values per column:")
+print(DATA_RAW.isna().sum().to_string())
+
+print("\nUnique values in categorical columns:")
+for column in DATA_RAW.select_dtypes(
+    include=["object", "category", "bool"]
+).columns:
+    print(f"\n{column}:")
+    print(DATA_RAW[column].value_counts(dropna=False).head(20))
+
+# Save an inventory, not a modified source database.
+DATA_RAW.head(100).to_csv(
+    CSV_DIR / "dataset_preview.csv",
+    index=False,
+)
+
+DATA_RAW.dtypes.astype(str).rename("dtype").to_csv(
+    CSV_DIR / "dataset_column_types.csv"
+)
+
+print("\nBlock 3 completed.")
+print("Preview saved to:", CSV_DIR / "dataset_preview.csv")
+
+# ============================================================
+# BLOCK 4: DATA CLEANING, FEATURE PREPARATION AND DATA SPLITS
+# ============================================================
+
+from pathlib import Path
+import numpy as np
+import pandas as pd
+
+print("\n" + "=" * 76)
+print("BLOCK 4: FEATURE PREPROCESSING")
+print("=" * 76)
+
+# ------------------------------------------------------------
+# 4.1 IDENTIFY LABEL AND IDENTIFIER COLUMNS
+# ------------------------------------------------------------
+
+DATA_CLEAN = DATA_RAW.copy()
+
+# Remove duplicate column names if present.
+DATA_CLEAN = DATA_CLEAN.loc[
+    :, ~DATA_CLEAN.columns.duplicated()
+]
+
+# Recognize likely target/metadata columns.
+label_keywords = (
+    "label", "class", "attack", "category",
+    "subcategory", "traffic_type"
+)
+
+identifier_keywords = (
+    "rnti", "user_id", "ue_id", "subscriber_id",
+    "timestamp", "record_id", "row_id"
+)
+
+LABEL_COLUMNS = [
+    col for col in DATA_CLEAN.columns
+    if any(key in col.lower() for key in label_keywords)
+]
+
+IDENTIFIER_COLUMNS = [
+    col for col in DATA_CLEAN.columns
+    if any(key in col.lower() for key in identifier_keywords)
+]
+
+print("Potential label/metadata columns:", LABEL_COLUMNS)
+print("Potential identifier columns:", IDENTIFIER_COLUMNS)
+
+if "traffic_type" in DATA_CLEAN.columns:
+    print("\nTraffic type distribution:")
+    print(
+        DATA_CLEAN["traffic_type"]
+        .astype(str)
+        .value_counts(dropna=False)
+        .to_string()
+    )
+
+    observed = set(
+        DATA_CLEAN["traffic_type"]
+        .astype(str).str.strip().str.lower().unique()
+    )
+
+    expected = {
+        "embb", "urllc", "mtm", "iot", "vehicular"
+    }
+
+    print("\nRequested service classes:", sorted(expected))
+    print("Observed traffic labels:", sorted(observed))
+    print(
+        "All requested classes represented:",
+        expected.issubset(observed),
+    )
+else:
+    print(
+        "\nNo traffic_type column exists. Service classes will "
+        "need to be supplied by the workload/environment."
+    )
+
+# ------------------------------------------------------------
+# 4.2 SELECT NUMERICAL INPUT FEATURES
+# ------------------------------------------------------------
+
+excluded_columns = set(LABEL_COLUMNS + IDENTIFIER_COLUMNS)
+
+numeric_columns = DATA_CLEAN.select_dtypes(
+    include=[np.number]
+).columns.tolist()
+
+FEATURE_COLUMNS = [
+    col for col in numeric_columns
+    if col not in excluded_columns
+]
+
+if not FEATURE_COLUMNS:
+    raise ValueError(
+        "No usable numerical input features were identified. "
+        "Inspect Block 3's column names and data types."
+    )
+
+X_DF = DATA_CLEAN[FEATURE_COLUMNS].copy()
+
+# Convert infinities to missing values and impute with column medians.
+X_DF = X_DF.replace([np.inf, -np.inf], np.nan)
+
+all_missing = X_DF.columns[X_DF.isna().all()].tolist()
+if all_missing:
+    print("Dropping all-missing features:", all_missing)
+    X_DF = X_DF.drop(columns=all_missing)
+
+FEATURE_COLUMNS = X_DF.columns.tolist()
+
+if not FEATURE_COLUMNS:
+    raise ValueError("No numerical features remain after cleaning.")
+
+X_DF = X_DF.fillna(X_DF.median())
+
+# Remove constant columns.
+constant_columns = [
+    col for col in X_DF.columns
+    if X_DF[col].nunique(dropna=False) <= 1
+]
+
+if constant_columns:
+    print("Dropping constant features:", constant_columns)
+    X_DF = X_DF.drop(columns=constant_columns)
+
+FEATURE_COLUMNS = X_DF.columns.tolist()
+
+if not FEATURE_COLUMNS:
+    raise ValueError("All numerical features were constant or missing.")
+
+X = X_DF.to_numpy(dtype=np.float32)
+
+# Optional labels retained separately; never fed into X.
+Y_LABELS = (
+    DATA_CLEAN["traffic_type"].astype(str).to_numpy()
+    if "traffic_type" in DATA_CLEAN.columns
+    else None
+)
+
+# ------------------------------------------------------------
+# 4.3 SPLIT DATA INTO TRAIN / VALIDATION / TEST
+# ------------------------------------------------------------
+
+rng = np.random.default_rng(SEED)
+indices = rng.permutation(len(X))
+
+n_total = len(indices)
+n_train = int(0.70 * n_total)
+n_val = int(0.15 * n_total)
+
+train_idx = indices[:n_train]
+val_idx = indices[n_train:n_train + n_val]
+test_idx = indices[n_train + n_val:]
+
+X_train_raw = X[train_idx]
+X_val_raw = X[val_idx]
+X_test_raw = X[test_idx]
+
+# ------------------------------------------------------------
+# 4.4 SCALE USING TRAINING STATISTICS ONLY
+# ------------------------------------------------------------
+
+feature_min = X_train_raw.min(axis=0)
+feature_max = X_train_raw.max(axis=0)
+
+feature_range = feature_max - feature_min
+feature_range[feature_range == 0] = 1.0
+
+X_train = (X_train_raw - feature_min) / feature_range
+X_val = (X_val_raw - feature_min) / feature_range
+X_test = (X_test_raw - feature_min) / feature_range
+
+# Keep the values bounded if validation/test contains outliers.
+X_train = np.clip(X_train, 0.0, 1.0).astype(np.float32)
+X_val = np.clip(X_val, 0.0, 1.0).astype(np.float32)
+X_test = np.clip(X_test, 0.0, 1.0).astype(np.float32)
+
+# ------------------------------------------------------------
+# 4.5 SAVE REPRODUCIBLE OUTPUTS
+# ------------------------------------------------------------
+
+np.savez_compressed(
+    RESULT_DIR / "prepared_radio_data.npz",
+    X_train=X_train,
+    X_val=X_val,
+    X_test=X_test,
+    train_indices=train_idx,
+    val_indices=val_idx,
+    test_indices=test_idx,
+    feature_columns=np.asarray(FEATURE_COLUMNS, dtype=str),
+    feature_min=feature_min,
+    feature_max=feature_max,
+)
+
+pd.DataFrame({
+    "feature": FEATURE_COLUMNS,
+    "train_min": feature_min,
+    "train_max": feature_max,
+}).to_csv(
+    CSV_DIR / "feature_scaling_parameters.csv",
+    index=False,
+)
+
+# ------------------------------------------------------------
+# 4.6 SUMMARY
+# ------------------------------------------------------------
+
+print("\nFEATURES USED:")
+for i, col in enumerate(FEATURE_COLUMNS, start=1):
+    print(f"{i:02d}. {col}")
+
+print("\nPrepared feature matrix:")
+print("Training   :", X_train.shape)
+print("Validation :", X_val.shape)
+print("Testing    :", X_test.shape)
+
+print("\nSaved:")
+print("  ", RESULT_DIR / "prepared_radio_data.npz")
+print("  ", CSV_DIR / "feature_scaling_parameters.csv")
+
+print("\nBlock 4 completed.")
+print("=" * 76)
+
+
+# ============================================================
+# BLOCK 5: TRAFFIC CLASSES AND RADIO RESOURCE CONFIGURATION
+# ============================================================
+
+import numpy as np
+import pandas as pd
+
+# ------------------------------------------------------------
+# SHARED RADIO RESOURCE BUDGET
+# ------------------------------------------------------------
+
+TOTAL_BANDWIDTH_MHZ = 20.0
+TOTAL_RBS = 100
+MAX_TRANSMIT_POWER_W = 40.0
+
+# Initial user-load points for scalability experiments.
+USER_COUNTS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+# ------------------------------------------------------------
+# TRAFFIC PROFILES
+# These are initial experimental assumptions.
+# Calibrate them to the intended scenario before final reporting.
+# ------------------------------------------------------------
+
+TRAFFIC_PROFILES = {
+    "eMBB": {
+        "weight": 0.25,
+        "min_rate_mbps": 10.0,
+        "target_rate_mbps": 50.0,
+        "max_latency_ms": 100.0,
+        "min_reliability": 0.99,
+        "priority": 2,
+    },
+    "uRLLC": {
+        "weight": 0.20,
+        "min_rate_mbps": 1.0,
+        "target_rate_mbps": 10.0,
+        "max_latency_ms": 5.0,
+        "min_reliability": 0.99999,
+        "priority": 5,
+    },
+    "MTM": {
+        "weight": 0.15,
+        "min_rate_mbps": 0.05,
+        "target_rate_mbps": 0.25,
+        "max_latency_ms": 1000.0,
+        "min_reliability": 0.99,
+        "priority": 1,
+    },
+    "IoT": {
+        "weight": 0.20,
+        "min_rate_mbps": 0.1,
+        "target_rate_mbps": 1.0,
+        "max_latency_ms": 100.0,
+        "min_reliability": 0.99,
+        "priority": 2,
+    },
+    "Vehicular": {
+        "weight": 0.20,
+        "min_rate_mbps": 5.0,
+        "target_rate_mbps": 20.0,
+        "max_latency_ms": 10.0,
+        "min_reliability": 0.999,
+        "priority": 4,
+    },
+}
+
+TRAFFIC_NAMES = list(TRAFFIC_PROFILES.keys())
+
+# ------------------------------------------------------------
+# VALIDATE RESOURCE AND PROFILE SETTINGS
+# ------------------------------------------------------------
+
+assert TOTAL_RBS > 0
+assert TOTAL_BANDWIDTH_MHZ > 0
+assert abs(
+    sum(profile["weight"] for profile in TRAFFIC_PROFILES.values()) - 1.0
+) < 1e-8
+
+profile_table = pd.DataFrame.from_dict(
+    TRAFFIC_PROFILES,
+    orient="index",
+)
+profile_table.index.name = "traffic_class"
+
+profile_table.to_csv(
+    CSV_DIR / "traffic_profiles.csv"
+)
+
+print("=" * 76)
+print("BLOCK 5: TRAFFIC AND RESOURCE CONFIGURATION")
+print("=" * 76)
+print(f"Bandwidth budget : {TOTAL_BANDWIDTH_MHZ:.1f} MHz")
+print(f"RB budget        : {TOTAL_RBS}")
+print(f"Power budget     : {MAX_TRANSMIT_POWER_W:.1f} W")
+print("\nTraffic profiles:")
+print(profile_table.to_string())
+print("\nSaved:", CSV_DIR / "traffic_profiles.csv")
+print("=" * 76)
+
+
+# ============================================================
+# BLOCK 6: RBF ENCODER AND EDGECOVER CANDIDATE SELECTION
+# ============================================================
+
+import numpy as np
+import pandas as pd
+
+# ------------------------------------------------------------
+# 6.1 CONFIGURATION
+# ------------------------------------------------------------
+
+RBF_NUM_CENTERS = min(64, len(X_train))
+RBF_SIGMA = None          # Automatically estimated from training data
+RBF_EPS = 1e-8
+
+# Number of candidate users that may share an RB in this
+# preliminary abstraction. Calibrate this against the simulator.
+MAX_USERS_PER_RB = 10
+
+rng_rbf = np.random.default_rng(SEED)
+
+if len(X_train) == 0:
+    raise ValueError("X_train is empty. Run Block 4 successfully first.")
+
+center_indices = rng_rbf.choice(
+    len(X_train),
+    size=RBF_NUM_CENTERS,
+    replace=False,
+)
+
+RBF_CENTERS = X_train[center_indices].copy()
+
+# Estimate the RBF width using sampled pairwise distances.
+sample_size = min(256, len(X_train))
+sample_indices = rng_rbf.choice(
+    len(X_train),
+    size=sample_size,
+    replace=False,
+)
+sample = X_train[sample_indices]
+
+if len(sample) > 1:
+    differences = sample[:, None, :] - sample[None, :, :]
+    distances = np.sqrt(
+        np.sum(differences ** 2, axis=2)
+    )
+    positive_distances = distances[distances > RBF_EPS]
+
+    RBF_SIGMA = (
+        float(np.median(positive_distances))
+        if len(positive_distances)
+        else 1.0
+    )
+else:
+    RBF_SIGMA = 1.0
+
+RBF_SIGMA = max(RBF_SIGMA, RBF_EPS)
+
+# ------------------------------------------------------------
+# 6.2 RBF FEATURE TRANSFORMATION
+# ------------------------------------------------------------
+
+def rbf_transform(features):
+    """
+    Map normalized input features to radial-basis features.
+
+    Parameters
+    ----------
+    features : array, shape (n_samples, n_features)
+
+    Returns
+    -------
+    array, shape (n_samples, RBF_NUM_CENTERS)
+    """
+    features = np.asarray(features, dtype=np.float32)
+
+    if features.ndim == 1:
+        features = features.reshape(1, -1)
+
+    if features.shape[1] != RBF_CENTERS.shape[1]:
+        raise ValueError(
+            f"Expected {RBF_CENTERS.shape[1]} features, "
+            f"received {features.shape[1]}."
+        )
+
+    difference = (
+        features[:, None, :] - RBF_CENTERS[None, :, :]
+    )
+
+    squared_distance = np.sum(
+        difference ** 2,
+        axis=2,
+    )
+
+    encoded = np.exp(
+        -squared_distance / (2.0 * RBF_SIGMA ** 2)
+    )
+
+    return encoded.astype(np.float32)
+
+
+# ------------------------------------------------------------
+# 6.3 EDGECOVER-INSPIRED RESOURCE CANDIDATE SELECTION
+# ------------------------------------------------------------
+
+def edgecover_candidates(
+    user_features,
+    user_classes,
+    num_rbs=TOTAL_RBS,
+    max_users_per_rb=MAX_USERS_PER_RB,
+):
+    """
+    Generate user-to-RB candidate assignments.
+
+    The score combines RBF state similarity and the configured
+    traffic priority. The function greedily assigns one RB per
+    user subject to a per-RB occupancy limit.
+
+    This is a candidate selector, not a learned DDQN policy.
+    Replace/calibrate its scoring rule using the real simulator.
+    """
+    user_features = np.asarray(
+        user_features,
+        dtype=np.float32,
+    )
+
+    user_classes = np.asarray(user_classes)
+
+    if user_features.ndim != 2:
+        raise ValueError("user_features must be a 2D array.")
+
+    n_users = len(user_features)
+
+    if len(user_classes) != n_users:
+        raise ValueError(
+            "Each user must have one traffic-class label."
+        )
+
+    if num_rbs <= 0 or max_users_per_rb <= 0:
+        raise ValueError("RB count and RB capacity must be positive.")
+
+    unknown_classes = set(user_classes) - set(TRAFFIC_NAMES)
+    if unknown_classes:
+        raise ValueError(
+            f"Unknown traffic classes: {unknown_classes}"
+        )
+
+    rbf_features = rbf_transform(user_features)
+
+    # Similarity score for each user.
+    similarity = rbf_features.mean(axis=1)
+
+    priorities = np.asarray([
+        TRAFFIC_PROFILES[class_name]["priority"]
+        for class_name in user_classes
+    ], dtype=np.float32)
+
+    priority_norm = priorities / max(
+        max(p["priority"] for p in TRAFFIC_PROFILES.values()),
+        1.0,
+    )
+
+    user_scores = 0.5 * similarity + 0.5 * priority_norm
+
+    # Higher-priority/high-score users are considered first.
+    processing_order = np.argsort(-user_scores)
+
+    rb_occupancy = np.zeros(num_rbs, dtype=np.int32)
+    assignments = np.full(n_users, -1, dtype=np.int32)
+
+    # Deterministic tie-breaking via a rotating RB preference.
+    for user_index in processing_order:
+        start_rb = int(user_index % num_rbs)
+
+        candidate_rbs = (
+            np.arange(num_rbs) + start_rb
+        ) % num_rbs
+
+        # Prefer the least occupied eligible RB.
+        eligible = candidate_rbs[
+            rb_occupancy[candidate_rbs] < max_users_per_rb
+        ]
+
+        if len(eligible) == 0:
+            continue
+
+        chosen_rb = eligible[
+            np.argmin(rb_occupancy[eligible])
+        ]
+
+        assignments[user_index] = chosen_rb
+        rb_occupancy[chosen_rb] += 1
+
+    accepted = assignments >= 0
+
+    return {
+        "assignments": assignments,
+        "accepted": accepted,
+        "acceptance_ratio": float(accepted.mean()),
+        "rb_occupancy": rb_occupancy,
+        "rbf_features": rbf_features,
+        "user_scores": user_scores,
+    }
+
+
+# ------------------------------------------------------------
+# 6.4 TEST RBF ENCODING
+# ------------------------------------------------------------
+
+test_batch = X_train[:min(8, len(X_train))]
+test_encoding = rbf_transform(test_batch)
+
+print("=" * 76)
+print("BLOCK 6: RBF ENCODER CHECK")
+print("=" * 76)
+print("Training feature dimensions :", X_train.shape[1])
+print("RBF center count            :", len(RBF_CENTERS))
+print("RBF sigma                   :", round(RBF_SIGMA, 6))
+print("Test input shape            :", test_batch.shape)
+print("RBF output shape            :", test_encoding.shape)
+print("RBF output min/max           :",
+      float(test_encoding.min()),
+      float(test_encoding.max()))
+
+assert np.isfinite(test_encoding).all()
+assert test_encoding.min() >= 0.0
+assert test_encoding.max() <= 1.0 + 1e-6
+
+print("\nBlock 6 completed.")
+print(
+    "Next: establish the actual simulator environment and workload "
+    "interface before implementing the DDQN training loop."
+)
+print("=" * 76)
+
+
+# ============================================================
+# BLOCK 7: INSPECT ENVIRONMENT AND SIMULATOR SOURCE FILES
+# ============================================================
+
+import ast
+from pathlib import Path
+
+PROJECT_ROOT = Path(r"E:\Abrokwa\PycharmProjects\pythonProject1")
+BASE_DIR = PROJECT_ROOT / "pythonProject3"
+
+SOURCE_FILES = [
+    PROJECT_ROOT / "oran_config.py",
+    PROJECT_ROOT / "oran_environment.py",
+    BASE_DIR / "main.py",
+]
+
+print("=" * 75)
+print("ENVIRONMENT AND SIMULATOR INSPECTION")
+print("=" * 75)
+
+for file_path in SOURCE_FILES:
+    print(f"\nFile: {file_path}")
+    print(f"Exists: {file_path.exists()}")
+
+    if not file_path.exists():
+        continue
+
+    try:
+        source = file_path.read_text(encoding="utf-8", errors="replace")
+        tree = ast.parse(source)
+
+        print(f"Size: {len(source):,} characters")
+
+        # Display class and function definitions without executing the file.
+        print("\nClasses and functions:")
+        definitions_found = False
+
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef,
+                                 ast.AsyncFunctionDef)):
+                definitions_found = True
+                line_number = getattr(node, "lineno", "?")
+                print(
+                    f"  Line {line_number}: "
+                    f"{type(node).__name__} {node.name}"
+                )
+
+        if not definitions_found:
+            print("  No class/function definitions found.")
+
+        # Display environment-related configuration and API references.
+        print("\nRelevant source lines:")
+        keywords = (
+            "py5che", "environment", "class ", "def reset",
+            "def step", "observation", "action_space",
+            "observation_space", "reward", "bandwidth",
+            "resource_block", "rb", "latency", "slice",
+            "user", "power", "capacity", "throughput"
+        )
+
+        relevant_lines = [
+            (i, line.strip())
+            for i, line in enumerate(source.splitlines(), start=1)
+            if any(word in line.lower() for word in keywords)
+        ]
+
+        for line_number, line in relevant_lines[:100]:
+            print(f"  {line_number:4}: {line[:200]}")
+
+        if len(relevant_lines) > 100:
+            print(f"  ... {len(relevant_lines) - 100} more relevant lines")
+
+    except (SyntaxError, OSError) as exc:
+        print(f"Could not inspect file: {exc}")
+
+print("\n" + "=" * 75)
+print("SEARCHING FOR PY5CHESIM SOURCE FILES")
+print("=" * 75)
+
+search_roots = [PROJECT_ROOT, BASE_DIR]
+
+matches = []
+for root in search_roots:
+    if not root.exists():
+        continue
+
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+
+        # Avoid scanning large virtual environments and package caches.
+        if any(part.lower() in {
+            "venv", ".venv", "__pycache__", "site-packages",
+            "node_modules", ".git"
+        } for part in path.parts):
+            continue
+
+        name = path.name.lower()
+        if (
+            "py5chesim" in name
+            or "py5che_sim" in name
+            or "py5chisim" in name
+        ):
+            matches.append(path)
+
+if matches:
+    for path in matches[:100]:
+        print(path)
+else:
+    print("No Py5cheSim-named source files found in the searched folders.")
+
+print("\nInspection complete. No source files were modified.")
+
+
+
+
+# ============================================================
+# BLOCK 8: INSPECT EXISTING PY5CHESIM TEST SCRIPTS
+# ============================================================
+
+from pathlib import Path
+import ast
+
+PROJECT_ROOT = Path(r"E:\Abrokwa\PycharmProjects\pythonProject1")
+
+SCRIPT_NAMES = [
+    "check_py5chesim_imports.py",
+    "check_py5chesim_requirements.py",
+    "inspect_py5chesim.py",
+    "py5chesim_stats_inspection.py",
+    "py5chesim_two_slice_test.py",
+]
+
+# Prefer the main project folder; inspect pf1/pythonProject only
+# if the corresponding main-project file is unavailable.
+ALTERNATE_DIRS = [
+    PROJECT_ROOT,
+    PROJECT_ROOT / "pf1",
+    PROJECT_ROOT / "pythonProject",
+]
+
+KEYWORDS = (
+    "import ", "from ", "py5che", "slice", "traffic",
+    "user", "resource", "bandwidth", "latency", "throughput",
+    "simulation", "environment", "reset(", "step(", "run(",
+    "install", "requirements", "class ", "def "
+)
+
+for script_name in SCRIPT_NAMES:
+    candidates = [
+        folder / script_name
+        for folder in ALTERNATE_DIRS
+        if (folder / script_name).is_file()
+    ]
+
+    if not candidates:
+        print(f"\nNOT FOUND: {script_name}")
+        continue
+
+    script_path = candidates[0]
+    print("\n" + "=" * 80)
+    print(f"SCRIPT: {script_path}")
+    print("=" * 80)
+
+    try:
+        source = script_path.read_text(
+            encoding="utf-8", errors="replace"
+        )
+        lines = source.splitlines()
+
+        # Print relevant lines with their original line numbers.
+        selected = [
+            (i, line)
+            for i, line in enumerate(lines, start=1)
+            if any(key in line.lower() for key in KEYWORDS)
+        ]
+
+        if selected:
+            for line_no, line in selected[:120]:
+                print(f"{line_no:4}: {line[:220]}")
+        else:
+            print("No relevant lines found.")
+
+        # Report imported module names without executing the script.
+        try:
+            tree = ast.parse(source)
+            imports = []
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imports.extend(alias.name for alias in node.names)
+                elif isinstance(node, ast.ImportFrom):
+                    imports.append(node.module or "")
+
+            print("\nDetected imports:")
+            for module in sorted(set(imports)):
+                print(" ", module)
+
+        except SyntaxError as exc:
+            print(f"AST inspection warning: {exc}")
+
+    except OSError as exc:
+        print(f"Read error: {exc}")
+
+print("\n" + "=" * 80)
+print("INSPECTION COMPLETE — NO FILES MODIFIED")
+print("=" * 80)
+
+
+
+# ============================================================
+# BLOCK 9: VERIFY PY5CHESIM SOURCE AND API
+# ============================================================
+
+import ast
+from pathlib import Path
+
+PROJECT_ROOT = Path(r"E:\Abrokwa\PycharmProjects\pythonProject1")
+
+SEARCH_DIRS = [
+    PROJECT_ROOT / "py5chesim",
+    PROJECT_ROOT / "pf1" / "py5chesim",
+    PROJECT_ROOT / "pythonProject" / "py5chesim",
+    PROJECT_ROOT / "pythonProject3" / "py5chesim",
+]
+
+SOURCE_NAMES = {
+    "Cell.py",
+    "Results.py",
+    "Slice.py",
+    "InterSliceSch.py",
+    "IntraSliceSch.py",
+    "simulation.py",
+}
+
+print("=" * 78)
+print("BLOCK 9: PY5CHESIM SOURCE AND API VERIFICATION")
+print("=" * 78)
+
+found_files = []
+
+# Check known locations first.
+for folder in SEARCH_DIRS:
+    print(f"\nDirectory: {folder}")
+    print(f"Exists: {folder.is_dir()}")
+
+    if folder.is_dir():
+        for path in folder.rglob("*.py"):
+            if path.name in SOURCE_NAMES:
+                found_files.append(path)
+
+# Search other project subfolders if the known paths did not find sources.
+if not found_files:
+    excluded = {
+        "venv", ".venv", "__pycache__", "site-packages",
+        "node_modules", ".git"
+    }
+
+    for path in PROJECT_ROOT.rglob("*.py"):
+        if any(part.lower() in excluded for part in path.parts):
+            continue
+
+        if path.name in SOURCE_NAMES and "py5chesim" in str(path).lower():
+            found_files.append(path)
+
+found_files = sorted(set(found_files))
+
+if not found_files:
+    print("\nPy5cheSim source modules were not found.")
+    print("The existing test scripts alone are insufficient to")
+    print("verify the simulator API for five traffic classes.")
+else:
+    for path in found_files:
+        print("\n" + "-" * 78)
+        print(f"SOURCE: {path}")
+        print("-" * 78)
+
+        try:
+            source = path.read_text(
+                encoding="utf-8", errors="replace"
+            )
+            tree = ast.parse(source)
+
+            # Report class constructors and methods relevant to simulation.
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ClassDef):
+                    continue
+
+                print(f"\nCLASS: {node.name}")
+
+                for method in node.body:
+                    if not isinstance(
+                        method,
+                        (ast.FunctionDef, ast.AsyncFunctionDef)
+                    ):
+                        continue
+
+                    args = method.args
+                    arg_names = [
+                        arg.arg for arg in args.args
+                    ]
+
+                    if args.vararg:
+                        arg_names.append("*" + args.vararg.arg)
+
+                    if args.kwarg:
+                        arg_names.append("**" + args.kwarg.arg)
+
+                    print(
+                        f"  {method.name}("
+                        + ", ".join(arg_names)
+                        + ")"
+                    )
+
+            # Print implementation lines for key API methods.
+            keywords = (
+                "def __init__", "def createslice",
+                "def updateconfig", "def resalloc",
+                "def run", "def start", "def setup",
+                "def ", "prbs", "reqthroughput",
+                "reqdelay", "meassuredkpi", "packetflows",
+                "availability", "sinr", "mcs"
+            )
+
+            print("\nRelevant implementation lines:")
+            for line_no, line in enumerate(
+                source.splitlines(), start=1
+            ):
+                if any(k in line.lower() for k in keywords):
+                    print(f"{line_no:4}: {line.strip()[:200]}")
+
+        except (OSError, SyntaxError) as exc:
+            print(f"Inspection error: {exc}")
+
+print("\n" + "=" * 78)
+print("BLOCK 9 COMPLETE — NO SOURCE FILES MODIFIED")
+print("=" * 78)
+
+
+
+# ============================================================
+# BLOCK 10: FIVE-CLASS RAN WORKLOAD CONFIGURATION
+# ============================================================
+
+import numpy as np
+import pandas as pd
+from pathlib import Path
+
+# Shared radio-resource limits
+TOTAL_BANDWIDTH_MHZ = 20.0
+TOTAL_RBS = 100
+MAX_TRANSMIT_POWER_W = 40.0
+
+TRAFFIC_PROFILES = {
+    "eMBB": {
+        "weight": 0.25, "min_rate_mbps": 10.0,
+        "target_rate_mbps": 50.0, "max_latency_ms": 100.0,
+        "min_reliability": 0.99000, "priority": 2
+    },
+    "uRLLC": {
+        "weight": 0.20, "min_rate_mbps": 1.0,
+        "target_rate_mbps": 10.0, "max_latency_ms": 5.0,
+        "min_reliability": 0.99999, "priority": 5
+    },
+    "MTM": {
+        "weight": 0.15, "min_rate_mbps": 0.05,
+        "target_rate_mbps": 0.25, "max_latency_ms": 1000.0,
+        "min_reliability": 0.99000, "priority": 1
+    },
+    "IoT": {
+        "weight": 0.20, "min_rate_mbps": 0.1,
+        "target_rate_mbps": 1.0, "max_latency_ms": 100.0,
+        "min_reliability": 0.99000, "priority": 2
+    },
+    "Vehicular": {
+        "weight": 0.20, "min_rate_mbps": 5.0,
+        "target_rate_mbps": 20.0, "max_latency_ms": 10.0,
+        "min_reliability": 0.99900, "priority": 4
+    },
+}
+
+TRAFFIC_NAMES = list(TRAFFIC_PROFILES)
+ALGORITHMS = ["RBF-EdgeCover-DDQN", "GGN-DDQN", "GCN-DDQN", "DDQN"]
+
+USER_COUNTS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+# Keep the experiment outputs separate from previous experiments.
+RESULT_DIR = (
+    Path(r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3")
+    / "results" / "RBF_EdgeCover_DDQN"
+)
+CSV_DIR = RESULT_DIR / "csv"
+FIGURE_DIR = RESULT_DIR / "figures"
+MODEL_DIR = RESULT_DIR / "models"
+
+for folder in (CSV_DIR, FIGURE_DIR, MODEL_DIR):
+    folder.mkdir(parents=True, exist_ok=True)
+
+profile_df = pd.DataFrame.from_dict(
+    TRAFFIC_PROFILES, orient="index"
+)
+profile_df.index.name = "traffic_class"
+profile_df.to_csv(CSV_DIR / "traffic_profiles.csv")
+
+assert np.isclose(
+    sum(profile["weight"] for profile in TRAFFIC_PROFILES.values()),
+    1.0
+), "Traffic-class weights must sum to 1."
+
+assert TOTAL_RBS > 0 and TOTAL_BANDWIDTH_MHZ > 0
+
+print("Traffic classes:", TRAFFIC_NAMES)
+print("Algorithms:", ALGORITHMS)
+print("User counts:", USER_COUNTS)
+print("Total bandwidth:", TOTAL_BANDWIDTH_MHZ, "MHz")
+print("Total PRBs:", TOTAL_RBS)
+print("\nConfigured traffic profiles:")
+print(profile_df)
+print("\nSaved:", CSV_DIR / "traffic_profiles.csv")
+
+# ============================================================
+# BLOCK 11: DATASET-DRIVEN RADIO CONTEXT AND TRAFFIC GENERATION
+# ============================================================
+
+import numpy as np
+import pandas as pd
+
+SEED = 420
+rng_workload = np.random.default_rng(SEED)
+
+# Use the prepared training data from Blocks 3-4.
+if "X_train" not in globals() or len(X_train) == 0:
+    raise RuntimeError(
+        "X_train is unavailable. Run the dataset preparation blocks first."
+    )
+
+RADIO_CONTEXT = np.asarray(X_train, dtype=np.float32)
+
+if RADIO_CONTEXT.ndim != 2:
+    raise ValueError("X_train must be a 2-D feature matrix.")
+
+if not np.isfinite(RADIO_CONTEXT).all():
+    raise ValueError("Radio features contain NaN or infinite values.")
+
+traffic_probabilities = np.array(
+    [TRAFFIC_PROFILES[name]["weight"] for name in TRAFFIC_NAMES],
+    dtype=np.float64
+)
+traffic_probabilities /= traffic_probabilities.sum()
+
+
+def generate_workload(num_users, seed=SEED):
+    """
+    Generate a reproducible workload.
+
+    Radio-context vectors are sampled from prepared dataset rows.
+    Traffic classes and QoS targets come from the explicit profiles
+    configured in Block 10; they are not dataset ground-truth labels.
+    """
+    rng = np.random.default_rng(seed)
+
+    row_indices = rng.integers(
+        0, len(RADIO_CONTEXT), size=num_users
+    )
+    context = RADIO_CONTEXT[row_indices].copy()
+
+    class_indices = rng.choice(
+        len(TRAFFIC_NAMES),
+        size=num_users,
+        p=traffic_probabilities
+    )
+    class_names = np.asarray(TRAFFIC_NAMES, dtype=object)[class_indices]
+
+    demand = np.array([
+        TRAFFIC_PROFILES[name]["target_rate_mbps"]
+        for name in class_names
+    ], dtype=np.float32)
+
+    min_rate = np.array([
+        TRAFFIC_PROFILES[name]["min_rate_mbps"]
+        for name in class_names
+    ], dtype=np.float32)
+
+    max_latency = np.array([
+        TRAFFIC_PROFILES[name]["max_latency_ms"]
+        for name in class_names
+    ], dtype=np.float32)
+
+    reliability = np.array([
+        TRAFFIC_PROFILES[name]["min_reliability"]
+        for name in class_names
+    ], dtype=np.float32)
+
+    priority = np.array([
+        TRAFFIC_PROFILES[name]["priority"]
+        for name in class_names
+    ], dtype=np.float32)
+
+    # Initial normalized channel-quality proxy derived from the
+    # dataset feature vectors. It is NOT a measured SINR estimate.
+    context_quality = np.mean(context, axis=1)
+    context_quality = np.clip(context_quality, 0.0, 1.0)
+
+    # Configurable per-user radio context for the allocation model.
+    # The scaling factors are simulation assumptions.
+    channel_factor = np.clip(
+        0.25 + 1.5 * context_quality, 0.25, 1.75
+    )
+
+    return {
+        "features": context,
+        "class_names": class_names,
+        "class_indices": class_indices.astype(np.int64),
+        "demand_mbps": demand,
+        "min_rate_mbps": min_rate,
+        "max_latency_ms": max_latency,
+        "reliability_target": reliability,
+        "priority": priority,
+        "channel_factor": channel_factor.astype(np.float32),
+    }
+
+
+# Quick sanity check
+workload_preview = generate_workload(20, seed=SEED)
+
+preview_df = pd.DataFrame({
+    "traffic_class": workload_preview["class_names"],
+    "target_rate_mbps": workload_preview["demand_mbps"],
+    "minimum_rate_mbps": workload_preview["min_rate_mbps"],
+    "maximum_latency_ms": workload_preview["max_latency_ms"],
+    "priority": workload_preview["priority"],
+    "channel_factor": workload_preview["channel_factor"],
+})
+
+print(preview_df.head(20).to_string(index=False))
+print("\nClass counts:")
+print(preview_df["traffic_class"].value_counts())
+
+preview_df.to_csv(
+    CSV_DIR / "workload_preview.csv", index=False
+)
+print("\nSaved:", CSV_DIR / "workload_preview.csv")
+
+
+
+# ============================================================
+# BLOCK 12: SHARED RAN SLICING ENVIRONMENT AND KPI EVALUATION
+# ============================================================
+
+import numpy as np
+import pandas as pd
+
+class RANSlicingEnvironment:
+    """
+    Dataset-driven RAN resource-allocation environment.
+
+    Each action is an integer PRB allocation per user.
+    The environment enforces the total PRB budget and calculates
+    model-based rate, latency, utility, acceptance and QoS metrics.
+
+    These KPI equations are experimental proxies, not direct
+    Py5cheSim measurements or calibrated propagation models.
+    """
+
+    def __init__(self, total_rbs=TOTAL_RBS,
+                 total_bandwidth_mhz=TOTAL_BANDWIDTH_MHZ):
+        self.total_rbs = int(total_rbs)
+        self.total_bandwidth_mhz = float(total_bandwidth_mhz)
+        self.bandwidth_per_rb = (
+            self.total_bandwidth_mhz / self.total_rbs
+        )
+
+    def project_allocation(self, proposed_rbs, workload):
+        """Project a proposed allocation onto the PRB budget."""
+        n = len(workload["class_names"])
+        allocation = np.asarray(proposed_rbs, dtype=np.float64)
+
+        if allocation.shape != (n,):
+            raise ValueError(
+                f"Expected {n} per-user allocations; "
+                f"received shape {allocation.shape}."
+            )
+
+        allocation = np.nan_to_num(
+            allocation, nan=0.0, posinf=0.0, neginf=0.0
+        )
+        allocation = np.maximum(np.rint(allocation), 0).astype(int)
+
+        # Cap every user's allocation before enforcing the global budget.
+        allocation = np.minimum(allocation, self.total_rbs)
+
+        # Deterministic priority-based budget projection.
+        # Higher-priority users receive PRBs first; ties are stable.
+        priorities = np.asarray(workload["priority"])
+        order = np.argsort(-priorities, kind="stable")
+
+        projected = np.zeros(n, dtype=int)
+        remaining = self.total_rbs
+
+        for i in order:
+            if remaining <= 0:
+                break
+            granted = min(int(allocation[i]), remaining)
+            projected[i] = granted
+            remaining -= granted
+
+        return projected
+
+    def evaluate(self, workload, proposed_rbs):
+        """Return projected allocation, per-user KPIs and aggregate KPIs."""
+        rb_alloc = self.project_allocation(proposed_rbs, workload)
+
+        demand = np.asarray(workload["demand_mbps"], dtype=float)
+        min_rate = np.asarray(workload["min_rate_mbps"], dtype=float)
+        max_latency = np.asarray(workload["max_latency_ms"], dtype=float)
+        channel = np.asarray(workload["channel_factor"], dtype=float)
+        class_names = np.asarray(workload["class_names"], dtype=object)
+        priority = np.asarray(workload["priority"], dtype=float)
+
+        # Assumed spectral-efficiency proxy. Calibrate against actual
+        # SINR/MCS data before interpreting these rates as physical KPIs.
+        spectral_efficiency = np.clip(
+            0.5 + 2.0 * channel, 0.5, 4.0
+        )
+
+        rate_mbps = (
+            rb_alloc
+            * self.bandwidth_per_rb
+            * spectral_efficiency
+        )
+
+        rate_satisfaction = np.clip(
+            rate_mbps / np.maximum(demand, 1e-9), 0.0, 1.0
+        )
+
+        # Model-based latency proxy: base delay plus load-related delay.
+        # This is not a packet-level delay measurement.
+        latency_ms = (
+            0.5
+            + 2.0 * np.maximum(demand - rate_mbps, 0.0)
+              / np.maximum(demand, 1e-9)
+            + 0.1 * demand / np.maximum(rate_mbps, 0.05)
+        )
+
+        served = rb_alloc > 0
+        rate_met = rate_mbps >= min_rate
+        latency_met = latency_ms <= max_latency
+
+        user_satisfied = served & rate_met & latency_met
+        qos_violation = ~(rate_met & latency_met)
+
+        # Demand-weighted utility with priority weighting.
+        normalized_priority = priority / max(
+            float(np.max(priority)), 1.0
+        )
+        utility_per_user = (
+            rate_satisfaction * (0.5 + 0.5 * normalized_priority)
+        )
+
+        metrics = {
+            "acceptance_ratio": float(np.mean(served)),
+            "utility": float(np.mean(utility_per_user)),
+            "service_satisfaction_ratio": float(np.mean(user_satisfied)),
+            "qos_violation_ratio": float(np.mean(qos_violation)),
+            "mean_data_rate_mbps": float(np.mean(rate_mbps)),
+            "mean_latency_ms": float(np.mean(latency_ms)),
+            "total_data_rate_mbps": float(np.sum(rate_mbps)),
+            "allocated_rbs": int(np.sum(rb_alloc)),
+            "rb_utilization": float(np.sum(rb_alloc) / self.total_rbs),
+            "mean_user_rate_satisfaction": float(np.mean(rate_satisfaction)),
+        }
+
+        user_df = pd.DataFrame({
+            "traffic_class": class_names,
+            "priority": priority,
+            "allocated_rbs": rb_alloc,
+            "target_rate_mbps": demand,
+            "minimum_rate_mbps": min_rate,
+            "estimated_rate_mbps": rate_mbps,
+            "estimated_latency_ms": latency_ms,
+            "rate_satisfaction": rate_satisfaction,
+            "accepted": served,
+            "satisfied": user_satisfied,
+            "qos_violation": qos_violation,
+            "utility": utility_per_user,
+        })
+
+        # Per-class summaries for analysis.
+        class_rows = []
+        for traffic_class in TRAFFIC_NAMES:
+            mask = class_names == traffic_class
+            if not np.any(mask):
+                continue
+
+            class_rows.append({
+                "traffic_class": traffic_class,
+                "users": int(np.sum(mask)),
+                "mean_rbs_per_user": float(np.mean(rb_alloc[mask])),
+                "mean_rate_mbps": float(np.mean(rate_mbps[mask])),
+                "mean_latency_ms": float(np.mean(latency_ms[mask])),
+                "acceptance_ratio": float(np.mean(served[mask])),
+                "satisfaction_ratio": float(np.mean(user_satisfied[mask])),
+                "qos_violation_ratio": float(np.mean(qos_violation[mask])),
+            })
+
+        class_df = pd.DataFrame(class_rows)
+
+        return {
+            "metrics": metrics,
+            "users": user_df,
+            "classes": class_df,
+            "allocation": rb_alloc,
+        }
+
+
+# Smoke test with a simple equal allocation.
+env = RANSlicingEnvironment()
+test_workload = generate_workload(20, seed=SEED)
+equal_allocation = np.full(20, TOTAL_RBS // 20)
+
+test_result = env.evaluate(test_workload, equal_allocation)
+
+print("Aggregate KPI smoke test:")
+for key, value in test_result["metrics"].items():
+    print(f"{key:32s}: {value}")
+
+print("\nPer-class KPI smoke test:")
+print(test_result["classes"].to_string(index=False))
+
+assert test_result["metrics"]["allocated_rbs"] <= TOTAL_RBS
+assert 0.0 <= test_result["metrics"]["acceptance_ratio"] <= 1.0
+assert 0.0 <= test_result["metrics"]["qos_violation_ratio"] <= 1.0
+
+test_result["users"].to_csv(
+    CSV_DIR / "block12_user_kpi_smoke_test.csv", index=False
+)
+test_result["classes"].to_csv(
+    CSV_DIR / "block12_class_kpi_smoke_test.csv", index=False
+)
+
+print("\nBlock 12 passed. Smoke-test CSV files saved.")
+
+
+
+# ============================================================
+# BLOCK 13: DDQN, GCN-DDQN, GGN-DDQN AND RBF-EDGE-COVER-DDQN
+# ============================================================
+
+import random
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from collections import deque
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+STATE_DIM = 8
+ACTION_LEVELS = 5
+REPLAY_CAPACITY = 20000
+BATCH_SIZE = 64
+GAMMA = 0.95
+LEARNING_RATE = 3e-4
+TARGET_UPDATE_STEPS = 100
+
+class ReplayBuffer:
+    def __init__(self, capacity=REPLAY_CAPACITY):
+        self.memory = deque(maxlen=capacity)
+
+    def add(self, state, action, reward, next_state, done):
+        self.memory.append((
+            np.asarray(state, dtype=np.float32),
+            int(action),
+            float(reward),
+            np.asarray(next_state, dtype=np.float32),
+            float(done),
+        ))
+
+    def sample(self, batch_size):
+        batch = random.sample(self.memory, batch_size)
+        s, a, r, ns, d = zip(*batch)
+        return (
+            torch.tensor(np.asarray(s), dtype=torch.float32, device=DEVICE),
+            torch.tensor(a, dtype=torch.long, device=DEVICE),
+            torch.tensor(r, dtype=torch.float32, device=DEVICE),
+            torch.tensor(np.asarray(ns), dtype=torch.float32, device=DEVICE),
+            torch.tensor(d, dtype=torch.float32, device=DEVICE),
+        )
+
+    def __len__(self):
+        return len(self.memory)
+
+
+class AllocationQNetwork(nn.Module):
+    def __init__(self, state_dim=STATE_DIM, action_levels=ACTION_LEVELS,
+                 architecture="ddqn"):
+        super().__init__()
+        self.architecture = architecture
+
+        self.input_layer = nn.Linear(state_dim, 64)
+        self.local_layer = nn.Linear(64, 64)
+        self.global_layer = nn.Linear(64, 64)
+        self.output_layer = nn.Linear(64, action_levels)
+
+    def forward(self, x):
+        h = torch.relu(self.input_layer(x))
+
+        if self.architecture == "gcn":
+            # One-dimensional neighborhood proxy:
+            # adjacent users are represented by a batch-local average.
+            local = torch.roll(h, shifts=1, dims=0)
+            h = torch.relu(self.local_layer(0.5 * (h + local)))
+
+        elif self.architecture == "ggn":
+            # Global context aggregation across the current batch.
+            global_context = h.mean(dim=0, keepdim=True)
+            h = torch.relu(
+                self.global_layer(h + global_context)
+            )
+
+        return self.output_layer(h)
+
+
+class DDQNAgent:
+    def __init__(self, architecture="ddqn", state_dim=STATE_DIM):
+        self.architecture = architecture
+        self.online = AllocationQNetwork(
+            state_dim=state_dim, architecture=architecture
+        ).to(DEVICE)
+        self.target = AllocationQNetwork(
+            state_dim=state_dim, architecture=architecture
+        ).to(DEVICE)
+        self.target.load_state_dict(self.online.state_dict())
+        self.target.eval()
+
+        self.optimizer = optim.Adam(
+            self.online.parameters(), lr=LEARNING_RATE
+        )
+        self.buffer = ReplayBuffer()
+        self.steps = 0
+
+    def choose_action(self, state, epsilon=0.1):
+        if random.random() < epsilon:
+            return random.randrange(ACTION_LEVELS)
+
+        x = torch.tensor(
+            np.asarray(state, dtype=np.float32),
+            device=DEVICE
+        ).unsqueeze(0)
+
+        with torch.no_grad():
+            return int(self.online(x).argmax(dim=1).item())
+
+    def train_step(self):
+        if len(self.buffer) < BATCH_SIZE:
+            return None
+
+        states, actions, rewards, next_states, dones = (
+            self.buffer.sample(BATCH_SIZE)
+        )
+
+        q_values = self.online(states).gather(
+            1, actions.unsqueeze(1)
+        ).squeeze(1)
+
+        # Double DQN: online network chooses; target network evaluates.
+        with torch.no_grad():
+            next_actions = self.online(next_states).argmax(dim=1)
+            next_q = self.target(next_states).gather(
+                1, next_actions.unsqueeze(1)
+            ).squeeze(1)
+            targets = rewards + GAMMA * (1.0 - dones) * next_q
+
+        loss = nn.functional.smooth_l1_loss(q_values, targets)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        nn.utils.clip_grad_norm_(self.online.parameters(), 1.0)
+        self.optimizer.step()
+
+        self.steps += 1
+        if self.steps % TARGET_UPDATE_STEPS == 0:
+            self.target.load_state_dict(self.online.state_dict())
+
+        return float(loss.item())
+
+
+def user_state(workload, i, current_rbs, users_remaining):
+    """Build an eight-dimensional normalized user state."""
+    return np.asarray([
+        workload["features"][i].mean(),
+        workload["demand_mbps"][i] / 50.0,
+        workload["min_rate_mbps"][i] / 10.0,
+        workload["max_latency_ms"][i] / 1000.0,
+        workload["priority"][i] / 5.0,
+        workload["channel_factor"][i] / 1.75,
+        current_rbs / max(TOTAL_RBS, 1),
+        users_remaining / max(len(workload["class_names"]), 1),
+    ], dtype=np.float32)
+
+
+# Discrete allocation proposals: 0, 1, 2, 4, or 8 PRBs per user.
+ACTION_RBS = np.array([0, 1, 2, 4, 8], dtype=int)
+
+def allocate_with_agent(agent, workload, epsilon=0.0):
+    n = len(workload["class_names"])
+    proposed = np.zeros(n, dtype=int)
+
+    # All methods use the same order to ensure fair comparison.
+    order = np.argsort(
+        -np.asarray(workload["priority"]), kind="stable"
+    )
+
+    allocated_so_far = 0
+    for position, i in enumerate(order):
+        state = user_state(
+            workload, i, allocated_so_far, n - position
+        )
+        action = agent.choose_action(state, epsilon=epsilon)
+        proposed[i] = ACTION_RBS[action]
+        allocated_so_far += proposed[i]
+
+    return proposed
+
+
+def allocate_edgecover_rbf(workload, centers, sigma):
+    """
+    RBF + greedy edge-cover-inspired candidate allocation.
+    The policy is a transparent heuristic, not an edge-cover
+    optimality guarantee.
+    """
+    features = np.asarray(workload["features"], dtype=np.float32)
+    if len(centers) == 0:
+        rbf_scores = np.zeros(len(features))
+    else:
+        dist2 = ((features[:, None, :] - centers[None, :, :]) ** 2).mean(axis=2)
+        rbf_scores = np.exp(-dist2 / (2.0 * max(sigma, 1e-6) ** 2)).mean(axis=1)
+
+    priorities = np.asarray(workload["priority"], dtype=float)
+    demand = np.asarray(workload["demand_mbps"], dtype=float)
+    channel = np.asarray(workload["channel_factor"], dtype=float)
+
+    # Candidate score combines RBF similarity, service priority,
+    # demand and channel quality.
+    score = (
+        0.35 * rbf_scores
+        + 0.35 * priorities / 5.0
+        + 0.20 * np.clip(demand / 50.0, 0.0, 1.0)
+        + 0.10 * np.clip(channel / 1.75, 0.0, 1.0)
+    )
+
+    order = np.argsort(-score, kind="stable")
+    allocation = np.zeros(len(features), dtype=int)
+    remaining = TOTAL_RBS
+
+    for i in order:
+        if remaining <= 0:
+            break
+
+        desired = int(ACTION_RBS[
+            min(int(score[i] * (ACTION_LEVELS - 1)), ACTION_LEVELS - 1)
+        ])
+        granted = min(desired, remaining)
+        allocation[i] = granted
+        remaining -= granted
+
+    return allocation
+
+
+# Instantiate all trainable agents.
+AGENTS = {
+    "DDQN": DDQNAgent("ddqn"),
+    "GCN-DDQN": DDQNAgent("gcn"),
+    "GGN-DDQN": DDQNAgent("ggn"),
+}
+
+print("Agents initialized on:", DEVICE)
+print("Trainable baselines:", list(AGENTS))
+print("RBF centers available:", len(globals().get("RBF_CENTERS", [])))
+print("Action levels (PRBs):", ACTION_RBS.tolist())
+
+
+
+# ============================================================
+# BLOCK 14: TRAIN DDQN-BASED BASELINES
+# ============================================================
+
+NUM_TRAIN_EPISODES = 50
+EPSILON_START = 1.0
+EPSILON_END = 0.05
+EPSILON_DECAY = 0.985
+
+training_records = []
+
+for algorithm, agent in AGENTS.items():
+    print(f"\nTraining {algorithm} ...")
+    epsilon = EPSILON_START
+
+    for episode in range(NUM_TRAIN_EPISODES):
+        n_users = int(rng_workload.choice([100, 200, 300, 400, 500]))
+        workload = generate_workload(
+            n_users, seed=SEED + episode
+        )
+
+        proposed = allocate_with_agent(
+            agent, workload, epsilon=epsilon
+        )
+        evaluation = env.evaluate(workload, proposed)
+        metrics = evaluation["metrics"]
+
+        # Scalar reward balances utility and QoS violation.
+        reward = (
+            metrics["utility"]
+            + 0.5 * metrics["service_satisfaction_ratio"]
+            - 0.5 * metrics["qos_violation_ratio"]
+        )
+
+        # Learn from per-user states and individual allocation decisions.
+        order = np.argsort(
+            -np.asarray(workload["priority"]), kind="stable"
+        )
+
+        for position, i in enumerate(order):
+            state = user_state(
+                workload, i, 0, n_users - position
+            )
+            next_state = state.copy()
+            next_state[-1] = max(
+                0.0, (n_users - position - 1) / n_users
+            )
+
+            action = int(np.argmin(
+                np.abs(ACTION_RBS - proposed[i])
+            ))
+
+            # Shared episode reward is a simplified training signal.
+            agent.buffer.add(
+                state, action, reward, next_state, True
+            )
+            agent.train_step()
+
+        training_records.append({
+            "algorithm": algorithm,
+            "episode": episode + 1,
+            "users": n_users,
+            "epsilon": epsilon,
+            "reward": reward,
+            "utility": metrics["utility"],
+            "satisfaction": metrics["service_satisfaction_ratio"],
+            "qos_violation": metrics["qos_violation_ratio"],
+        })
+
+        epsilon = max(EPSILON_END, epsilon * EPSILON_DECAY)
+
+        if (episode + 1) % 50 == 0:
+            print(
+                f"{algorithm} | Episode {episode + 1:4d}/"
+                f"{NUM_TRAIN_EPISODES} | "
+                f"Reward={reward:.4f} | epsilon={epsilon:.3f}"
+            )
+
+    torch.save(
+        agent.online.state_dict(),
+        MODEL_DIR / f"{algorithm.lower().replace('-', '_')}.pth"
+    )
+
+training_df = pd.DataFrame(training_records)
+training_df.to_csv(CSV_DIR / "training_history.csv", index=False)
+
+print("\nTraining finished.")
+print("Saved training history:", CSV_DIR / "training_history.csv")
+print("Saved model checkpoints in:", MODEL_DIR)
+
+
+
+# ============================================================
+# BLOCK 15: MULTI-SCALE EVALUATION OF ALL FOUR ALGORITHMS
+# ============================================================
+
+import time
+
+EVALUATION_EPISODES = 20
+evaluation_records = []
+class_records = []
+
+if "RBF_CENTERS" not in globals():
+    # Fall back to a seeded subset of the available training data.
+    _rng = np.random.default_rng(SEED)
+    _n_centers = min(64, len(X_train))
+    _indices = _rng.choice(len(X_train), _n_centers, replace=False)
+    RBF_CENTERS = np.asarray(X_train[_indices], dtype=np.float32)
+
+if "RBF_SIGMA" not in globals():
+    _dist = np.sqrt(
+        np.maximum(
+            ((RBF_CENTERS[:, None, :] - RBF_CENTERS[None, :, :]) ** 2)
+            .mean(axis=2),
+            0.0
+        )
+    )
+    _positive = _dist[_dist > 0]
+    RBF_SIGMA = float(np.median(_positive)) if len(_positive) else 1.0
+
+for n_users in USER_COUNTS:
+    for episode in range(EVALUATION_EPISODES):
+        workload_seed = SEED + 10000 + n_users * 100 + episode
+        workload = generate_workload(n_users, seed=workload_seed)
+
+        # Ours: RBF-EdgeCover-DDQN label refers to the proposed hybrid.
+        # The current policy is an RBF/priority candidate heuristic.
+        t0 = time.perf_counter()
+        ours_allocation = allocate_edgecover_rbf(
+            workload, RBF_CENTERS, RBF_SIGMA
+        )
+        ours_result = env.evaluate(workload, ours_allocation)
+        ours_time = time.perf_counter() - t0
+
+        proposed_methods = {
+            "RBF-EdgeCover-DDQN": (ours_result, ours_time)
+        }
+
+        for algorithm, agent in AGENTS.items():
+            t0 = time.perf_counter()
+            proposed = allocate_with_agent(
+                agent, workload, epsilon=0.0
+            )
+            result = env.evaluate(workload, proposed)
+            elapsed = time.perf_counter() - t0
+            proposed_methods[algorithm] = (result, elapsed)
+
+        # Same workload for every algorithm.
+        for algorithm, (result, elapsed) in proposed_methods.items():
+            m = result["metrics"]
+
+            evaluation_records.append({
+                "algorithm": algorithm,
+                "users": n_users,
+                "episode": episode,
+                "acceptance_ratio": m["acceptance_ratio"],
+                "utility": m["utility"],
+                "service_satisfaction_ratio":
+                    m["service_satisfaction_ratio"],
+                "qos_violation_ratio": m["qos_violation_ratio"],
+                "mean_data_rate_mbps": m["mean_data_rate_mbps"],
+                "mean_latency_ms": m["mean_latency_ms"],
+                "total_data_rate_mbps": m["total_data_rate_mbps"],
+                "allocated_rbs": m["allocated_rbs"],
+                "rb_utilization": m["rb_utilization"],
+                "execution_time_s": elapsed,
+            })
+
+            for _, row in result["classes"].iterrows():
+                class_records.append({
+                    "algorithm": algorithm,
+                    "users": n_users,
+                    "episode": episode,
+                    **row.to_dict(),
+                })
+
+    print(f"Finished evaluation for {n_users} users.")
+
+evaluation_df = pd.DataFrame(evaluation_records)
+class_evaluation_df = pd.DataFrame(class_records)
+
+evaluation_df.to_csv(
+    CSV_DIR / "evaluation_raw.csv", index=False
+)
+class_evaluation_df.to_csv(
+    CSV_DIR / "class_evaluation_raw.csv", index=False
+)
+
+print("\nRaw evaluation results saved.")
+print("Rows:", len(evaluation_df))
+print("Algorithms:", evaluation_df["algorithm"].unique())
+print("User scales:", sorted(evaluation_df["users"].unique()))
+
+
+
+# ============================================================
+# BLOCK 16: AGGREGATE EVALUATION RESULTS
+# ============================================================
+
+METRICS = [
+    "acceptance_ratio",
+    "utility",
+    "service_satisfaction_ratio",
+    "qos_violation_ratio",
+    "mean_data_rate_mbps",
+    "mean_latency_ms",
+    "total_data_rate_mbps",
+    "rb_utilization",
+    "execution_time_s",
+]
+
+summary_df = (
+    evaluation_df
+    .groupby(["algorithm", "users"])[METRICS]
+    .agg(["mean", "std"])
+    .reset_index()
+)
+
+summary_df.columns = [
+    "_".join(str(part) for part in column if part != "")
+    if isinstance(column, tuple) else column
+    for column in summary_df.columns
+]
+
+summary_df.to_csv(
+    CSV_DIR / "evaluation_summary_mean_std.csv", index=False
+)
+
+print(summary_df.head(16).to_string(index=False))
+print("\nSaved:", CSV_DIR / "evaluation_summary_mean_std.csv")
+
+
+
+# ============================================================
+# BLOCK 17: PLOT AND SAVE SIX COMPARISON FIGURES
+# ============================================================
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 19,
+    "axes.labelsize": 20,
+    "xtick.labelsize": 17,
+    "ytick.labelsize": 17,
+    "legend.fontsize": 14,
+    "lines.linewidth": 2.5,
+    "lines.markersize": 8,
+    "savefig.dpi": 600,
+    "ps.fonttype": 42,
+    "pdf.fonttype": 42,
+})
+
+DISPLAY_NAMES = {
+    "RBF-EdgeCover-DDQN": "Ours",
+    "GGN-DDQN": "GGN-DDQN",
+    "GCN-DDQN": "GCN-DDQN",
+    "DDQN": "DDQN",
+}
+
+PLOT_ORDER = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN",
+]
+
+MARKERS = ["o", "s", "^", "D"]
+LINESTYLES = ["-", "--", "-.", ":"]
+
+def mean_curve(metric):
+    return (
+        evaluation_df.groupby(["algorithm", "users"])[metric]
+        .mean()
+        .reset_index()
+    )
+
+def plot_user_metric(metric, ylabel, filename, percent=False):
+    fig, ax = plt.subplots(figsize=(9.5, 6.5))
+    curve = mean_curve(metric)
+
+    for idx, algorithm in enumerate(PLOT_ORDER):
+        subset = curve[curve["algorithm"] == algorithm].sort_values("users")
+        y = subset[metric].to_numpy(dtype=float)
+        if percent:
+            y = 100.0 * y
+
+        ax.plot(
+            subset["users"], y,
+            label=DISPLAY_NAMES[algorithm],
+            marker=MARKERS[idx],
+            linestyle=LINESTYLES[idx],
+        )
+
+    ax.set_xlabel("Number of Users")
+    ax.set_ylabel(ylabel)
+    ax.set_xlim(left=0)
+    ax.grid(True, linestyle="--", alpha=0.35)
+    ax.legend(loc="best", ncol=2, frameon=True)
+    fig.tight_layout()
+
+    # Display first, then save.
+    plt.show()
+    fig.savefig(FIGURE_DIR / f"{filename}.png", dpi=600,
+                bbox_inches="tight")
+    fig.savefig(FIGURE_DIR / f"{filename}.eps", format="eps",
+                bbox_inches="tight")
+    plt.close(fig)
+
+
+plot_user_metric(
+    "execution_time_s", "Evaluation Time (s)",
+    "scalability_vs_users"
+)
+plot_user_metric(
+    "acceptance_ratio", "Acceptance Ratio (%)",
+    "acceptance_ratio_vs_users", percent=True
+)
+plot_user_metric(
+    "utility", "Utility",
+    "utility_vs_users"
+)
+plot_user_metric(
+    "service_satisfaction_ratio", "Service Satisfaction Ratio (%)",
+    "service_satisfaction_vs_users", percent=True
+)
+plot_user_metric(
+    "qos_violation_ratio", "QoS Violation Ratio (%)",
+    "qos_violation_vs_users", percent=True
+)
+
+# Data rate versus latency: mean point at each user scale.
+fig, ax = plt.subplots(figsize=(9.5, 6.5))
+
+for idx, algorithm in enumerate(PLOT_ORDER):
+    subset = (
+        evaluation_df[evaluation_df["algorithm"] == algorithm]
+        .groupby("users", as_index=False)[
+            ["mean_data_rate_mbps", "mean_latency_ms"]
+        ].mean()
+        .sort_values("users")
+    )
+
+    ax.plot(
+        subset["mean_data_rate_mbps"],
+        subset["mean_latency_ms"],
+        label=DISPLAY_NAMES[algorithm],
+        marker=MARKERS[idx],
+        linestyle=LINESTYLES[idx],
+    )
+
+ax.set_xlabel("Mean Data Rate (Mbps)")
+ax.set_ylabel("Mean Latency (ms)")
+ax.set_xlim(left=0)
+ax.set_ylim(bottom=0)
+ax.grid(True, linestyle="--", alpha=0.35)
+ax.legend(loc="best", ncol=2, frameon=True)
+fig.tight_layout()
+
+plt.show()
+fig.savefig(FIGURE_DIR / "data_rate_vs_latency.png",
+            dpi=600, bbox_inches="tight")
+fig.savefig(FIGURE_DIR / "data_rate_vs_latency.eps",
+            format="eps", bbox_inches="tight")
+plt.close(fig)
+
+print("\nAll six figures saved in:", FIGURE_DIR)
+
+
+# ============================================================
+# BLOCK 18: FINAL RESULTS EXPORT AND VALIDATION
+# ============================================================
+
+required_columns = [
+    "algorithm", "users",
+    "acceptance_ratio", "utility",
+    "service_satisfaction_ratio",
+    "qos_violation_ratio",
+    "mean_data_rate_mbps", "mean_latency_ms",
+    "execution_time_s",
+]
+
+missing = [
+    col for col in required_columns
+    if col not in evaluation_df.columns
+]
+if missing:
+    raise ValueError(f"Missing evaluation columns: {missing}")
+
+if not evaluation_df["algorithm"].isin(ALGORITHMS).all():
+    raise ValueError("Unexpected algorithm labels found.")
+
+if evaluation_df[METRICS].isna().any().any():
+    print("Warning: NaN values exist in metric results.")
+
+# Per-algorithm, per-user-scale summary
+final_summary = (
+    evaluation_df.groupby(["algorithm", "users"], as_index=False)
+    .agg(
+        acceptance_ratio=("acceptance_ratio", "mean"),
+        utility=("utility", "mean"),
+        service_satisfaction_ratio=("service_satisfaction_ratio", "mean"),
+        qos_violation_ratio=("qos_violation_ratio", "mean"),
+        mean_data_rate_mbps=("mean_data_rate_mbps", "mean"),
+        mean_latency_ms=("mean_latency_ms", "mean"),
+        total_data_rate_mbps=("total_data_rate_mbps", "mean"),
+        rb_utilization=("rb_utilization", "mean"),
+        execution_time_s=("execution_time_s", "mean"),
+    )
+)
+
+final_summary.to_csv(
+    CSV_DIR / "final_comparison_summary.csv", index=False
+)
+
+class_summary = (
+    class_evaluation_df
+    .groupby(["algorithm", "users", "traffic_class"], as_index=False)
+    .agg(
+        users=("users", "size"),
+        mean_rbs_per_user=("mean_rbs_per_user", "mean"),
+        mean_rate_mbps=("mean_rate_mbps", "mean"),
+        mean_latency_ms=("mean_latency_ms", "mean"),
+        acceptance_ratio=("acceptance_ratio", "mean"),
+        satisfaction_ratio=("satisfaction_ratio", "mean"),
+        qos_violation_ratio=("qos_violation_ratio", "mean"),
+    )
+)
+
+class_summary.to_csv(
+    CSV_DIR / "final_per_class_summary.csv", index=False
+)
+
+print("\nFINAL COMPARISON SUMMARY")
+print(final_summary.to_string(index=False))
+
+print("\nSaved outputs:")
+for path in sorted(CSV_DIR.glob("*.csv")):
+    print(" ", path.name)
+
+print("\nSaved figures:")
+for path in sorted(FIGURE_DIR.glob("*")):
+    print(" ", path.name)
+
+print("\nExperiment pipeline completed.")
+print("Note: KPI rates and latencies are model-based proxies until")
+print("validated against measured Py5cheSim output.")
+
+
+
+
+# ============================================================
+# BLOCK 19: INSPECT SAVED RESULTS AND METRIC COLUMNS
+# ============================================================
+
+from pathlib import Path
+import pandas as pd
+
+BASE_DIR = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3"
+)
+RESULT_DIR = BASE_DIR / "results" / "RBF_EdgeCover_DDQN"
+CSV_DIR = RESULT_DIR / "csv"
+
+print("=" * 90)
+print("AVAILABLE RESULT CSV FILES")
+print("=" * 90)
+
+csv_files = sorted(set(RESULT_DIR.rglob("*.csv")))
+
+if not csv_files:
+    raise FileNotFoundError(
+        f"No CSV files found under: {RESULT_DIR}"
+    )
+
+for i, file_path in enumerate(csv_files, start=1):
+    print(f"\n[{i}] {file_path}")
+    try:
+        df = pd.read_csv(file_path, nrows=5)
+        print("Columns:", df.columns.tolist())
+        print(df.head(2).to_string(index=False))
+    except Exception as exc:
+        print("Could not inspect file:", exc)
+
+print("\nInspection completed.")
+
+
+
+
+
+# ============================================================
+# BLOCK 20: PER-CLASS METRIC COMPARISON FOR FOUR MODELS
+# ============================================================
+
+from pathlib import Path
+import re
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+BASE_DIR = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3"
+)
+RESULT_DIR = BASE_DIR / "results" / "RBF_EdgeCover_DDQN"
+FIGURE_DIR = RESULT_DIR / "class_metric_figures"
+CSV_DIR = RESULT_DIR / "csv"
+
+FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+
+SEED = 420
+np.random.seed(SEED)
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 17,
+    "axes.labelsize": 19,
+    "xtick.labelsize": 15,
+    "ytick.labelsize": 15,
+    "legend.fontsize": 13,
+    "savefig.dpi": 600,
+    "axes.grid": True,
+    "grid.alpha": 0.25,
+})
+
+MODEL_ORDER = [
+    "Ours",
+    "DDQN",
+    "GCN-DDQN",
+    "GGN-DDQN",
+]
+
+MODEL_ALIASES = {
+    "ours": "Ours",
+    "rbf-ddqn": "Ours",
+    "rbf-edge-ddqn": "Ours",
+    "rbf-edgecover-ddqn": "Ours",
+    "rbf_edgecover_ddqn": "Ours",
+    "rbf-ddqn-edgecover": "Ours",
+    "ddqn": "DDQN",
+    "gcn-ddqn": "GCN-DDQN",
+    "gcn_ddqn": "GCN-DDQN",
+    "ggn-ddqn": "GGN-DDQN",
+    "ggn_ddqn": "GGN-DDQN",
+}
+
+CLASS_ALIASES = {
+    "embb": "eMBB",
+    "urllc": "uRLLC",
+    "vehicular": "Vehicular",
+    "vehicle": "Vehicular",
+    "iot": "IoT",
+    "mtm": "MTM",
+    "m2m": "MTM",
+}
+
+CLASS_ORDER = ["eMBB", "uRLLC", "Vehicular", "IoT", "MTM"]
+
+# Add or modify aliases here if Block 19 reveals other column names.
+COLUMN_ALIASES = {
+    "model": [
+        "algorithm", "model", "method", "agent", "algorithm_name"
+    ],
+    "traffic_class": [
+        "traffic_class", "slice", "slice_type", "service_type",
+        "traffic_type", "class_name"
+    ],
+    "data_rate": [
+        "data_rate_mbps", "throughput_mbps", "mean_data_rate_mbps",
+        "avg_throughput_mbps", "throughput", "data_rate"
+    ],
+    "latency": [
+        "latency_ms", "mean_latency_ms", "avg_latency_ms",
+        "delay_ms", "latency", "delay"
+    ],
+    "energy": [
+        "energy_j", "energy_consumption_j", "energy_consumption",
+        "energy_proxy", "mean_energy", "energy_w", "power_w",
+        "mean_power_w"
+    ],
+    "prbs": [
+        "allocated_prbs", "prbs_allocated", "mean_prbs",
+        "allocated_rbs", "rb_allocation", "resource_blocks"
+    ],
+    "bandwidth": [
+        "allocated_bandwidth_mhz", "bandwidth_mhz",
+        "allocated_bandwidth", "bandwidth"
+    ],
+    "satisfaction": [
+        "service_satisfaction_ratio", "qos_satisfaction_ratio",
+        "satisfaction_ratio", "service_satisfaction",
+        "qos_satisfaction"
+    ],
+    "qos_violation": [
+        "qos_violation_ratio", "violation_ratio",
+        "qos_violations", "violation_rate"
+    ],
+    "spectral_efficiency": [
+        "spectral_efficiency_bps_hz", "spectral_efficiency",
+        "se_bps_hz"
+    ],
+    "packet_loss": [
+        "packet_loss_ratio", "packet_loss_rate",
+        "packet_loss"
+    ],
+    "reliability": [
+        "reliability", "reliability_ratio", "success_probability"
+    ],
+    "utility": [
+        "utility", "mean_utility", "normalized_utility"
+    ],
+    "acceptance": [
+        "acceptance_ratio", "request_acceptance_ratio",
+        "admission_ratio"
+    ],
+}
+
+def normalize_name(value):
+    """Normalize column names and model/class labels."""
+    return re.sub(r"[^a-z0-9]+", "_", str(value).strip().lower()).strip("_")
+
+def find_column(df, aliases):
+    normalized = {normalize_name(c): c for c in df.columns}
+
+    for alias in aliases:
+        key = normalize_name(alias)
+        if key in normalized:
+            return normalized[key]
+
+    return None
+
+# ------------------------------------------------------------
+# 1. Load candidate CSVs and find the best class-level dataset
+# ------------------------------------------------------------
+candidate_files = list(RESULT_DIR.rglob("*.csv"))
+best_df = None
+best_file = None
+best_mapping = None
+best_score = -1
+
+for file_path in candidate_files:
+    try:
+        candidate = pd.read_csv(file_path)
+    except Exception:
+        continue
+
+    if candidate.empty:
+        continue
+
+    mapping = {
+        key: find_column(candidate, aliases)
+        for key, aliases in COLUMN_ALIASES.items()
+    }
+
+    # Both model and class identifiers are required for class plots.
+    if mapping["model"] is None or mapping["traffic_class"] is None:
+        continue
+
+    metric_count = sum(
+        mapping[key] is not None
+        for key in COLUMN_ALIASES
+        if key not in ("model", "traffic_class")
+    )
+
+    # Prefer files with more useful metrics and more observations.
+    score = metric_count * 100000 + min(len(candidate), 99999)
+
+    if score > best_score:
+        best_score = score
+        best_df = candidate.copy()
+        best_file = file_path
+        best_mapping = mapping
+
+if best_df is None:
+    raise ValueError(
+        "No CSV contains both a recognizable model column and traffic-class "
+        "column. Inspect Block 19 and update COLUMN_ALIASES."
+    )
+
+print("Selected source:", best_file)
+print("Rows:", len(best_df))
+print("Detected columns:", best_mapping)
+
+# ------------------------------------------------------------
+# 2. Standardize model and traffic-class labels
+# ------------------------------------------------------------
+def normalize_model(value):
+    key = normalize_name(value)
+    return MODEL_ALIASES.get(key, None)
+
+def normalize_class(value):
+    key = normalize_name(value)
+    return CLASS_ALIASES.get(key, None)
+
+best_df["plot_model"] = best_df[best_mapping["model"]].map(normalize_model)
+best_df["plot_class"] = best_df[best_mapping["traffic_class"]].map(
+    normalize_class
+)
+
+best_df = best_df[
+    best_df["plot_model"].isin(MODEL_ORDER)
+    & best_df["plot_class"].isin(CLASS_ORDER)
+].copy()
+
+if best_df.empty:
+    raise ValueError(
+        "No rows matched the four expected model names and five traffic "
+        "classes. Print the unique values in the model/class columns and "
+        "extend MODEL_ALIASES or CLASS_ALIASES."
+    )
+
+# ------------------------------------------------------------
+# 3. Convert detected metrics to numeric values
+# ------------------------------------------------------------
+metric_specs = {
+    "data_rate": ("Data rate / throughput (Mbps)", "DataRate"),
+    "latency": ("Latency (ms)", "Latency"),
+    "energy": ("Energy / power metric (source units)", "Energy"),
+    "prbs": ("Allocated resource blocks (PRBs)", "PRBs"),
+    "bandwidth": ("Allocated bandwidth (MHz)", "Bandwidth"),
+    "satisfaction": ("Service/QoS satisfaction ratio", "Satisfaction"),
+    "qos_violation": ("QoS violation ratio", "QoSViolation"),
+    "spectral_efficiency": ("Spectral efficiency (source units)", "SpectralEfficiency"),
+    "packet_loss": ("Packet-loss metric (source units)", "PacketLoss"),
+    "reliability": ("Reliability metric (source units)", "Reliability"),
+    "utility": ("Utility (source units)", "Utility"),
+    "acceptance": ("Acceptance ratio", "Acceptance"),
+}
+
+available_metrics = {
+    key: spec
+    for key, spec in metric_specs.items()
+    if best_mapping.get(key) is not None
+}
+
+if not available_metrics:
+    raise ValueError(
+        "The selected CSV has model and class columns but no recognized "
+        "metric columns. Update COLUMN_ALIASES using Block 19."
+    )
+
+for metric, _ in available_metrics.items():
+    source_col = best_mapping[metric]
+    best_df[metric] = pd.to_numeric(best_df[source_col], errors="coerce")
+
+print("\nMetrics to plot:")
+for metric in available_metrics:
+    print(f"  {metric}: {best_mapping[metric]}")
+
+# ------------------------------------------------------------
+# 4. Aggregate rows at model/class level
+# ------------------------------------------------------------
+# If the source is per-user or per-episode data, this computes means.
+# If it already contains aggregate rows, these are means of those rows.
+grouped = (
+    best_df.groupby(["plot_class", "plot_model"], as_index=False)
+    [list(available_metrics.keys())]
+    .mean(numeric_only=True)
+)
+
+grouped.to_csv(
+    CSV_DIR / "Per_Class_Metric_Means_Four_Models.csv",
+    index=False
+)
+
+# ------------------------------------------------------------
+# 5. Draw a separate figure for each available metric
+# ------------------------------------------------------------
+for metric, (y_label, file_suffix) in available_metrics.items():
+
+    plot_data = grouped.dropna(subset=[metric]).copy()
+
+    if plot_data.empty:
+        print(f"Skipping {metric}: no numeric data.")
+        continue
+
+    pivot = plot_data.pivot(
+        index="plot_class",
+        columns="plot_model",
+        values=metric
+    )
+
+    pivot = pivot.reindex(index=CLASS_ORDER)
+    pivot = pivot.reindex(columns=MODEL_ORDER)
+
+    # Remove models/classes with no recorded observations.
+    pivot = pivot.dropna(axis=0, how="all").dropna(axis=1, how="all")
+
+    if pivot.empty:
+        continue
+
+    ax = pivot.plot(
+        kind="bar",
+        figsize=(12, 6.5),
+        width=0.78,
+        rot=0,
+        edgecolor="black"
+    )
+
+    ax.set_xlabel("Traffic class")
+    ax.set_ylabel(y_label)
+    ax.set_axisbelow(True)
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+    ax.grid(axis="x", visible=False)
+    ax.legend(
+        title="Model",
+        loc="best",
+        frameon=True
+    )
+
+    plt.tight_layout()
+    plt.show()
+
+    fig = ax.get_figure()
+    fig.savefig(
+        FIGURE_DIR / f"{file_suffix}_By_Traffic_Class.png",
+        dpi=600,
+        bbox_inches="tight"
+    )
+    fig.savefig(
+        FIGURE_DIR / f"{file_suffix}_By_Traffic_Class.eps",
+        format="eps",
+        dpi=600,
+        bbox_inches="tight"
+    )
+    plt.close(fig)
+
+print("\nCompleted class-level metric plots.")
+print("Figures saved to:", FIGURE_DIR)
+print("Class-level summary saved to:", CSV_DIR)
+
+
+
+
+# ============================================================
+# BLOCK 21: DATA RATE VS LATENCY BY TRAFFIC CLASS
+# ============================================================
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+TRADEOFF_DIR = FIGURE_DIR / "Rate_Latency_Tradeoff"
+TRADEOFF_DIR.mkdir(parents=True, exist_ok=True)
+
+if "data_rate" not in available_metrics or "latency" not in available_metrics:
+    print(
+        "Trade-off plots skipped: the selected CSV must contain both "
+        "data-rate and latency measurements."
+    )
+else:
+    for traffic_class in CLASS_ORDER:
+
+        subset = grouped[grouped["plot_class"] == traffic_class].copy()
+
+        subset = subset.dropna(subset=["data_rate", "latency"])
+
+        if subset.empty:
+            print(f"No rate/latency observations for {traffic_class}.")
+            continue
+
+        fig, ax = plt.subplots(figsize=(9, 7))
+
+        for model in MODEL_ORDER:
+            row = subset[subset["plot_model"] == model]
+
+            if row.empty:
+                continue
+
+            x = row["latency"].to_numpy(dtype=float)
+            y = row["data_rate"].to_numpy(dtype=float)
+
+            ax.scatter(
+                x,
+                y,
+                s=130,
+                marker="o",
+                edgecolors="black",
+                label=model
+            )
+
+            ax.annotate(
+                model,
+                (x[0], y[0]),
+                xytext=(6, 6),
+                textcoords="offset points",
+                fontsize=12
+            )
+
+        ax.set_xlabel("Latency (ms)")
+        ax.set_ylabel("Data rate / throughput (Mbps)")
+        ax.grid(True, linestyle="--", alpha=0.3)
+        ax.legend(title="Model", loc="best", frameon=True)
+
+        plt.tight_layout()
+        plt.show()
+
+        safe_class = traffic_class.replace("/", "_")
+        fig.savefig(
+            TRADEOFF_DIR / f"{safe_class}_DataRate_vs_Latency.png",
+            dpi=600,
+            bbox_inches="tight"
+        )
+        fig.savefig(
+            TRADEOFF_DIR / f"{safe_class}_DataRate_vs_Latency.eps",
+            format="eps",
+            dpi=600,
+            bbox_inches="tight"
+        )
+        plt.close(fig)
+
+print("Trade-off figures saved to:", TRADEOFF_DIR)
+
+
+
+
+# ============================================================
+# BLOCK 22: EXPORT A MODEL-BY-CLASS COMPARISON TABLE
+# ============================================================
+
+SUMMARY_PATH = CSV_DIR / "Four_Model_Traffic_Class_Comparison.csv"
+
+summary = grouped.copy()
+summary["plot_class"] = pd.Categorical(
+    summary["plot_class"],
+    categories=CLASS_ORDER,
+    ordered=True
+)
+summary["plot_model"] = pd.Categorical(
+    summary["plot_model"],
+    categories=MODEL_ORDER,
+    ordered=True
+)
+
+summary = summary.sort_values(["plot_class", "plot_model"])
+
+summary.to_csv(SUMMARY_PATH, index=False)
+
+print("=" * 100)
+print("FOUR-MODEL, TRAFFIC-CLASS COMPARISON")
+print("=" * 100)
+print(summary.to_string(index=False))
+print("\nSaved:", SUMMARY_PATH)
+
+print("\nMetric availability:")
+for metric in metric_specs:
+    if metric in available_metrics:
+        print(f"  [AVAILABLE] {metric}: {best_mapping[metric]}")
+    else:
+        print(f"  [NOT FOUND] {metric}")
+
+print(
+    "\nImportant: a missing metric is not estimated or fabricated by these "
+    "blocks. Energy, reliability, and packet loss should only be reported "
+    "when the underlying simulation records those quantities."
+)
