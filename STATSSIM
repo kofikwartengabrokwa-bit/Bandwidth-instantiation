@@ -1,0 +1,1599 @@
+E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py 
+============================================================================
+RBF-EDGE-COVER-DDQN: PROJECT CONFIGURATION
+============================================================================
+Python executable : E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe
+Python version    : 3.11.5
+Project directory : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Database file     : E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db
+Database exists   : True
+Database size MB  : 5.152
+Py5cheSim folder  : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\py5chesim
+Py5cheSim exists  : False
+PyTorch version   : 2.1.2+cu118
+Compute device    : cpu
+Random seed       : 420
+Traffic classes   : ['eMBB', 'uRLLC', 'MTM', 'IoT', 'Vehicular']
+Algorithms        : ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+User counts       : [100, 200, 300, 400, 500, 600, 800, 1000]
+Results directory : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN
+============================================================================
+
+============================================================================
+BLOCK 2: DATABASE AND SIMULATOR INSPECTION
+============================================================================
+
+DATABASE TABLES
+            name  type
+lower_layer_data table
+
+----------------------------------------------------------------------------
+TABLE NAME: lower_layer_data
+ROW COUNT : 45,244
+
+COLUMN SCHEMA
+ cid               name    type  notnull dflt_value  pk
+   0            dlBytes INTEGER        0       None   0
+   1              dlMcs INTEGER        0       None   0
+   2             dlBler    REAL        0       None   0
+   3            ulBytes INTEGER        0       None   0
+   4              ulMcs INTEGER        0       None   0
+   5             ulBler    REAL        0       None   0
+   6                 ri INTEGER        0       None   0
+   7                phr INTEGER        0       None   0
+   8              pcmax INTEGER        0       None   0
+   9               rsrq    REAL        0       None   0
+  10               sinr    REAL        0       None   0
+  11               rsrp INTEGER        0       None   0
+  12               rssi    REAL        0       None   0
+  13                cqi INTEGER        0       None   0
+  14           pucchSnr    REAL        0       None   0
+  15           puschSnr    REAL        0       None   0
+  16              ue_id    REAL        0       None   0
+  17          timestamp    REAL        0       None   0
+  18             cellid    REAL        0       None   0
+  19            in_sync    REAL        0       None   0
+  20               rnti    TEXT        0       None   0
+  21                pmi    TEXT        0       None   0
+  22       traffic_type INTEGER        0       None   0
+  23    attack_category    TEXT        0       None   0
+  24 attack_subcategory    TEXT        0       None   0
+
+SAMPLE RECORDS
+ dlBytes  dlMcs  dlBler   ulBytes  ulMcs   ulBler  ri  phr  pcmax  rsrq  sinr  rsrp  rssi  cqi  pucchSnr  puschSnr  ue_id    timestamp     cellid  in_sync rnti    pmi  traffic_type attack_category attack_subcategory
+93883433     13     0.0 115160671      9 0.057268   1   15     24 -11.0  14.5  -101 -71.0   15      19.0      33.0    1.0 1.751034e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+93888597     11     0.0 115199297     10 0.109026   1   11     24 -11.0  15.0  -101 -71.5   15      18.0      19.0    1.0 1.751360e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+93889971     11     0.0 115202820      9 0.038015   1   11     24 -11.0  16.0  -103 -73.4   15      17.0      35.5    1.0 1.751360e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+93894248      9     0.0 115248349     12 0.018447   1   13     23 -11.0  17.5  -102 -69.7   15      18.0      32.0    1.0 1.751037e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+93898044     10     0.0 115305003     11 0.007147   1   19     23 -11.0  17.0  -103 -62.0   15      18.0      10.0    1.0 1.751037e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+
+----------------------------------------------------------------------------
+PY5CHESIM MODULE CHECK
+py5chesim: NOT FOUND
+Py5CheSim: NOT FOUND
+Py5CHESim: NOT FOUND
+
+PROJECT DIRECTORY CHECK
+Project exists: True
+No likely simulator files found in the project.
+
+DATASET FEATURE CHECK
+Table: lower_layer_data
+Number of columns: 25
+Column names:
+  01. dlBytes
+  02. dlMcs
+  03. dlBler
+  04. ulBytes
+  05. ulMcs
+  06. ulBler
+  07. ri
+  08. phr
+  09. pcmax
+  10. rsrq
+  11. sinr
+  12. rsrp
+  13. rssi
+  14. cqi
+  15. pucchSnr
+  16. puschSnr
+  17. ue_id
+  18. timestamp
+  19. cellid
+  20. in_sync
+  21. rnti
+  22. pmi
+  23. traffic_type
+  24. attack_category
+  25. attack_subcategory
+
+============================================================================
+BLOCK 2 COMPLETED
+Schema files saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv
+============================================================================
+
+============================================================================
+BLOCK 3: LOADING DATASET
+============================================================================
+Available tables: ['lower_layer_data']
+
+Selected table: lower_layer_data
+Dataset shape: (45244, 25)
+
+Column names:
+01. dlBytes
+02. dlMcs
+03. dlBler
+04. ulBytes
+05. ulMcs
+06. ulBler
+07. ri
+08. phr
+09. pcmax
+10. rsrq
+11. sinr
+12. rsrp
+13. rssi
+14. cqi
+15. pucchSnr
+16. puschSnr
+17. ue_id
+18. timestamp
+19. cellid
+20. in_sync
+21. rnti
+22. pmi
+23. traffic_type
+24. attack_category
+25. attack_subcategory
+
+First five records:
+ dlBytes  dlMcs  dlBler   ulBytes  ulMcs   ulBler  ri  phr  pcmax  rsrq  sinr  rsrp  rssi  cqi  pucchSnr  puschSnr  ue_id    timestamp     cellid  in_sync rnti    pmi  traffic_type attack_category attack_subcategory
+93883433     13     0.0 115160671      9 0.057268   1   15     24 -11.0  14.5  -101 -71.0   15      19.0      33.0    1.0 1.751034e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+93888597     11     0.0 115199297     10 0.109026   1   11     24 -11.0  15.0  -101 -71.5   15      18.0      19.0    1.0 1.751360e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+93889971     11     0.0 115202820      9 0.038015   1   11     24 -11.0  16.0  -103 -73.4   15      17.0      35.5    1.0 1.751360e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+93894248      9     0.0 115248349     12 0.018447   1   13     23 -11.0  17.5  -102 -69.7   15      18.0      32.0    1.0 1.751037e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+93898044     10     0.0 115305003     11 0.007147   1   19     23 -11.0  17.0  -103 -62.0   15      18.0      10.0    1.0 1.751037e+12 11111111.0      1.0 None (0, 0)             1             DoS            DoS_SYN
+
+Data types:
+dlBytes                 int64
+dlMcs                   int64
+dlBler                float64
+ulBytes                 int64
+ulMcs                   int64
+ulBler                float64
+ri                      int64
+phr                     int64
+pcmax                   int64
+rsrq                  float64
+sinr                  float64
+rsrp                    int64
+rssi                  float64
+cqi                     int64
+pucchSnr              float64
+puschSnr              float64
+ue_id                 float64
+timestamp             float64
+cellid                float64
+in_sync               float64
+rnti                   object
+pmi                    object
+traffic_type            int64
+attack_category        object
+attack_subcategory     object
+
+Missing values per column:
+dlBytes                  0
+dlMcs                    0
+dlBler                   0
+ulBytes                  0
+ulMcs                    0
+ulBler                   0
+ri                       0
+phr                      0
+pcmax                    0
+rsrq                     0
+sinr                     0
+rsrp                     0
+rssi                     0
+cqi                      0
+pucchSnr                 0
+puschSnr                 0
+ue_id                    0
+timestamp                0
+cellid                   0
+in_sync                  0
+rnti                  1540
+pmi                      0
+traffic_type             0
+attack_category          0
+attack_subcategory       0
+
+Unique values in categorical columns:
+
+rnti:
+rnti
+c66b    4914
+ae63    4097
+e264    3532
+3cfb    3353
+5867    3226
+2ce1    1791
+None    1540
+2c3c    1520
+097a    1381
+de81    1381
+5e5a    1145
+e9ba    1144
+e41b    1061
+fa58    1037
+d25e     935
+e5bd     935
+dcbc     917
+e81c     909
+9b79     901
+59e1     890
+Name: count, dtype: int64
+
+pmi:
+pmi
+(0, 0)    45244
+Name: count, dtype: int64
+
+attack_category:
+attack_category
+DDoS           15084
+Benign         10664
+Probe           8445
+DoS             4721
+Web Attacks     3273
+BruteForce      3057
+Name: count, dtype: int64
+
+attack_subcategory:
+attack_subcategory
+Benign                      10664
+Probe_OsFingerprinting       6036
+DDoS_UDP                     4458
+DDoS_SYN                     3568
+DDoS_ICMP                    3294
+Probe_PortScan               2409
+DDoS_ACK                     1934
+DDoS_Slowloris               1830
+BruteForce_SSH               1666
+BruteForce_FTP               1391
+DoS_Slowloris                1104
+Web_HTTP_Bruteforce          1098
+DoS_UDP                      1040
+DoS_ICMP                     1037
+DoS_SYN                       892
+Web_XSS                       783
+Web_SQL_Injection             752
+DoS_ACK                       648
+Web_Directory_Bruteforce      640
+Name: count, dtype: int64
+
+Block 3 completed.
+Preview saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\dataset_preview.csv
+
+============================================================================
+BLOCK 4: FEATURE PREPROCESSING
+============================================================================
+Potential label/metadata columns: ['traffic_type', 'attack_category', 'attack_subcategory']
+Potential identifier columns: ['ue_id', 'timestamp', 'rnti']
+
+Traffic type distribution:
+traffic_type
+1    34580
+0    10664
+
+Requested service classes: ['embb', 'iot', 'mtm', 'urllc', 'vehicular']
+Observed traffic labels: ['0', '1']
+All requested classes represented: False
+Dropping constant features: ['ri', 'cellid', 'in_sync']
+
+FEATURES USED:
+01. dlBytes
+02. dlMcs
+03. dlBler
+04. ulBytes
+05. ulMcs
+06. ulBler
+07. phr
+08. pcmax
+09. rsrq
+10. sinr
+11. rsrp
+12. rssi
+13. cqi
+14. pucchSnr
+15. puschSnr
+
+Prepared feature matrix:
+Training   : (31670, 15)
+Validation : (6786, 15)
+Testing    : (6788, 15)
+
+Saved:
+   E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\prepared_radio_data.npz
+   E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\feature_scaling_parameters.csv
+
+Block 4 completed.
+============================================================================
+============================================================================
+BLOCK 5: TRAFFIC AND RESOURCE CONFIGURATION
+============================================================================
+Bandwidth budget : 20.0 MHz
+RB budget        : 100
+Power budget     : 40.0 W
+
+Traffic profiles:
+               weight  min_rate_mbps  target_rate_mbps  max_latency_ms  min_reliability  priority
+traffic_class                                                                                    
+eMBB             0.25          10.00             50.00           100.0          0.99000         2
+uRLLC            0.20           1.00             10.00             5.0          0.99999         5
+MTM              0.15           0.05              0.25          1000.0          0.99000         1
+IoT              0.20           0.10              1.00           100.0          0.99000         2
+Vehicular        0.20           5.00             20.00            10.0          0.99900         4
+
+Saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\traffic_profiles.csv
+============================================================================
+============================================================================
+BLOCK 6: RBF ENCODER CHECK
+============================================================================
+Training feature dimensions : 15
+RBF center count            : 64
+RBF sigma                   : 0.96944
+Test input shape            : (8, 15)
+RBF output shape            : (8, 64)
+RBF output min/max           : 0.05460333451628685 0.9989022612571716
+
+Block 6 completed.
+Next: establish the actual simulator environment and workload interface before implementing the DDQN training loop.
+============================================================================
+===========================================================================
+ENVIRONMENT AND SIMULATOR INSPECTION
+===========================================================================
+
+File: E:\Abrokwa\PycharmProjects\pythonProject1\oran_config.py
+Exists: True
+Size: 5,968 characters
+
+Classes and functions:
+  Line 122: FunctionDef load_sqlite_dataset
+  Line 154: FunctionDef find_column
+  Line 176: FunctionDef select_kpi_features
+
+Relevant source lines:
+     1: #conda create -n oran_py5chesim python=3.8 -y
+     2: #conda activate oran_py5chesim
+    18: PY5CHESIM_DIR = PROJECT_DIR / "py5chesim"
+    84: # PY5CHESIM
+    87: BANDWIDTH_MHZ = 10
+    93: INTER_SLICE_GRANULARITY_MS = 30
+    96: EMBB_USERS = 10
+    97: URLLC_USERS = 10
+   109: print("Py5cheSim:", PY5CHESIM_DIR)
+
+File: E:\Abrokwa\PycharmProjects\pythonProject1\oran_environment.py
+Exists: True
+Size: 9,632 characters
+
+Classes and functions:
+  Line 6: ClassDef ORANEnvironment
+  Line 8: FunctionDef __init__
+  Line 45: FunctionDef reset
+  Line 67: FunctionDef action_to_prbs
+  Line 102: FunctionDef estimate_performance
+  Line 218: FunctionDef calculate_reward
+  Line 249: FunctionDef step
+
+Relevant source lines:
+     6: class ORANEnvironment:
+    10: total_prbs=52
+    13: self.total_prbs = total_prbs
+    21: # PRB ALLOCATION ACTIONS
+    45: def reset(self, state):
+    64: # ACTION → PRB ALLOCATION
+    67: def action_to_prbs(self, action):
+    81: embb_prbs = int(
+    83: self.total_prbs
+    88: urllc_prbs = (
+    89: self.total_prbs
+    90: - embb_prbs
+    94: embb_prbs,
+    95: urllc_prbs
+   105: embb_prbs,
+   106: urllc_prbs
+   118: #  ul_buffer, prbs]
+   129: # eMBB THROUGHPUT PROXY
+   140: throughput = (
+   141: embb_prbs
+   154: if urllc_prbs > 0:
+   163: / urllc_prbs
+   171: # NORMALIZED THROUGHPUT
+   174: normalized_throughput = (
+   175: throughput
+   177: self.total_prbs,
+   200: "throughput": float(
+   201: throughput
+   206: "normalized_throughput": float(
+   207: normalized_throughput
+   215: # REWARD
+   218: def calculate_reward(
+   223: throughput_reward = (
+   225: "normalized_throughput"
+   235: reward = (
+   236: throughput_reward
+   242: reward
+   246: # ENVIRONMENT STEP
+   249: def step(
+   258: "Environment must be reset "
+   281: embb_prbs, urllc_prbs = (
+   282: self.action_to_prbs(
+   294: embb_prbs,
+   295: urllc_prbs
+   300: # REWARD
+   303: reward = self.calculate_reward(
+   322: "embb_prbs": int(
+   323: embb_prbs
+   326: "urllc_prbs": int(
+   327: urllc_prbs
+   330: "throughput": float(
+   332: "throughput"
+   342: "normalized_throughput": float(
+   344: "normalized_throughput"
+   354: "reward": float(
+   355: reward
+   361: reward,
+   374: print("TESTING ORAN ENVIRONMENT")
+   377: environment = ORANEnvironment(
+   378: total_prbs=52
+   394: state = environment.reset(
+   405: reward,
+   408: ) = environment.step(
+   417: f"{info['embb_prbs']} eMBB PRBs, "
+   418: f"{info['urllc_prbs']} uRLLC PRBs"
+   422: "Throughput:",
+   423: f"{info['throughput']:.4f}"
+   432: "Reward:",
+   433: f"{reward:.6f}"
+   437: print("ORAN ENVIRONMENT TEST PASSED")
+
+File: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py
+Exists: True
+Size: 70,698 characters
+
+Classes and functions:
+  Line 785: FunctionDef rbf_transform
+  Line 828: FunctionDef edgecover_candidates
+  Line 1410: FunctionDef generate_workload
+  Line 1511: ClassDef RANSlicingEnvironment
+  Line 1724: ClassDef ReplayBuffer
+  Line 1752: ClassDef AllocationQNetwork
+  Line 1782: ClassDef DDQNAgent
+  Line 1846: FunctionDef user_state
+  Line 1863: FunctionDef allocate_with_agent
+  Line 1884: FunctionDef allocate_edgecover_rbf
+  Line 2213: FunctionDef mean_curve
+  Line 2220: FunctionDef plot_user_metric
+  Line 1523: FunctionDef __init__
+  Line 1531: FunctionDef project_allocation
+  Line 1567: FunctionDef evaluate
+  Line 1725: FunctionDef __init__
+  Line 1728: FunctionDef add
+  Line 1737: FunctionDef sample
+  Line 1748: FunctionDef __len__
+  Line 1753: FunctionDef __init__
+  Line 1763: FunctionDef forward
+  Line 1783: FunctionDef __init__
+  Line 1800: FunctionDef choose_action
+  Line 1812: FunctionDef train_step
+
+Relevant source lines:
+     3: # RBF-EdgeCover-DDQN for 5G RAN Slicing
+    36: PY5CHESIM_DIR = BASE_DIR / "py5chesim"
+    38: RESULT_DIR = BASE_DIR / "results" / "RBF_EdgeCover_DDQN"
+    66: "RBF-EdgeCover-DDQN",
+    72: USER_COUNTS = [100, 200, 300, 400, 500, 600, 800, 1000]
+   118: print("RBF-EDGE-COVER-DDQN: PROJECT CONFIGURATION")
+   130: print("Py5cheSim folder  :", PY5CHESIM_DIR)
+   131: print("Py5cheSim exists  :", PY5CHESIM_DIR.exists())
+   137: print("User counts       :", USER_COUNTS)
+   149: # BLOCK 2: DATASET SCHEMA AND PY5CHESIM INSPECTION
+   215: # PART B: CHECK PY5CHESIM PYTHON MODULE
+   219: print("PY5CHESIM MODULE CHECK")
+   223: for module_name in ("py5chesim", "Py5CheSim", "Py5CHESim"):
+   263: "py5chesim" in lower_name
+   265: or "environment" in lower_name
+   266: or "oran_environment" in lower_name
+   271: print("Potential simulator/environment files:")
+   428: "rnti", "user_id", "ue_id", "subscriber_id",
+   472: "need to be supplied by the workload/environment."
+   633: TOTAL_BANDWIDTH_MHZ = 20.0
+   634: TOTAL_RBS = 100
+   635: MAX_TRANSMIT_POWER_W = 40.0
+   637: # Initial user-load points for scalability experiments.
+   638: USER_COUNTS = [100, 200, 300, 400, 500, 600, 800, 1000]
+   651: "max_latency_ms": 100.0,
+   659: "max_latency_ms": 5.0,
+   667: "max_latency_ms": 1000.0,
+   675: "max_latency_ms": 100.0,
+   683: "max_latency_ms": 10.0,
+   695: assert TOTAL_RBS > 0
+   696: assert TOTAL_BANDWIDTH_MHZ > 0
+   714: print(f"Bandwidth budget : {TOTAL_BANDWIDTH_MHZ:.1f} MHz")
+   715: print(f"RB budget        : {TOTAL_RBS}")
+   716: print(f"Power budget     : {MAX_TRANSMIT_POWER_W:.1f} W")
+   724: # BLOCK 6: RBF ENCODER AND EDGECOVER CANDIDATE SELECTION
+   734: RBF_NUM_CENTERS = min(64, len(X_train))
+   735: RBF_SIGMA = None          # Automatically estimated from training data
+   736: RBF_EPS = 1e-8
+   738: # Number of candidate users that may share an RB in this
+   740: MAX_USERS_PER_RB = 10
+   742: rng_rbf = np.random.default_rng(SEED)
+   747: center_indices = rng_rbf.choice(
+   749: size=RBF_NUM_CENTERS,
+   753: RBF_CENTERS = X_train[center_indices].copy()
+   755: # Estimate the RBF width using sampled pairwise distances.
+   757: sample_indices = rng_rbf.choice(
+   769: positive_distances = distances[distances > RBF_EPS]
+   771: RBF_SIGMA = (
+   777: RBF_SIGMA = 1.0
+   779: RBF_SIGMA = max(RBF_SIGMA, RBF_EPS)
+   782: # 6.2 RBF FEATURE TRANSFORMATION
+   785: def rbf_transform(features):
+   795: array, shape (n_samples, RBF_NUM_CENTERS)
+   802: if features.shape[1] != RBF_CENTERS.shape[1]:
+   804: f"Expected {RBF_CENTERS.shape[1]} features, "
+   809: features[:, None, :] - RBF_CENTERS[None, :, :]
+   818: -squared_distance / (2.0 * RBF_SIGMA ** 2)
+   829: user_features,
+   830: user_classes,
+   831: num_rbs=TOTAL_RBS,
+   832: max_users_per_rb=MAX_USERS_PER_RB,
+   835: Generate user-to-RB candidate assignments.
+   837: The score combines RBF state similarity and the configured
+   838: traffic priority. The function greedily assigns one RB per
+   839: user subject to a per-RB occupancy limit.
+   844: user_features = np.asarray(
+   845: user_features,
+   849: user_classes = np.asarray(user_classes)
+   851: if user_features.ndim != 2:
+   852: raise ValueError("user_features must be a 2D array.")
+   854: n_users = len(user_features)
+   856: if len(user_classes) != n_users:
+   858: "Each user must have one traffic-class label."
+   861: if num_rbs <= 0 or max_users_per_rb <= 0:
+   862: raise ValueError("RB count and RB capacity must be positive.")
+   864: unknown_classes = set(user_classes) - set(TRAFFIC_NAMES)
+   870: rbf_features = rbf_transform(user_features)
+   872: # Similarity score for each user.
+   873: similarity = rbf_features.mean(axis=1)
+   877: for class_name in user_classes
+   885: user_scores = 0.5 * similarity + 0.5 * priority_norm
+   887: # Higher-priority/high-score users are considered first.
+   888: processing_order = np.argsort(-user_scores)
+   890: rb_occupancy = np.zeros(num_rbs, dtype=np.int32)
+   891: assignments = np.full(n_users, -1, dtype=np.int32)
+   893: # Deterministic tie-breaking via a rotating RB preference.
+   894: for user_index in processing_order:
+   895: start_rb = int(user_index % num_rbs)
+   897: candidate_rbs = (
+   898: np.arange(num_rbs) + start_rb
+   899: ) % num_rbs
+   901: # Prefer the least occupied eligible RB.
+   902: eligible = candidate_rbs[
+   903: rb_occupancy[candidate_rbs] < max_users_per_rb
+   909: chosen_rb = eligible[
+   910: np.argmin(rb_occupancy[eligible])
+   913: assignments[user_index] = chosen_rb
+   914: rb_occupancy[chosen_rb] += 1
+   922: "rb_occupancy": rb_occupancy,
+   923: "rbf_features": rbf_features,
+  ... 237 more relevant lines
+
+===========================================================================
+SEARCHING FOR PY5CHESIM SOURCE FILES
+===========================================================================
+E:\Abrokwa\PycharmProjects\pythonProject1\check_py5chesim_imports.py
+E:\Abrokwa\PycharmProjects\pythonProject1\check_py5chesim_requirements.py
+E:\Abrokwa\PycharmProjects\pythonProject1\inspect_py5chesim.py
+E:\Abrokwa\PycharmProjects\pythonProject1\py5chesim_stats_inspection.py
+E:\Abrokwa\PycharmProjects\pythonProject1\py5chesim_two_slice_test.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pf1\check_py5chesim_imports.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pf1\check_py5chesim_requirements.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pf1\inspect_py5chesim.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pf1\py5chesim_stats_inspection.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pf1\py5chesim_two_slice_test.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\check_py5chesim_imports.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\check_py5chesim_requirements.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\inspect_py5chesim.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim_stats_inspection.py
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim_two_slice_test.py
+
+Inspection complete. No source files were modified.
+
+================================================================================
+SCRIPT: E:\Abrokwa\PycharmProjects\pythonProject1\check_py5chesim_imports.py
+================================================================================
+   1: import os
+   2: import sys
+   3: import importlib
+  10: PY5CHESIM_DIR = os.path.join(
+  12:     "py5chesim"
+  15: PY5CHESIM_LIB_DIR = os.path.join(
+  16:     PY5CHESIM_DIR,
+  22: print("BLOCK 14: PY5CHESIM IMPORT VERIFICATION")
+  28: print("\nPy5cheSim directory:")
+  29: print(PY5CHESIM_DIR)
+  31: print("\nPy5cheSim lib directory:")
+  32: print(PY5CHESIM_LIB_DIR)
+  36: # Add Py5cheSim directories to Python import path
+  39: if PY5CHESIM_DIR not in sys.path:
+  40:     sys.path.insert(0, PY5CHESIM_DIR)
+  42: if PY5CHESIM_LIB_DIR not in sys.path:
+  43:     sys.path.insert(0, PY5CHESIM_LIB_DIR)
+  46: print("\nPython import paths configured.")
+  58:     import simpy
+  69: # Py5cheSim modules
+  75:     "Slice",
+  76:     "InterSliceSch",
+  77:     "IntraSliceSch",
+  78:     "simulation",
+  83: print("2. CHECKING PY5CHESIM MODULES")
+ 141: print("IMPORT SUMMARY")
+ 167:     "\nNo Py5cheSim source files were modified."
+
+Detected imports:
+  importlib
+  os
+  simpy
+  sys
+
+================================================================================
+SCRIPT: E:\Abrokwa\PycharmProjects\pythonProject1\check_py5chesim_requirements.py
+================================================================================
+   1: import os
+  12: PY5CHESIM_DIR = os.path.join(
+  14:     "py5chesim"
+  17: REQUIREMENTS_FILE = os.path.join(
+  18:     PY5CHESIM_DIR,
+  19:     "requirements.txt"
+  28: print("BLOCK 12: PY5CHESIM REQUIREMENTS CHECK")
+  31: print("\nPy5cheSim directory:")
+  32: print(PY5CHESIM_DIR)
+  34: print("\nRequirements file:")
+  35: print(REQUIREMENTS_FILE)
+  43:     REQUIREMENTS_FILE
+  47:         "Py5cheSim requirements.txt "
+  53: # READ REQUIREMENTS
+  57:     REQUIREMENTS_FILE,
+  66: print("PY5CHESIM REQUIREMENTS")
+  69: requirements = []
+  81:     requirements.append(
+  98:     len(requirements)
+ 106:     "\nNo packages were installed."
+ 110:     "Send the output before installing "
+
+Detected imports:
+  os
+
+================================================================================
+SCRIPT: E:\Abrokwa\PycharmProjects\pythonProject1\inspect_py5chesim.py
+================================================================================
+   1: import os
+   2: import sys
+   3: import inspect
+   4: import importlib
+  15: PY5CHESIM_DIR = os.path.join(
+  17:     "py5chesim"
+  26: print("BLOCK 11: PY5CHESIM API INSPECTION")
+  32: print("\nExpected Py5cheSim directory:")
+  33: print(PY5CHESIM_DIR)
+  40: if not os.path.exists(PY5CHESIM_DIR):
+  44:         "The expected 'py5chesim' directory "
+  50:         "Py5cheSim source files such as:"
+  53:     print("  simulation.py")
+  55:     print("  Slice.py")
+  57:     print("  InterSliceSch.py")
+  58:     print("  IntraSliceSch.py")
+  61:         "\nPy5cheSim directory not found. "
+  68: # SHOW PY5CHESIM FILES
+  72: print("PY5CHESIM FILES")
+  76:     PY5CHESIM_DIR
+  87:             PY5CHESIM_DIR,
+ 112: # ADD PY5CHESIM TO PYTHON PATH
+ 115: if PY5CHESIM_DIR not in sys.path:
+ 119:         PY5CHESIM_DIR
+ 127: def inspect_module(
+ 146:             "\n[IMPORT ERROR]"
+ 248:     "Slice",
+ 250:     "InterSliceSch",
+ 251:     "IntraSliceSch",
+ 252:     "simulation"
+ 271: # INSPECT INTER-SLICE SCHEDULER
+ 275: print("INTER-SLICE SCHEDULER INSPECTION")
+ 279:     "InterSliceSch"
+ 284:     scheduler_class = getattr(
+ 286:         "InterSliceScheduler",
+ 290:     if scheduler_class is None:
+ 294:             "InterSliceScheduler not found."
+ 353: # INSPECT SLICE
+ 357: print("SLICE INSPECTION")
+ 360: slice_module = loaded_modules.get(
+ 361:     "Slice"
+ 364: if slice_module is not None:
+ 366:     slice_classes = [
+ 370:             slice_module,
+ 377:         ) == "Slice"
+ 380:     for cls in slice_classes:
+ 507: # SEARCH FOR RESOURCE ALLOCATION METHODS
+ 511: print("RESOURCE-ALLOCATION API SEARCH")
+ 516:     "resource",
+ 518:     "slice",
+ 558: print("PYTHON ENVIRONMENT")
+ 584:     "\nNo Py5cheSim modifications were made."
+ 589:     "the Py5cheSim adapter."
+
+Detected imports:
+  importlib
+  inspect
+  os
+  sys
+
+================================================================================
+SCRIPT: E:\Abrokwa\PycharmProjects\pythonProject1\py5chesim_stats_inspection.py
+================================================================================
+   1: import os
+   2: import sys
+   3: import simpy
+   4: import numpy as np
+   5: import os
+   6: import sys
+   7: import simpy
+   8: import numpy as np
+  11: # PY5CHESIM PATH CONFIGURATION
+  15: PY5CHESIM_DIR = os.path.join(BASE_DIR, "py5chesim")
+  16: PY5CHESIM_LIB_DIR = os.path.join(PY5CHESIM_DIR, "lib")
+  18: # Py5cheSim uses absolute-style imports internally.
+  20: if PY5CHESIM_DIR not in sys.path:
+  21:     sys.path.insert(0, PY5CHESIM_DIR)
+  23: if PY5CHESIM_LIB_DIR not in sys.path:
+  24:     sys.path.insert(0, PY5CHESIM_LIB_DIR)
+  28: # PY5CHESIM IMPORTS
+  31: from Cell import Cell
+  32: from Results import UEgroup
+  34: PY5CHESIM_DIR = os.path.join(BASE_DIR, "py5chesim")
+  36: if PY5CHESIM_DIR not in sys.path:
+  37:     sys.path.insert(0, PY5CHESIM_DIR)
+  39: from Cell import Cell
+  40: from Results import UEgroup
+  47: BANDWIDTH = [10]
+  53: INTER_SLICE_SCHEDULER = "PF11"
+  55: SIMULATION_TIME = 1000
+  57: INTER_SLICE_GRANULARITY = 30
+  71: print("PY5CHESIM ACTUAL KPI TEST")
+  80: # CREATE SIMULATION ENVIRONMENT
+  83: env = simpy.Environment()
+  87:     BANDWIDTH,
+  92:     INTER_SLICE_GRANULARITY,
+  93:     INTER_SLICE_SCHEDULER
+  96: inter_slice_scheduler = cell.interSliceSched
+ 104:     4,              # DL users
+ 105:     0,              # UL users
+ 121:     SIMULATION_TIME,
+ 133:     4,              # DL users
+ 134:     0,              # UL users
+ 150:     SIMULATION_TIME,
+ 158: # CREATE SLICES
+ 161: cell.interSliceSched.createSlice(
+ 163:     embb_group.req["reqThroughputDL"],
+ 164:     embb_group.req["reqThroughputUL"],
+ 166:     embb_group.num_usersDL,
+ 167:     embb_group.num_usersUL,
+ 176: cell.interSliceSched.createSlice(
+ 178:     urllc_group.req["reqThroughputDL"],
+ 179:     urllc_group.req["reqThroughputUL"],
+ 181:     urllc_group.num_usersDL,
+ 182:     urllc_group.num_usersUL,
+ 193: # GET SLICE OBJECTS
+ 196: embb_slice = inter_slice_scheduler.slices["eMBB-0"]
+ 197: urllc_slice = inter_slice_scheduler.slices["URLLC-0"]
+ 204: embb_slice.updateConfig(EMBB_PRBS)
+ 205: urllc_slice.updateConfig(URLLC_PRBS)
+ 211: print(f"eMBB PRBs : {embb_slice.PRBs}")
+ 212: print(f"uRLLC PRBs: {urllc_slice.PRBs}")
+ 213: print(f"Total PRBs: {embb_slice.PRBs + urllc_slice.PRBs}")
+ 220: print("\nStarting Py5cheSim...")
+ 226:         tSim=SIMULATION_TIME
+ 232: # Do NOT start inter_slice_scheduler.resAlloc(env).
+ 237: # RUN SIMULATION
+ 240: env.run(until=SIMULATION_TIME)
+ 242: print("Simulation completed.")
+ 246: # EXTRACT USER KPIs
+ 250: print("USER-LEVEL KPI RESULTS")
+ 254: def inspect_group(group, slice_name):
+ 256:     print(f"\n--- {slice_name} ---")
+ 258:     throughputs = []
+ 261:     for user in group.usersDL:
+ 263:         print(f"\nUE: {user.ue}")
+ 265:         print(f"  SINR          : {user.sinr}")
+ 266:         print(f"  MCS           : {user.mcs}")
+ 267:         print(f"  Resource use  : {user.resUse}")
+ 269:         if len(user.packetFlows) == 0:
+ 273:         flow = user.packetFlows[0]
+ 280:         if "Throughput" in flow.meassuredKPI:
+ 281:             throughputs.append(flow.meassuredKPI["Throughput"])
+ 288:     if throughputs:
+ 289:         print(f"  Average Throughput   : {np.mean(throughputs)}")
+ 291:         print("  Average Throughput   : N/A")
+ 298:     return throughputs, packet_losses
+ 301: embb_throughputs, embb_losses = inspect_group(
+ 306: urllc_throughputs, urllc_losses = inspect_group(
+ 320: if embb_throughputs:
+ 323:         f"Avg Throughput={np.mean(embb_throughputs):.6f} | "
+ 329:         f"No throughput KPI available"
+ 332: if urllc_throughputs:
+ 335:         f"Avg Throughput={np.mean(urllc_throughputs):.6f} | "
+ 341:         f"No throughput KPI available"
+
+Detected imports:
+  Cell
+  Results
+  numpy
+  os
+  simpy
+  sys
+
+================================================================================
+SCRIPT: E:\Abrokwa\PycharmProjects\pythonProject1\py5chesim_two_slice_test.py
+================================================================================
+   1: import os
+   2: import sys
+   3: import simpy
+   6: # Py5cheSim paths
+   8: PY5CHESIM_DIR = os.path.join(os.path.dirname(__file__), "py5chesim")
+   9: PY5CHESIM_LIB = os.path.join(PY5CHESIM_DIR, "lib")
+  11: sys.path.insert(0, PY5CHESIM_DIR)
+  12: sys.path.insert(0, PY5CHESIM_LIB)
+  14: from Cell import Cell
+  15: from Results import UEgroup
+  21: BANDWIDTH = [10]
+  27: INTER_SLICE_SCHEDULER = "PF11"
+  29: SIMULATION_TIME = 1000
+  31: INTER_SLICE_GRANULARITY = 30
+  52: # Create SimPy environment
+  54: env = simpy.Environment()
+  58: # Create Py5cheSim cell
+  62:     BANDWIDTH,
+  67:     INTER_SLICE_GRANULARITY,
+  68:     INTER_SLICE_SCHEDULER,
+  71: inter_slice_scheduler = cell.interSliceSched
+  75: print("PY5CHESIM PPO PRB ALLOCATION TEST")
+  78: print("\nTotal PRBs:", inter_slice_scheduler.PRBs)
+  84: embb_users = UEgroup(
+ 102:     SIMULATION_TIME,
+ 112: urllc_users = UEgroup(
+ 130:     SIMULATION_TIME,
+ 138: # Create slices
+ 140: inter_slice_scheduler.createSlice(
+ 141:     embb_users.req["reqDelay"],
+ 142:     embb_users.req["reqThroughputDL"],
+ 143:     embb_users.req["reqThroughputUL"],
+ 144:     embb_users.req["reqAvailability"],
+ 145:     embb_users.num_usersDL,
+ 146:     embb_users.num_usersUL,
+ 149:     embb_users.mmMd,
+ 150:     embb_users.lyrs,
+ 151:     embb_users.label,
+ 152:     embb_users.sch,
+ 155: inter_slice_scheduler.createSlice(
+ 156:     urllc_users.req["reqDelay"],
+ 157:     urllc_users.req["reqThroughputDL"],
+ 158:     urllc_users.req["reqThroughputUL"],
+ 159:     urllc_users.req["reqAvailability"],
+ 160:     urllc_users.num_usersDL,
+ 161:     urllc_users.num_usersUL,
+ 164:     urllc_users.mmMd,
+ 165:     urllc_users.lyrs,
+ 166:     urllc_users.label,
+ 167:     urllc_users.sch,
+ 172: # Verify slice names
+ 174: print("\nCreated slices:")
+ 176: for label in inter_slice_scheduler.slices:
+ 183: def apply_action(action):
+ 185:     Apply a PPO-style action directly to the two Py5cheSim slices.
+ 193:     embb_slice = inter_slice_scheduler.slices["eMBB-0"]
+ 194:     urllc_slice = inter_slice_scheduler.slices["URLLC-0"]
+ 196:     # Direct Py5cheSim resource control.
+ 197:     embb_slice.updateConfig(embb_prbs)
+ 198:     urllc_slice.updateConfig(urllc_prbs)
+ 207: print("TESTING ALL PPO RESOURCE ACTIONS")
+ 214:     embb_slice = inter_slice_scheduler.slices["eMBB-0"]
+ 215:     urllc_slice = inter_slice_scheduler.slices["URLLC-0"]
+ 220:         f"\n  Py5cheSim: eMBB={embb_slice.PRBs}, "
+ 221:         f"uRLLC={urllc_slice.PRBs}"
+ 222:         f"\n  Total: {embb_slice.PRBs + urllc_slice.PRBs}"
+ 227: # Select one action for simulation
+ 245: # Do NOT start the built-in inter-slice resAlloc() process.
+ 256:         tSim=SIMULATION_TIME,
+ 262: # Run simulation
+ 264: print("Running Py5cheSim with PPO-selected allocation...\n")
+ 266: env.run(until=SIMULATION_TIME)
+ 272: embb_slice = inter_slice_scheduler.slices["eMBB-0"]
+ 273: urllc_slice = inter_slice_scheduler.slices["URLLC-0"]
+ 276: print("SIMULATION COMPLETED")
+ 280: print("Final eMBB PRBs:", embb_slice.PRBs)
+ 281: print("Final uRLLC PRBs:", urllc_slice.PRBs)
+ 282: print("Final total PRBs:", embb_slice.PRBs + urllc_slice.PRBs)
+ 284: print("\nPPO → Py5cheSim PRB control test completed successfully.")
+
+Detected imports:
+  Cell
+  Results
+  os
+  simpy
+  sys
+
+================================================================================
+INSPECTION COMPLETE — NO FILES MODIFIED
+================================================================================
+==============================================================================
+BLOCK 9: PY5CHESIM SOURCE AND API VERIFICATION
+==============================================================================
+
+Directory: E:\Abrokwa\PycharmProjects\pythonProject1\py5chesim
+Exists: False
+
+Directory: E:\Abrokwa\PycharmProjects\pythonProject1\pf1\py5chesim
+Exists: False
+
+Directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim
+Exists: True
+
+Directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\py5chesim
+Exists: False
+
+------------------------------------------------------------------------------
+SOURCE: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim\Cell.py
+------------------------------------------------------------------------------
+
+CLASS: Cell
+  __init__(self, i, b, fr, dm, mBue, tdd, gr, schInter)
+  updateStsts(self, env, interv, tSim)
+
+Relevant implementation lines:
+  22: def __init__(self, i, b, fr, dm, mBue, tdd, gr, schInter):
+  51: def updateStsts(self, env, interv, tSim):  # ---------- PEM -------------
+  66: "time ue sinr MCS BLER ResourceUse sntPackets lstPackets rcvdBytes sliceLabel"
+  73: "time ue sinr MCS BLER ResourceUse sntPackets lstPackets rcvdBytes sliceLabel"
+ 108: .packetFlows[0]
+ 114: .packetFlows[0]
+ 120: .packetFlows[0]
+ 123: sinr = (
+ 128: mcs = self.interSliceSched.slices[slice].schedulerDL.ues[ue].MCS
+ 142: + str(sinr)
+ 144: + str(mcs)
+ 197: .packetFlows[0]
+ 203: .packetFlows[0]
+ 209: .packetFlows[0]
+ 212: sinr = (
+ 217: mcs = self.interSliceSched.slices[slice].schedulerUL.ues[ue].MCS
+ 237: + str(sinr)
+ 239: + str(mcs)
+
+------------------------------------------------------------------------------
+SOURCE: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim\InterSliceSch.py
+------------------------------------------------------------------------------
+
+CLASS: InterSliceScheduler
+  __init__(self, ba, fr, dm, tdd, gr)
+  resAlloc(self, env)
+  createSlice(self, dly, thDL, thUL, avl, cnxDL, cnxUL, ba, dm, mmd, ly, lbl, sch)
+  printSliceConfig(self, slice)
+
+Relevant implementation lines:
+  13: def __init__(self, ba, fr, dm, tdd, gr):
+  62: self.PRBs = 0
+  65: self.PRBs = self.PRBs + self.nRBtable[fr]["15kHz"][str(b) + "MHz"]
+  67: self.PRBs = self.PRBs + self.nRBtable[fr]["60kHz"][str(b) + "MHz"]
+  76: def resAlloc(self, env):  # PEM ------------------------------------------------
+  86: (self.PRBs / len(list(self.slices.keys())))
+  94: prbs = 0
+  96: prbs = prbs + self.nRBtable[self.FR][slice.scs][str(b) + "MHz"]
+  97: slice.updateConfig(prbs)
+ 102: def createSlice(
+ 110: def printSliceConfig(self, slice):
+ 143: self.dbFile.write("Resources (PRBs): " + str(sliceRessources) + "<br>")
+
+------------------------------------------------------------------------------
+SOURCE: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim\IntraSliceSch.py
+------------------------------------------------------------------------------
+
+CLASS: IntraSliceScheduler
+  __init__(self, ba, n, debMd, sLod, ttiByms, mmd_, ly_, dir, Smb, robustMCS, slcLbl, sch)
+  queuesOut(self, env)
+  updSliceQoeStats(self, rcvdBytes)
+  findPackBeQ(self, uee, p)
+  queueUpdate(self)
+  rrcUncstSigIn(self, u)
+  updIndUE(self)
+  updSumPcks(self)
+  dataPtoTB(self, u)
+  moving_average(self, current_utilization, u)
+  retransmitTB(self, u)
+  resAlloc(self, Nrb)
+  setMod(self, u, nprb)
+  findMCS(self, s)
+  setTBS(self, r, qm, uldl, u_, fr, nprb)
+  setBLER(self, u)
+  insertTB(self, id, m, uu, type, pack_lst, n, s)
+  printQstate(self, env)
+  printQue(self)
+  printQtb(self)
+  printPendTB(self)
+  printDebData(self, debData)
+  printDebDataDM(self, debData)
+  printResAlloc(self)
+
+CLASS: LTE_scheduler
+  __init__(self, ba, n, debMd, sLod, mmd_, ly_, dir)
+  loadModTable(self)
+  loadTbsTable(self)
+  loadCqiTable(self)
+  loadBlerTable(self)
+  setMod(self, u, nprb)
+  setCQI(self, sp_eff)
+  findMCS(self, e)
+  setBLER(self, u)
+
+CLASS: TBqueue
+  __init__(self, nrb)
+  getFreeSpace(self)
+  insertTB(self, tb)
+  removeTB(self)
+  updateSize(self, newSize)
+
+CLASS: TransportBlock
+  __init__(self, i, m, u, typ, p_l, nrb, sz)
+
+CLASS: Format
+
+Relevant implementation lines:
+  10: from lib.SchedulerUtils import loadModTable, loadSINR_MCStable, loadtbsTable, getTbs
+  17: def __init__(
+  18: self, ba, n, debMd, sLod, ttiByms, mmd_, ly_, dir, Smb, robustMCS, slcLbl, sch
+  21: self.PRBs = n
+  23: prbsMaxQueue = ly_ * n  # 5G
+  25: prbsMaxQueue = n
+  27: self.queue = TBqueue(prbsMaxQueue)
+  36: self.sinrModTable = loadSINR_MCStable(self.tdd)  # 5G
+  49: self.robustMCS = robustMCS  # 5G
+  76: def queuesOut(self, env):  # ---------- PEM -------------
+ 112: self.ues[ue].packetFlows[0].rcvdBytes = (
+ 113: self.ues[ue].packetFlows[0].rcvdBytes + tbl.size
+ 166: def updSliceQoeStats(self, rcvdBytes):
+ 172: def findPackBeQ(self, uee, p):
+ 182: def queueUpdate(self):
+ 200: and (rb + self.ues[self.ueLst[self.ind_u]].prbs) <= self.rb_lim
+ 206: if self.ues[ue].prbs > 0:
+ 229: # print('usuarios: ',len(self.ueLst), 'NSRS ', self.NSRS, 'PRBs ', self.nrbUEmax)
+ 232: def rrcUncstSigIn(self, u):
+ 238: p_l.append(self.ues[u].packetFlows[0].pId)
+ 239: self.ues[u].packetFlows[0].pId = self.ues[u].packetFlows[0].pId + 1
+ 241: self.ues[u].TBid, "4-QAM", u, "Sig", p_l, self.ues[u].prbs, 19
+ 248: def updIndUE(self):  # Update ind_u in ues list in circular way.
+ 254: def updSumPcks(self):  # Update packts variable (sum all packets in bearer buffers)
+ 263: def dataPtoTB(self, u):
+ 265: n = self.ues[u].prbs
+ 266: [tbSbits, mod, bits, mcs__] = self.setMod(u, n)
+ 273: self.ues[u].MCS = mcs__
+ 314: def moving_average(self, current_utilization, u):
+ 320: def retransmitTB(self, u):
+ 326: r = self.ues[u].prbs
+ 332: def resAlloc(self, Nrb):
+ 333: """This method allocates cell PRBs to the different connected UEs."""
+ 341: def setMod(self, u, nprb):  # AMC
+ 342: """This method sets the MCS and TBS for each TB."""
+ 343: sinr = self.ues[u].radioLinks.linkQuality
+ 344: mcs_ = self.findMCS(sinr)
+ 345: if self.robustMCS and mcs_ > 2:
+ 346: mcs_ = mcs_ - 2
+ 347: mo = self.modTable[mcs_]["mod"]
+ 348: mcsi = self.modTable[mcs_]["mcsi"]
+ 349: Qm = self.modTable[mcs_]["bitsPerSymb"]
+ 350: R = self.modTable[mcs_]["codeRate"]
+ 365: return [tbls, mo, Qm, mcsi]
+ 367: def findMCS(self, s):
+ 368: mcs = -1
+ 369: findSINR = False
+ 370: while mcs < 27 and not (findSINR):  # By SINR
+ 371: mcs = mcs + 1
+ 372: if mcs < 27:
+ 373: findSINR = s < float(self.sinrModTable[mcs])
+ 375: findSINR = True
+ 376: return mcs
+ 378: def setTBS(self, r, qm, uldl, u_, fr, nprb):  # TS 38.214 procedure
+ 395: def setBLER(self, u):  # BLER calculation
+ 398: def insertTB(self, id, m, uu, type, pack_lst, n, s):
+ 414: def printQstate(self, env):
+ 426: self.ues[ue].packetFlows[0].setMeassures(env.now)
+ 429: def printQue(self):
+ 447: def printQtb(self):
+ 466: def printPendTB(self):
+ 472: def printDebData(self, debData):
+ 475: def printDebDataDM(self, debData):
+ 479: def printResAlloc(self):
+ 482: self.printDebData("PRBs: " + str(self.nrbUEmax) + "<br>")
+ 486: resAllocMsg + ue + ": " + str(self.ues[ue].prbs) + " PRBs" + "<br>"
+ 498: def __init__(self, ba, n, debMd, sLod, mmd_, ly_, dir):
+ 512: def loadModTable(self):
+ 513: """3GPP TS 36.213 7.1.7.1-1 merged with MCS table presented in R1-081483."""
+ 777: def loadTbsTable(self):
+4191: def loadCqiTable(self):
+4210: def loadBlerTable(self):
+6072: def setMod(self, u, nprb):  # AMC
+6073: """This method calculates spectral efficiency for the UE SINR and configured BER, and obtains CQI, MCS, and TBS"""
+6074: sinr = self.ues[u].radioLinks.linkQuality
+6075: sp_ef = math.log(1 - (sinr / (math.log(5 * self.BER) / 1.5)), 2)
+6078: # Find MCS and TBindex
+6079: mcs_ = self.findMCS(ef)
+6080: mo = self.modTable[mcs_]["mod"]
+6081: b = self.modTable[mcs_]["bitsPerSymb"]
+6082: tbs_ind = self.modTable[mcs_]["tbsi"]
+6085: return [tbls, mo, b, mcs_]
+6087: def setCQI(self, sp_eff):
+6099: def findMCS(self, e):
+6100: mcs = 0
+6101: findMCS = False
+6102: while mcs < 29 and not (findMCS):
+6103: mcs = mcs + 1
+6104: if mcs < 29:
+6105: findMCS = e < self.modTable[mcs + 1]["spctEff"]
+6107: findMCS = True
+6108: if not (mcs % 2 == 0):
+6109: mcs = mcs - 1
+6110: return mcs
+6112: def setBLER(self, u):  # BLER calculation
+6113: if (self.BER < 0.01) or (self.BER == 0.01 and self.PRBs > 6):
+6116: sinr = self.ues[u].radioLinks.linkQuality
+6117: mcs = self.ues[u].MCS
+6120: sinrs = [
+6180: sinrs_i = 0
+6181: findSINR = False
+6182: while sinrs_i < (len(sinrs) - 1) and not (findSINR):
+6183: sinrs_i = sinrs_i + 1
+6184: findSINR = sinr >= sinrs[sinrs_i]
+6186: if mcs <= 24:
+6188: self.blerTable[berKey][sinrs_i][str(mcs)]
+6189: - self.blerTable[berKey][sinrs_i - 1][str(mcs)]
+6190: ) / (sinrs[sinrs_i] - sinrs[sinrs_i - 1])
+6191: self.ues[u].bler = self.blerTable[berKey][sinrs_i][str(mcs)] + pend * (
+6192: sinr - sinrs[sinrs_i]
+6195: self.ues[u].bler = self.blerTable[berKey][sinrs_i][str(24)]
+6201: def __init__(self, nrb):
+6205: def getFreeSpace(self):
+6212: def insertTB(self, tb):
+6230: def removeTB(self):
+6234: def updateSize(self, newSize):
+6241: def __init__(self, i, m, u, typ, p_l, nrb, sz):
+
+------------------------------------------------------------------------------
+SOURCE: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim\Results.py
+------------------------------------------------------------------------------
+
+CLASS: UEgroup
+  __init__(self, nuDL, nuUL, pszDL, pszUL, parrDL, parrUL, activationTime, deactivationTime, distributionSize, distributionArrival, label, dly, avlty, schedulerType, mmMd, lyrs, cell, t_sim, measInterv, env, sinr)
+  setReq(self, delay, avl)
+  setInitialSINR(self, sinr)
+  initializeUEs(self, dir, num_users, p_size, p_arr_rate, sinr_0, cell, t_sim, measInterv, env, activationTime, deactivationTime, distributionSize, distributionArrival)
+  activateSliceScheds(self, interSliceSche, env)
+  printSliceResults(self, interSliceSche, t_sim, bw, measInterv)
+
+Relevant implementation lines:
+  15: def initialSinrGenerator(n_ues, refValue):
+  16: """Auxiliary method for SINR generation.
+  17: This method is used to generate initial UE SINR. Later, during the simulation SINR will have small variations with time.
+  19: genSINRs = []
+  20: sameSINR = refValue[0] == "S"
+  24: if sameSINR:
+  25: genSINRs.append(value)
+  27: genSINRs.append(value - delta * i)
+  28: return genSINRs
+  36: def __init__(
+  58: sinr,
+  71: self.sinr_0DL = 0
+  72: """Initial sinr value for DL"""
+  73: self.sinr_0UL = 0
+  74: """Initial sinr value for UL"""
+  84: self.setInitialSINR(sinr)
+  97: self.sinr_0DL,
+ 113: self.sinr_0UL,
+ 124: def setReq(self, delay, avl):
+ 126: self.req["reqDelay"] = delay
+ 127: self.req["reqThroughputDL"] = (
+ 130: self.req["reqThroughputUL"] = 0  # 8*self.p_sizeUL*self.p_arr_rateUL
+ 131: self.req["reqAvailability"] = avl
+ 133: def setInitialSINR(self, sinr):
+ 134: """This method sets the initial SINR value"""
+ 136: self.sinr_0DL = initialSinrGenerator(self.num_usersDL, sinr)
+ 138: self.sinr_0UL = initialSinrGenerator(self.num_usersUL, sinr)
+ 140: def initializeUEs(
+ 141: self, dir, num_users, p_size, p_arr_rate, sinr_0, cell, t_sim, measInterv, env, activationTime, deactivationTime, distributionSize, distributionArrival
+ 151: users.append(UE(ue_name, float(sinr_0[j]), 0, 20))
+ 154: users[j].packetFlows[0].setQosFId(1)
+ 157: env.process(users[j].packetFlows[0].queueAppPckt(env, tSim=t_sim))
+ 169: def activateSliceScheds(self, interSliceSche, env):
+ 180: def printSliceResults(self, interSliceSche, t_sim, bw, measInterv):
+ 192: self.sinr_0DL,
+ 195: # print('Using Robust MCS: '+str(interSliceSche.slices[self.label].robustMCS))
+ 196: [SINR_DL, times_DL, mcs_DL, rU_DL, plr_DL, th_DL] = getKPIs(
+ 201: self.sinr_0DL,
+ 208: SINR_DL,
+ 209: mcs_DL,
+ 249: self.sinr_0UL,
+ 252: # print('Using Robust MCS: '+str(interSliceSche.slices[self.label].robustMCS))
+ 253: [SINR_UL, times_UL, mcs_UL, rU_UL, plr_UL, th_UL] = getKPIs(
+ 258: self.sinr_0UL,
+ 265: SINR_UL,
+ 266: mcs_UL,
+ 296: def printResults(
+ 297: dir, users, num_users, scheduler, t_sim, singleRunMode, fileSINR, sinr
+ 302: SINRprom = 0.0
+ 303: MCSprom = 0.0
+ 305: # UEresults = open('UEresults'+str(sinr[0])+'.txt','w') # This file is used as an input for the validation script
+ 306: # UEresults.write('SINR MCS BLER PLR TH ResUse'+'\n')
+ 310: users[i].packetFlows[0].lostPackets = (
+ 311: users[i].packetFlows[0].lostPackets
+ 313: + len(users[i].packetFlows[0].appBuff.pckts)
+ 319: users[i].packetFlows[0].lostPackets = (
+ 320: users[i].packetFlows[0].lostPackets - 1
+ 323: users[i].packetFlows[0].setMeassures(t_sim)
+ 324: PDRprom = PDRprom + users[i].packetFlows[0].meassuredKPI["PacketLossRate"]
+ 325: THprom = THprom + users[i].packetFlows[0].meassuredKPI["Throughput"]
+ 326: if singleRunMode and fileSINR:
+ 327: sinrUser = float(users[i].radioLinks.lqAv) / users[i].radioLinks.totCount
+ 329: sinrUser = users[
+ 331: ].radioLinks.linkQuality  # not single run, or single run but not taking SINR from file
+ 332: SINRprom = SINRprom + sinrUser
+ 333: MCSprom = MCSprom + float(users[i].MCS)
+ 341: + str(users[i].packetFlows[0].sentPackets)
+ 345: + str(users[i].packetFlows[0].lostPackets)
+ 349: + "SINRav: "
+ 350: + str(int(sinrUser))
+ 351: + " MCSav: "
+ 352: + str(users[i].MCS)
+ 354: + str(round(users[i].packetFlows[0].meassuredKPI["PacketLossRate"], 2))
+ 357: + str(round(users[i].packetFlows[0].meassuredKPI["Throughput"], 2))
+ 360: # UEresults.write(str(sinrUser)+' '+str(users[i].MCS)+' '+str(float(users[i].lostTB)/(users[i].TXedTB+users[i].lostTB))+' '+str(users[i].packetFlows[0].meassuredKPI['PacketLossRate']/100)+' '+str(user
+ 366: print("Slice Resources: " + "\t" + str(scheduler.nrbUEmax) + " PRBs")
+ 371: def getKPIs(dir, stFile, users, num_users, sinr_0, measInterv, tSim):
+ 375: SINR = {}
+ 378: mcs = {}
+ 386: SINR[users[i].id] = [sinr_0[i]]
+ 387: mcs[users[i].id] = [users[i].MCS]
+ 402: sinr_ = columns[2]
+ 403: mcs_ = columns[3]
+ 412: SINR[ue].append(float(sinr_))
+ 413: mcs[ue].append(int(mcs_))
+ 440: #write_to_file(users, SINR, times, mcs, rU, plr, th)
+ 441: return SINR, times, mcs, rU, plr, th
+ 443: def write_to_file(users, SINR, times, mcs, rU, plr, th):
+ 447: "SINR": SINR,
+ 449: "mcs": mcs,
+ 459: def getKPIsInter(dir, stFile, slices, num_slices):
+ 531: def save_(th, time, u, file_path, slice='None'):
+ 550: def makeTimePlot(u, plotName, plotType, xAx, yAx, slcLbl = 'non'):
+ 569: if plotType == "SINR":
+ 570: plt.plot(xAx[u], yAx[u], label="SINR(dB) " + u)
+ 571: if plotType == "MCS":
+ 572: plt.scatter(xAx[u], yAx[u], label="MCS " + u)
+ 589: def makeIntraSlicePlot(plotName, plotType, xAx, yAx, slcLbl, bw, sch, gran):
+ 649: def makeInterSlicePlot(plotName, plotType, xAx, yAx, bw, sch, gran):
+ 720: def makePlotsIntra(dir, times, sinr, mcs, rU, plr, th, slcLbl, bw, sch, gr):
+ 728: "PRBs"  + " (%)", "UEresUse", times, rU, slcLbl, bw, sch, gr
+ 730: makeIntraSlicePlot("SINR-" + dir, "SINR", times, sinr, slcLbl, bw, sch, gr)
+ 731: makeIntraSlicePlot("MCS-" + dir, "MCS", times, mcs, slcLbl, bw, sch, gr)
+ 734: def makePlotsInter(dir, times, res, plr, th, cnx, buf, met, bw, schIn, gr):
+ 742: makeInterSlicePlot("PRBs" , "sliceResUse", times, res, bw, schIn, gr)
+
+------------------------------------------------------------------------------
+SOURCE: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim\simulation.py
+------------------------------------------------------------------------------
+
+Relevant implementation lines:
+  87: label,dly,avlty,schedulerType,mimo_mode,layers,cell,hdr,t_sim,measInterv,env,sinr):
+  93: sinr: is a string starting starting with S if all ues have the same sinr or D if not. The value next will be the initial sinr of each ue or the maximum."""
+ 103: ueG.req["reqDelay"],
+ 104: ueG.req["reqThroughputDL"],
+ 105: ueG.req["reqThroughputUL"],
+ 106: ueG.req["reqAvailability"],
+
+------------------------------------------------------------------------------
+SOURCE: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject\py5chesim\Slice.py
+------------------------------------------------------------------------------
+
+CLASS: Slice
+  __init__(self, dly, thDL, thUL, avl, cnxDL, cnxUL, ba, dm, mmd, ly, lbl, tdd, sch)
+  createSliceSched(self, dir, tddSymb)
+  setInitialConfig(self)
+  dly2scs(self, delay)
+  updateConfig(self, n)
+
+Relevant implementation lines:
+  12: def __init__(
+  15: self.reqDelay = dly
+  16: self.reqThroughputDL = thDL
+  17: self.reqThroughputUL = thUL
+  18: self.reqAvailability = avl
+  23: self.PRBs = 0
+  27: self.robustMCS = False
+  44: self.reqThroughput = thDL*0.8 # 15#thDL # A definir
+  46: self.reqThroughput = 7.5
+  48: self.reqThroughput = 10.9
+  50: self.reqThroughput = 5
+  59: def createSliceSched(self, dir, tddSymb):
+  65: self.PRBs,
+  73: self.robustMCS,
+  80: self.PRBs,
+  88: self.robustMCS,
+  96: self.PRBs,
+ 106: self.PRBs,
+ 114: self.robustMCS,
+ 121: self.PRBs,
+ 129: self.robustMCS,
+ 136: self.PRBs,
+ 144: self.robustMCS,
+ 151: self.PRBs,
+ 159: self.robustMCS,
+ 166: self.PRBs,
+ 174: self.robustMCS,
+ 181: self.PRBs,
+ 189: self.robustMCS,
+ 196: self.PRBs,
+ 204: self.robustMCS,
+ 211: def setInitialConfig(self):
+ 213: self.dly2scs(self.reqDelay)
+ 228: DLfactor = float(self.reqDLconnections * self.reqThroughputDL) / (
+ 229: self.reqDLconnections * self.reqThroughputDL
+ 230: + self.reqULconnections * self.reqThroughputUL
+ 238: if self.reqAvailability == "High":
+ 239: self.robustMCS = True
+ 244: def dly2scs(self, delay):
+ 269: def updateConfig(self, n):
+ 270: """This method updates Slice allocated PRBs."""
+ 271: self.PRBs = n
+ 272: self.schedulerDL.nrbUEmax = self.PRBs
+ 274: self.schedulerUL.nrbUEmax = self.PRBs
+ 276: self.schedulerDL.queue.updateSize(self.PRBs * self.layers)
+ 278: self.schedulerUL.queue.updateSize(self.PRBs * self.layers)
+ 280: self.schedulerDL.queue.updateSize(self.PRBs)
+ 282: self.schedulerUL.queue.updateSize(self.PRBs)
+
+==============================================================================
+BLOCK 9 COMPLETE — NO SOURCE FILES MODIFIED
+==============================================================================
+Traffic classes: ['eMBB', 'uRLLC', 'MTM', 'IoT', 'Vehicular']
+Algorithms: ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+User counts: [100, 200, 300, 400, 500, 600, 800, 1000]
+Total bandwidth: 20.0 MHz
+Total PRBs: 100
+
+Configured traffic profiles:
+               weight  min_rate_mbps  ...  min_reliability  priority
+traffic_class                         ...                           
+eMBB             0.25          10.00  ...          0.99000         2
+uRLLC            0.20           1.00  ...          0.99999         5
+MTM              0.15           0.05  ...          0.99000         1
+IoT              0.20           0.10  ...          0.99000         2
+Vehicular        0.20           5.00  ...          0.99900         4
+
+[5 rows x 6 columns]
+
+Saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\traffic_profiles.csv
+traffic_class  target_rate_mbps  minimum_rate_mbps  maximum_latency_ms  priority  channel_factor
+        uRLLC             10.00               1.00                 5.0       5.0        1.030238
+    Vehicular             20.00               5.00                10.0       4.0        1.195747
+         eMBB             50.00              10.00               100.0       2.0        0.958248
+          IoT              1.00               0.10               100.0       2.0        0.973563
+         eMBB             50.00              10.00               100.0       2.0        1.139152
+        uRLLC             10.00               1.00                 5.0       5.0        0.989628
+    Vehicular             20.00               5.00                10.0       4.0        1.059010
+          MTM              0.25               0.05              1000.0       1.0        0.972333
+         eMBB             50.00              10.00               100.0       2.0        0.927915
+          IoT              1.00               0.10               100.0       2.0        1.221938
+    Vehicular             20.00               5.00                10.0       4.0        0.940744
+        uRLLC             10.00               1.00                 5.0       5.0        1.091138
+          MTM              0.25               0.05              1000.0       1.0        0.941383
+         eMBB             50.00              10.00               100.0       2.0        0.977025
+    Vehicular             20.00               5.00                10.0       4.0        0.913300
+         eMBB             50.00              10.00               100.0       2.0        0.975011
+         eMBB             50.00              10.00               100.0       2.0        0.981802
+        uRLLC             10.00               1.00                 5.0       5.0        0.952631
+          IoT              1.00               0.10               100.0       2.0        0.984689
+        uRLLC             10.00               1.00                 5.0       5.0        1.052735
+
+Class counts:
+traffic_class
+eMBB         6
+uRLLC        5
+Vehicular    4
+IoT          3
+MTM          2
+Name: count, dtype: int64
+
+Saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\workload_preview.csv
+Aggregate KPI smoke test:
+acceptance_ratio                : 1.0
+utility                         : 0.26209610760211943
+service_satisfaction_ratio      : 0.5
+qos_violation_ratio             : 0.5
+mean_data_rate_mbps             : 2.5278227269649505
+mean_latency_ms                 : 2.6595651242634517
+total_data_rate_mbps            : 50.55645453929901
+allocated_rbs                   : 100
+rb_utilization                  : 1.0
+mean_user_rate_satisfaction     : 0.35412599921226506
+
+Per-class KPI smoke test:
+traffic_class  users  mean_rbs_per_user  mean_rate_mbps  mean_latency_ms  acceptance_ratio  satisfaction_ratio  qos_violation_ratio
+         eMBB      6                5.0        2.486384         4.417038               1.0                 0.0                  1.0
+        uRLLC      5                5.0        2.546548         2.383947               1.0                 1.0                  0.0
+          MTM      2                5.0        2.413716         0.510359               1.0                 1.0                  0.0
+          IoT      3                5.0        2.620126         0.538443               1.0                 1.0                  0.0
+    Vehicular      4                5.0        2.554401         3.033324               1.0                 0.0                  1.0
+
+Block 12 passed. Smoke-test CSV files saved.
+[transformers] Disabling PyTorch because PyTorch >= 2.4 is required but found 2.1.2+cu118
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+Agents initialized on: cpu
+Trainable baselines: ['DDQN', 'GCN-DDQN', 'GGN-DDQN']
+RBF centers available: 64
+Action levels (PRBs): [0, 1, 2, 4, 8]
+
+Training DDQN ...
+DDQN | Episode   50/300 | Reward=-0.4598 | epsilon=0.470
+DDQN | Episode  100/300 | Reward=-0.4361 | epsilon=0.221
+DDQN | Episode  150/300 | Reward=-0.4679 | epsilon=0.104
+DDQN | Episode  200/300 | Reward=-0.4210 | epsilon=0.050
+DDQN | Episode  250/300 | Reward=-0.4364 | epsilon=0.050
+DDQN | Episode  300/300 | Reward=-0.3997 | epsilon=0.050
+
+Training GCN-DDQN ...
+GCN-DDQN | Episode   50/300 | Reward=-0.4191 | epsilon=0.470
+GCN-DDQN | Episode  100/300 | Reward=-0.4251 | epsilon=0.221
+GCN-DDQN | Episode  150/300 | Reward=-0.2893 | epsilon=0.104
+GCN-DDQN | Episode  200/300 | Reward=-0.3702 | epsilon=0.050
+GCN-DDQN | Episode  250/300 | Reward=-0.3998 | epsilon=0.050
+GCN-DDQN | Episode  300/300 | Reward=-0.3497 | epsilon=0.050
+
+Training GGN-DDQN ...
+GGN-DDQN | Episode   50/300 | Reward=-0.3565 | epsilon=0.470
+GGN-DDQN | Episode  100/300 | Reward=-0.4540 | epsilon=0.221
+GGN-DDQN | Episode  150/300 | Reward=-0.3702 | epsilon=0.104
+GGN-DDQN | Episode  200/300 | Reward=-0.4262 | epsilon=0.050
+GGN-DDQN | Episode  250/300 | Reward=-0.4538 | epsilon=0.050
+GGN-DDQN | Episode  300/300 | Reward=-0.3995 | epsilon=0.050
+
+Training finished.
+Saved training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\training_history.csv
+Saved model checkpoints in: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+Finished evaluation for 100 users.
+Finished evaluation for 200 users.
+Finished evaluation for 300 users.
+Finished evaluation for 400 users.
+Finished evaluation for 500 users.
+Finished evaluation for 600 users.
+Finished evaluation for 800 users.
+Finished evaluation for 1000 users.
+
+Raw evaluation results saved.
+Rows: 640
+Algorithms: ['RBF-EdgeCover-DDQN' 'DDQN' 'GCN-DDQN' 'GGN-DDQN']
+User scales: [100, 200, 300, 400, 500, 600, 800, 1000]
+algorithm  users  acceptance_ratio_mean  acceptance_ratio_std  utility_mean  utility_std  service_satisfaction_ratio_mean  service_satisfaction_ratio_std  qos_violation_ratio_mean  qos_violation_ratio_std  mean_data_rate_mbps_mean  mean_data_rate_mbps_std  mean_latency_ms_mean  mean_latency_ms_std  total_data_rate_mbps_mean  total_data_rate_mbps_std  rb_utilization_mean  rb_utilization_std  execution_time_s_mean  execution_time_s_std
+     DDQN    100               0.168500              0.009333      0.049679     0.001394                         0.150000                        0.009733                  0.850000                 0.009733                  0.500486                 0.007945             38.160261             3.610610                  50.048577                  0.794539                  1.0                 0.0               0.023382              0.004901
+     DDQN    200               0.080500              0.003940      0.024902     0.000415                         0.075750                        0.003354                  0.924250                 0.003354                  0.249017                 0.004147             39.683523             2.740213                  49.803322                  0.829468                  1.0                 0.0               0.041232              0.005214
+     DDQN    300               0.053167              0.002016      0.016698     0.000284                         0.051500                        0.002016                  0.948500                 0.002016                  0.166980                 0.002835             39.436011             2.207139                  50.093973                  0.850608                  1.0                 0.0               0.063008              0.008089
+     DDQN    400               0.039500              0.001740      0.012399     0.000234                         0.038500                        0.001496                  0.961500                 0.001496                  0.123988                 0.002345             39.565023             2.147948                  49.595121                  0.937926                  1.0                 0.0               0.088326              0.025389
+     DDQN    500               0.031300              0.000979      0.009981     0.000168                         0.030900                        0.001021                  0.969100                 0.001021                  0.099807                 0.001685             39.128123             2.529225                  49.903711                  0.842317                  1.0                 0.0               0.115445              0.027533
+     DDQN    600               0.026333              0.001026      0.008349     0.000160                         0.025750                        0.000851                  0.974250                 0.000851                  0.083486                 0.001598             39.371382             1.980216                  50.091894                  0.958794                  1.0                 0.0               0.121017              0.011137
+     DDQN    800               0.019625              0.000588      0.006288     0.000109                         0.019250                        0.000748                  0.980750                 0.000748                  0.062880                 0.001093             39.462839             1.344679                  50.303736                  0.874716                  1.0                 0.0               0.167988              0.025295
+     DDQN   1000               0.015750              0.000639      0.005020     0.000094                         0.015450                        0.000605                  0.984550                 0.000605                  0.050204                 0.000941             39.443134             1.550093                  50.204204                  0.941243                  1.0                 0.0               0.204904              0.025306
+ GCN-DDQN    100               0.250000              0.000000      0.044294     0.003337                         0.197500                        0.030066                  0.802500                 0.030066                  0.500912                 0.005622             35.619270             3.411276                  50.091198                  0.562225                  1.0                 0.0               0.035041              0.008981
+ GCN-DDQN    200               0.125000              0.000000      0.024965     0.000337                         0.125000                        0.000000                  0.875000                 0.000000                  0.249650                 0.003368             38.824953             2.723287                  49.930083                  0.673687                  1.0                 0.0               0.062718              0.007061
+ GCN-DDQN    300               0.083333              0.000000      0.016697     0.000262                         0.083333                        0.000000                  0.916667                 0.000000                  0.166973                 0.002616             38.854588             2.204686                  50.091919                  0.784678                  1.0                 0.0               0.108133              0.026721
+ GCN-DDQN    400               0.062500              0.000000      0.012457     0.000158                         0.062500                        0.000000                  0.937500                 0.000000                  0.124572                 0.001576             39.121830             2.143796                  49.828776                  0.630310                  1.0                 0.0               0.156389              0.063896
+ GCN-DDQN    500               0.050000              0.000000      0.009979     0.000122                         0.050000                        0.000000                  0.950000                 0.000000                  0.099792                 0.001220             38.768102             2.532575                  49.896240                  0.609924                  1.0                 0.0               0.167923              0.037982
+ GCN-DDQN    600               0.041667              0.000000      0.008343     0.000120                         0.041667                        0.000000                  0.958333                 0.000000                  0.083425                 0.001202             39.075967             1.980957                  50.055107                  0.721280                  1.0                 0.0               0.186363              0.018006
+ GCN-DDQN    800               0.031250              0.000000      0.006291     0.000077                         0.031250                        0.000000                  0.968750                 0.000000                  0.062905                 0.000769             39.238881             1.344538                  50.324361                  0.614830                  1.0                 0.0               0.247696              0.017463
+ GCN-DDQN   1000               0.025050              0.000224      0.005053     0.000085                         0.025000                        0.000000                  0.975000                 0.000000                  0.050532                 0.000849             39.263876             1.551859                  50.532484                  0.848756                  1.0                 0.0               0.307737              0.014062
+
+Saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\evaluation_summary_mean_std.csv
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+
+All six figures saved in: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\figures
+
+FINAL COMPARISON SUMMARY
+         algorithm  users  acceptance_ratio  utility  service_satisfaction_ratio  qos_violation_ratio  mean_data_rate_mbps  mean_latency_ms  total_data_rate_mbps  rb_utilization  execution_time_s
+              DDQN    100          0.168500 0.049679                    0.150000             0.850000             0.500486        38.160261             50.048577             1.0          0.023382
+              DDQN    200          0.080500 0.024902                    0.075750             0.924250             0.249017        39.683523             49.803322             1.0          0.041232
+              DDQN    300          0.053167 0.016698                    0.051500             0.948500             0.166980        39.436011             50.093973             1.0          0.063008
+              DDQN    400          0.039500 0.012399                    0.038500             0.961500             0.123988        39.565023             49.595121             1.0          0.088326
+              DDQN    500          0.031300 0.009981                    0.030900             0.969100             0.099807        39.128123             49.903711             1.0          0.115445
+              DDQN    600          0.026333 0.008349                    0.025750             0.974250             0.083486        39.371382             50.091894             1.0          0.121017
+              DDQN    800          0.019625 0.006288                    0.019250             0.980750             0.062880        39.462839             50.303736             1.0          0.167988
+              DDQN   1000          0.015750 0.005020                    0.015450             0.984550             0.050204        39.443134             50.204204             1.0          0.204904
+          GCN-DDQN    100          0.250000 0.044294                    0.197500             0.802500             0.500912        35.619270             50.091198             1.0          0.035041
+          GCN-DDQN    200          0.125000 0.024965                    0.125000             0.875000             0.249650        38.824953             49.930083             1.0          0.062718
+          GCN-DDQN    300          0.083333 0.016697                    0.083333             0.916667             0.166973        38.854588             50.091919             1.0          0.108133
+          GCN-DDQN    400          0.062500 0.012457                    0.062500             0.937500             0.124572        39.121830             49.828776             1.0          0.156389
+          GCN-DDQN    500          0.050000 0.009979                    0.050000             0.950000             0.099792        38.768102             49.896240             1.0          0.167923
+          GCN-DDQN    600          0.041667 0.008343                    0.041667             0.958333             0.083425        39.075967             50.055107             1.0          0.186363
+          GCN-DDQN    800          0.031250 0.006291                    0.031250             0.968750             0.062905        39.238881             50.324361             1.0          0.247696
+          GCN-DDQN   1000          0.025050 0.005053                    0.025000             0.975000             0.050532        39.263876             50.532484             1.0          0.307737
+          GGN-DDQN    100          0.388000 0.035095                    0.101000             0.899000             0.504265        30.029297             50.426492             1.0          0.033358
+          GGN-DDQN    200          0.243750 0.022036                    0.088500             0.911500             0.250785        35.714173             50.157097             1.0          0.063206
+          GGN-DDQN    300          0.166667 0.016588                    0.075000             0.925000             0.166244        37.301602             49.873333             1.0          0.101351
+          GGN-DDQN    400          0.125000 0.012499                    0.057125             0.942875             0.124988        37.965844             49.995247             1.0          0.129576
+          GGN-DDQN    500          0.100000 0.009975                    0.044900             0.955100             0.099750        37.843663             49.875077             1.0          0.158744
+          GGN-DDQN    600          0.083333 0.008335                    0.040333             0.959667             0.083353        38.305424             50.011993             1.0          0.180562
+          GGN-DDQN    800          0.062500 0.006261                    0.030563             0.969438             0.062612        38.661029             50.089238             1.0          0.234997
+          GGN-DDQN   1000          0.050000 0.005017                    0.024800             0.975200             0.050168        38.802502             50.167729             1.0          0.297012
+RBF-EdgeCover-DDQN    100          0.251000 0.043746                    0.187500             0.812500             0.509902        35.384305             50.990192             1.0          0.002474
+RBF-EdgeCover-DDQN    200          0.125000 0.025738                    0.125000             0.875000             0.257385        38.821425             51.476909             1.0          0.003204
+RBF-EdgeCover-DDQN    300          0.083333 0.017476                    0.083333             0.916667             0.174762        38.851052             52.428627             1.0          0.004893
+RBF-EdgeCover-DDQN    400          0.062500 0.013244                    0.062500             0.937500             0.132435        39.118313             52.974169             1.0          0.006596
+RBF-EdgeCover-DDQN    500          0.050000 0.010596                    0.050000             0.950000             0.105963        38.765344             52.981332             1.0          0.007960
+RBF-EdgeCover-DDQN    600          0.041667 0.008861                    0.041667             0.958333             0.088606        39.073654             53.163608             1.0          0.008546
+RBF-EdgeCover-DDQN    800          0.031250 0.006668                    0.031250             0.968750             0.066678        39.237207             53.342342             1.0          0.009461
+RBF-EdgeCover-DDQN   1000          0.025000 0.005372                    0.025000             0.975000             0.053721        39.263383             53.720624             1.0          0.011192
+
+Saved outputs:
+  block12_class_kpi_smoke_test.csv
+  block12_user_kpi_smoke_test.csv
+  class_evaluation_raw.csv
+  dataset_column_types.csv
+  dataset_preview.csv
+  evaluation_raw.csv
+  evaluation_summary_mean_std.csv
+  feature_scaling_parameters.csv
+  final_comparison_summary.csv
+  final_per_class_summary.csv
+  schema_lower_layer_data.csv
+  traffic_profiles.csv
+  training_history.csv
+  workload_preview.csv
+
+Saved figures:
+  acceptance_ratio_vs_users.eps
+  acceptance_ratio_vs_users.png
+  data_rate_vs_latency.eps
+  data_rate_vs_latency.png
+  qos_violation_vs_users.eps
+  qos_violation_vs_users.png
+  scalability_vs_users.eps
+  scalability_vs_users.png
+  service_satisfaction_vs_users.eps
+  service_satisfaction_vs_users.png
+  utility_vs_users.eps
+  utility_vs_users.png
+
+Experiment pipeline completed.
+Note: KPI rates and latencies are model-based proxies until
+validated against measured Py5cheSim output.
+
+Process finished with exit code 0
