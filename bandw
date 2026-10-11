@@ -1,0 +1,1063 @@
+
+# ============================================================
+# BLOCK 1: PROJECT CONFIGURATION
+# ============================================================
+
+import os
+import sys
+import copy
+import random
+from pathlib import Path
+from collections import deque
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+BASE_DIR = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3"
+)
+PY5CHESIM_DIR = BASE_DIR / "py5chesim"
+MODEL_DIR = BASE_DIR / "models"
+
+DATA_DIR = Path(
+    r"E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data"
+)
+
+RESULT_DIR = BASE_DIR / "results" / "RBF_DDQN_Comparison"
+FIG_DIR = RESULT_DIR / "figures"
+CSV_DIR = RESULT_DIR / "csv"
+CHECKPOINT_DIR = RESULT_DIR / "models"
+
+for folder in (
+    MODEL_DIR, RESULT_DIR, FIG_DIR, CSV_DIR, CHECKPOINT_DIR
+):
+    folder.mkdir(parents=True, exist_ok=True)
+
+SEED = 120
+
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(SEED)
+
+DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+
+# ------------------------------------------------------------
+# Radio configuration
+# ------------------------------------------------------------
+TOTAL_RBS = 200
+TOTAL_BANDWIDTH_MHZ = 100.0
+TOTAL_POWER_BUDGET = 2.0  # Normalized power units
+SLOT_SECONDS = 0.001
+
+# ------------------------------------------------------------
+# Models and experiment settings
+# ------------------------------------------------------------
+MODEL_NAMES = [
+    "RBF-DDQN",
+    "DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+]
+
+USER_LOADS_TRAIN = [50, 100, 150, 200]
+FIXED_EVAL_USERS = 200
+EVAL_REPEATS = 5
+
+LATENCY_LEVELS_MS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+BANDWIDTH_LEVELS_MHZ = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+RB_LEVELS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
+
+# Short initial run; increase for final experiments.
+NUM_EPISODES = 2
+BATCH_SIZE = 32
+REPLAY_CAPACITY = 30_000
+GAMMA = 0.99
+LEARNING_RATE = 1e-3
+TARGET_UPDATE_STEPS = 250
+EPSILON_START = 1.0
+EPSILON_END = 0.05
+EPSILON_DECAY = 0.985
+
+# Synthetic traffic proportions.
+SLICE_MIX = {
+    "IoT": 0.25,
+    "M2M": 0.25,
+    "Vehicular": 0.20,
+    "eMBB": 0.30,
+}
+
+SLICE_CONFIG = {
+    "IoT": {"min_rate_mbps": 0.05, "priority": 1},
+    "M2M": {"min_rate_mbps": 0.10, "priority": 2},
+    "Vehicular": {"min_rate_mbps": 2.0, "priority": 4},
+    "eMBB": {"min_rate_mbps": 5.0, "priority": 3},
+}
+
+print("=" * 70)
+print("RBF-DDQN / DDQN / GGN-DDQN / GCN-DDQN")
+print("=" * 70)
+print("Python:", sys.executable)
+print("PyTorch:", torch.__version__)
+print("Device:", DEVICE)
+print("Project:", BASE_DIR)
+print("Dataset directory exists:", DATA_DIR.exists())
+print("Py5cheSim exists:", PY5CHESIM_DIR.exists())
+print("Results:", RESULT_DIR)
+print("=" * 70)
+
+# ============================================================
+# BLOCK 2: USERS, O-RU, O-DU, AND STATE
+# ============================================================
+
+SLICE_NAMES = list(SLICE_MIX.keys())
+
+def generate_users(num_users, seed):
+    rng = np.random.default_rng(seed)
+
+    slice_names = rng.choice(
+        SLICE_NAMES,
+        size=num_users,
+        p=list(SLICE_MIX.values()),
+    )
+
+    users = []
+
+    for uid, name in enumerate(slice_names):
+        if name == "IoT":
+            demand = rng.uniform(0.02, 0.15)
+            latency = rng.uniform(5, 100)
+        elif name == "M2M":
+            demand = rng.uniform(0.05, 0.30)
+            latency = rng.uniform(5, 50)
+        elif name == "Vehicular":
+            demand = rng.uniform(1.0, 8.0)
+            latency = rng.uniform(2, 30)
+        else:
+            demand = rng.uniform(3.0, 20.0)
+            latency = rng.uniform(5, 60)
+
+        users.append({
+            "user_id": int(uid),
+            "slice": str(name),
+            "demand_mbps": float(demand),
+            "latency_ms": float(latency),
+            "channel": float(rng.beta(2.5, 2.0)),
+        })
+
+    return users
+
+
+class ORU:
+    """Synthetic O-RU radio-side interface."""
+
+    def __init__(self, seed=SEED):
+        self.seed = seed
+
+    def connect_users(self, num_users):
+        return generate_users(num_users, self.seed)
+
+
+class ODU:
+    """O-DU shared resource-budget controller."""
+
+    def __init__(
+        self,
+        total_rbs=TOTAL_RBS,
+        total_bandwidth_mhz=TOTAL_BANDWIDTH_MHZ,
+        power_budget=TOTAL_POWER_BUDGET,
+    ):
+        self.total_rbs = int(total_rbs)
+        self.total_bandwidth_mhz = float(total_bandwidth_mhz)
+        self.power_budget = float(power_budget)
+        self.reset()
+
+    def reset(self):
+        self.remaining_rbs = self.total_rbs
+        self.remaining_power = self.power_budget
+
+    @property
+    def bandwidth_per_rb(self):
+        return self.total_bandwidth_mhz / max(self.total_rbs, 1)
+
+    def allocate(self, user, requested_rbs, requested_power):
+        rbs = min(
+            max(0, int(requested_rbs)),
+            self.remaining_rbs,
+        )
+        power = min(
+            max(0.0, float(requested_power)),
+            self.remaining_power,
+        )
+
+        if rbs == 0:
+            power = 0.0
+
+        bandwidth = rbs * self.bandwidth_per_rb
+
+        # Illustrative link model, not a calibrated 5G PHY model.
+        efficiency = 0.5 + 4.5 * user["channel"]
+        power_factor = (
+            min(np.sqrt(power / 4.0), 2.0)
+            if power > 0 else 0.0
+        )
+
+        throughput = bandwidth * efficiency * power_factor
+
+        self.remaining_rbs -= rbs
+        self.remaining_power -= power
+
+        return {
+            "allocated_rbs": rbs,
+            "bandwidth_mhz": bandwidth,
+            "power": power,
+            "throughput_mbps": float(throughput),
+            "energy_proxy": power * SLOT_SECONDS,
+        }
+
+
+# State dimensions:
+# 4 slice indicators + channel + demand + observed latency +
+# latency constraint + remaining RB fraction + remaining power
+# fraction + current total RB scale + current bandwidth scale.
+STATE_DIM = 12
+
+def make_state(user, odu, latency_limit_ms):
+    slice_one_hot = [
+        float(user["slice"] == name)
+        for name in SLICE_NAMES
+    ]
+
+    return np.asarray(
+        slice_one_hot + [
+            user["channel"],
+            np.clip(user["demand_mbps"] / 20.0, 0.0, 1.0),
+            np.clip(user["latency_ms"] / 100.0, 0.0, 1.0),
+            np.clip(latency_limit_ms / 100.0, 0.0, 1.0),
+            odu.remaining_rbs / max(odu.total_rbs, 1),
+            odu.remaining_power / max(odu.power_budget, 1e-8),
+            min(odu.total_rbs / 100.0, 1.0),
+            min(odu.total_bandwidth_mhz / 40.0, 1.0),
+        ],
+        dtype=np.float32,
+    )
+
+print("State dimension:", STATE_DIM)
+print("Action space will be shared by all four models.")
+
+# ============================================================
+# BLOCK 3: ACTION SPACE AND MODEL ARCHITECTURES
+# ============================================================
+
+RB_ACTIONS = [1, 2, 4, 8, 16]
+POWER_ACTIONS = [1.0, 2.0, 4.0, 8.0]
+
+ACTIONS = [
+    (rbs, power)
+    for rbs in RB_ACTIONS
+    for power in POWER_ACTIONS
+]
+
+NUM_ACTIONS = len(ACTIONS)
+RBF_CENTERS = 128
+HIDDEN_DIM = 64
+
+
+class RBFQNetwork(nn.Module):
+    """Radial-basis state representation followed by a Q head."""
+
+    def __init__(self):
+        super().__init__()
+
+        centers = torch.rand(RBF_CENTERS, STATE_DIM)
+        self.register_buffer("centers", centers)
+
+        self.gamma_rbf = 4
+
+        self.head = nn.Sequential(
+            nn.Linear(RBF_CENTERS, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, NUM_ACTIONS),
+        )
+
+    def forward(self, x):
+        distance = (
+            x.unsqueeze(1) - self.centers.unsqueeze(0)
+        ).pow(2).sum(dim=2)
+
+        features = torch.exp(-self.gamma_rbf * distance)
+        return self.head(features)
+
+
+class DDQNQNetwork(nn.Module):
+    """Conventional fully connected Q-network."""
+
+    def __init__(self):
+        super().__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(STATE_DIM, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, NUM_ACTIONS),
+        )
+
+    def forward(self, x):
+        return self.network(x)
+
+
+def make_feature_adjacency(n_features):
+    """
+    Build a fixed feature graph.
+
+    Each state feature is a node. Adjacent feature indices
+    are connected, with self-loops.
+    """
+    adjacency = torch.eye(n_features)
+
+    for i in range(n_features - 1):
+        adjacency[i, i + 1] = 1.0
+        adjacency[i + 1, i] = 1.0
+
+    degree = adjacency.sum(dim=1).clamp(min=1.0)
+
+    # Symmetric degree normalization.
+    inv_sqrt = torch.diag(degree.pow(-0.5))
+    normalized = inv_sqrt @ adjacency @ inv_sqrt
+
+    return normalized
+
+
+class GGNQNetwork(nn.Module):
+    """
+    Graph-neighborhood aggregation Q-network.
+
+    Each state feature becomes a node embedding. Neighbor
+    aggregation is combined with the original embedding.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.register_buffer(
+            "adjacency",
+            make_feature_adjacency(STATE_DIM),
+        )
+
+        self.node_encoder = nn.Linear(1, HIDDEN_DIM)
+
+        self.neighbor_update = nn.Sequential(
+            nn.Linear(HIDDEN_DIM * 2, HIDDEN_DIM),
+            nn.ReLU(),
+            nn.Linear(HIDDEN_DIM, HIDDEN_DIM),
+            nn.ReLU(),
+        )
+
+        self.q_head = nn.Sequential(
+            nn.Linear(HIDDEN_DIM, 128),
+            nn.ReLU(),
+            nn.Linear(128, NUM_ACTIONS),
+        )
+
+    def forward(self, x):
+        # x: [batch, features]
+        node_values = x.unsqueeze(-1)
+        node_embeddings = torch.relu(
+            self.node_encoder(node_values)
+        )
+
+        neighbors = torch.einsum(
+            "ij,bjh->bih",
+            self.adjacency,
+            node_embeddings,
+        )
+
+        combined = torch.cat(
+            [node_embeddings, neighbors],
+            dim=-1,
+        )
+
+        updated = self.neighbor_update(combined)
+        graph_embedding = updated.mean(dim=1)
+
+        return self.q_head(graph_embedding)
+
+
+class GCNQNetwork(nn.Module):
+    """
+    Graph convolutional Q-network over the same feature graph.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.register_buffer(
+            "adjacency",
+            make_feature_adjacency(STATE_DIM),
+        )
+
+        self.input_projection = nn.Linear(1, HIDDEN_DIM)
+        self.graph_conv1 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
+        self.graph_conv2 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
+
+        self.q_head = nn.Sequential(
+            nn.Linear(HIDDEN_DIM, 128),
+            nn.ReLU(),
+            nn.Linear(128, NUM_ACTIONS),
+        )
+
+    def forward(self, x):
+        h = torch.relu(
+            self.input_projection(x.unsqueeze(-1))
+        )
+
+        h = torch.einsum(
+            "ij,bjh->bih",
+            self.adjacency,
+            h,
+        )
+        h = torch.relu(self.graph_conv1(h))
+
+        h = torch.einsum(
+            "ij,bjh->bih",
+            self.adjacency,
+            h,
+        )
+        h = torch.relu(self.graph_conv2(h))
+
+        graph_embedding = h.mean(dim=1)
+        return self.q_head(graph_embedding)
+
+
+NETWORK_FACTORIES = {
+    "RBF-DDQN": RBFQNetwork,
+    "DDQN": DDQNQNetwork,
+    "GGN-DDQN": GGNQNetwork,
+    "GCN-DDQN": GCNQNetwork,
+}
+
+print("Available actions:", NUM_ACTIONS)
+for name in NETWORK_FACTORIES:
+    print(f"{name}: {NETWORK_FACTORIES[name]().__class__.__name__}")
+
+# ============================================================
+# BLOCK 4: REPLAY BUFFER AND DDQN AGENT
+# ============================================================
+
+class ReplayBuffer:
+    def __init__(self, capacity):
+        self.memory = deque(maxlen=capacity)
+
+    def add(self, state, action, reward, next_state, done):
+        self.memory.append((
+            np.asarray(state, dtype=np.float32),
+            int(action),
+            float(reward),
+            np.asarray(next_state, dtype=np.float32),
+            float(done),
+        ))
+
+    def sample(self, batch_size):
+        batch = random.sample(self.memory, batch_size)
+
+        states, actions, rewards, next_states, dones = zip(*batch)
+
+        return (
+            np.asarray(states, dtype=np.float32),
+            np.asarray(actions, dtype=np.int64),
+            np.asarray(rewards, dtype=np.float32),
+            np.asarray(next_states, dtype=np.float32),
+            np.asarray(dones, dtype=np.float32),
+        )
+
+    def __len__(self):
+        return len(self.memory)
+
+
+class DDQNAgent:
+    def __init__(self, model_name):
+        self.model_name = model_name
+
+        self.online = NETWORK_FACTORIES[model_name]().to(DEVICE)
+        self.target = NETWORK_FACTORIES[model_name]().to(DEVICE)
+
+        self.target.load_state_dict(self.online.state_dict())
+        self.target.eval()
+
+        self.optimizer = optim.Adam(
+            self.online.parameters(),
+            lr=LEARNING_RATE,
+        )
+
+        self.loss_fn = nn.SmoothL1Loss()
+        self.memory = ReplayBuffer(REPLAY_CAPACITY)
+
+        self.epsilon = EPSILON_START
+        self.steps = 0
+
+    def select_action(self, state, explore=True):
+        if explore and random.random() < self.epsilon:
+            return random.randrange(NUM_ACTIONS)
+
+        state_tensor = torch.as_tensor(
+            state,
+            dtype=torch.float32,
+            device=DEVICE,
+        ).unsqueeze(0)
+
+        with torch.no_grad():
+            q_values = self.online(state_tensor)
+
+        return int(q_values.argmax(dim=1).item())
+
+    def learn(self):
+        if len(self.memory) < BATCH_SIZE:
+            return None
+
+        states, actions, rewards, next_states, dones = (
+            self.memory.sample(BATCH_SIZE)
+        )
+
+        states = torch.as_tensor(states, device=DEVICE)
+        actions = torch.as_tensor(
+            actions, dtype=torch.long, device=DEVICE
+        ).unsqueeze(1)
+        rewards = torch.as_tensor(rewards, device=DEVICE)
+        next_states = torch.as_tensor(next_states, device=DEVICE)
+        dones = torch.as_tensor(dones, device=DEVICE)
+
+        current_q = self.online(states).gather(
+            1, actions
+        ).squeeze(1)
+
+        with torch.no_grad():
+            next_actions = self.online(next_states).argmax(
+                dim=1, keepdim=True
+            )
+
+            next_q = self.target(next_states).gather(
+                1, next_actions
+            ).squeeze(1)
+
+            target_q = (
+                rewards
+                + GAMMA * (1.0 - dones) * next_q
+            )
+
+        loss = self.loss_fn(current_q, target_q)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+
+        nn.utils.clip_grad_norm_(
+            self.online.parameters(), max_norm=1.0
+        )
+
+        self.optimizer.step()
+        self.steps += 1
+
+        if self.steps % TARGET_UPDATE_STEPS == 0:
+            self.target.load_state_dict(
+                self.online.state_dict()
+            )
+
+        return float(loss.item())
+
+    def decay_epsilon(self):
+        self.epsilon = max(
+            EPSILON_END,
+            self.epsilon * EPSILON_DECAY,
+        )
+
+
+agents = {
+    name: DDQNAgent(name)
+    for name in MODEL_NAMES
+}
+
+print("Initialized agents:", list(agents.keys()))
+print("Training device:", DEVICE)
+
+# ============================================================
+# BLOCK 5: TRAIN ALL FOUR MODELS
+# ============================================================
+
+def calculate_reward(user, allocation, latency_limit_ms):
+    demand = max(user["demand_mbps"], 1e-6)
+
+    rate_satisfaction = min(
+        allocation["throughput_mbps"] / demand,
+        1.0,
+    )
+
+    latency_violation = float(
+        user["latency_ms"] > latency_limit_ms
+    )
+
+    rb_cost = (
+        allocation["allocated_rbs"] / max(TOTAL_RBS, 1)
+    )
+
+    power_cost = (
+        allocation["power"] / max(TOTAL_POWER_BUDGET, 1e-8)
+    )
+
+    return float(
+        2.0 * rate_satisfaction
+        - 0.25 * rb_cost
+        - 0.20 * power_cost
+        - 0.50 * latency_violation
+    )
+
+
+def run_training_episode(
+    model_agent,
+    users,
+    latency_limit_ms=20.0,
+):
+    odu = ODU()
+    odu.reset()
+
+    users = list(users)
+    random.shuffle(users)
+
+    episode_rewards = []
+    episode_losses = []
+
+    for i, user in enumerate(users):
+        state = make_state(user, odu, latency_limit_ms)
+
+        action_index = model_agent.select_action(
+            state, explore=True
+        )
+
+        requested_rbs, requested_power = ACTIONS[action_index]
+
+        allocation = odu.allocate(
+            user,
+            requested_rbs,
+            requested_power,
+        )
+
+        reward = calculate_reward(
+            user,
+            allocation,
+            latency_limit_ms,
+        )
+
+        done = i == len(users) - 1
+
+        if done:
+            next_state = np.zeros(STATE_DIM, dtype=np.float32)
+        else:
+            next_state = make_state(
+                users[i + 1], odu, latency_limit_ms
+            )
+
+        model_agent.memory.add(
+            state,
+            action_index,
+            reward,
+            next_state,
+            done,
+        )
+
+        # Learn every four user decisions.
+        if i % 4 == 0:
+            loss = model_agent.learn()
+            if loss is not None:
+                episode_losses.append(loss)
+
+        episode_rewards.append(reward)
+
+    model_agent.decay_epsilon()
+
+    return {
+        "mean_reward": float(np.mean(episode_rewards)),
+        "total_reward": float(np.sum(episode_rewards)),
+        "mean_loss": (
+            float(np.mean(episode_losses))
+            if episode_losses else np.nan
+        ),
+        "allocated_rbs": TOTAL_RBS - odu.remaining_rbs,
+        "allocated_power": TOTAL_POWER_BUDGET - odu.remaining_power,
+    }
+
+
+training_rows = []
+
+for episode in range(1, NUM_EPISODES + 1):
+    num_users = random.choice(USER_LOADS_TRAIN)
+
+    # Same traffic scenario for each model in this episode.
+    shared_users = generate_users(
+        num_users,
+        seed=SEED + episode,
+    )
+
+    for model_name in MODEL_NAMES:
+        # Each policy gets an independent copy of the same users.
+        episode_users = copy.deepcopy(shared_users)
+
+        metrics = run_training_episode(
+            agents[model_name],
+            episode_users,
+            latency_limit_ms=20.0,
+        )
+
+        training_rows.append({
+            "episode": episode,
+            "num_users": num_users,
+            "model": model_name,
+            "mean_reward": metrics["mean_reward"],
+            "total_reward": metrics["total_reward"],
+            "mean_loss": metrics["mean_loss"],
+            "allocated_rbs": metrics["allocated_rbs"],
+            "allocated_power": metrics["allocated_power"],
+            "epsilon": agents[model_name].epsilon,
+        })
+
+    if episode == 1 or episode % 10 == 0:
+        latest = [
+            row for row in training_rows
+            if row["episode"] == episode
+        ]
+
+        print(f"\nEpisode {episode}/{NUM_EPISODES}")
+        for row in latest:
+            print(
+                f"{row['model']:10s} | "
+                f"users={row['num_users']:3d} | "
+                f"reward={row['mean_reward']:.4f} | "
+                f"loss={row['mean_loss']:.5f}"
+            )
+
+training_df = pd.DataFrame(training_rows)
+training_path = CSV_DIR / "four_model_training_history.csv"
+training_df.to_csv(training_path, index=False)
+
+for model_name, model_agent in agents.items():
+    checkpoint_path = (
+        CHECKPOINT_DIR / f"{model_name.replace('-', '_')}.pt"
+    )
+
+    torch.save({
+        "model_name": model_name,
+        "online_state_dict": model_agent.online.state_dict(),
+        "target_state_dict": model_agent.target.state_dict(),
+        "optimizer_state_dict": model_agent.optimizer.state_dict(),
+        "epsilon": model_agent.epsilon,
+        "state_dim": STATE_DIM,
+        "num_actions": NUM_ACTIONS,
+        "rb_actions": RB_ACTIONS,
+        "power_actions": POWER_ACTIONS,
+    }, checkpoint_path)
+
+    print("Saved:", checkpoint_path)
+
+print("Training CSV:", training_path)
+
+# ============================================================
+# BLOCK 6: COMMON EVALUATION FUNCTION
+# ============================================================
+
+def evaluate_model(
+    model_agent,
+    users,
+    total_rbs,
+    bandwidth_mhz,
+    power_budget,
+    latency_limit_ms,
+):
+    odu = ODU(
+        total_rbs=total_rbs,
+        total_bandwidth_mhz=bandwidth_mhz,
+        power_budget=power_budget,
+    )
+
+    odu.reset()
+    records = []
+
+    for user in users:
+        state = make_state(user, odu, latency_limit_ms)
+
+        action_index = model_agent.select_action(
+            state, explore=False
+        )
+
+        requested_rbs, requested_power = ACTIONS[action_index]
+
+        allocation = odu.allocate(
+            user,
+            requested_rbs,
+            requested_power,
+        )
+
+        records.append({
+            "user_id": user["user_id"],
+            "slice": user["slice"],
+            "demand_mbps": user["demand_mbps"],
+            "latency_ms": user["latency_ms"],
+            **allocation,
+        })
+
+    details = pd.DataFrame(records)
+
+    assert details["allocated_rbs"].sum() <= total_rbs
+    assert (
+        details["bandwidth_mhz"].sum()
+        <= bandwidth_mhz + 1e-6
+    )
+    assert details["power"].sum() <= power_budget + 1e-6
+
+    return {
+        "throughput_mbps": details["throughput_mbps"].sum(),
+        "energy_proxy": details["energy_proxy"].sum(),
+        "total_power": details["power"].sum(),
+        "allocated_rbs": details["allocated_rbs"].sum(),
+        "allocated_bandwidth_mhz": details["bandwidth_mhz"].sum(),
+        "users_served": int(
+            (details["allocated_rbs"] > 0).sum()
+        ),
+        "details": details,
+    }
+
+
+def run_comparison_sweep(
+    experiment_name,
+    sweep_values,
+    scenario_fn,
+):
+    rows = []
+
+    for value in sweep_values:
+        total_rbs, bandwidth_mhz, latency_limit_ms = (
+            scenario_fn(value)
+        )
+
+        for repeat in range(EVAL_REPEATS):
+            shared_users = generate_users(
+                FIXED_EVAL_USERS,
+                seed=SEED + 100_000 + repeat * 1000 + int(value * 10),
+            )
+
+            for model_name in MODEL_NAMES:
+                result = evaluate_model(
+                    model_agent=agents[model_name],
+                    users=copy.deepcopy(shared_users),
+                    total_rbs=total_rbs,
+                    bandwidth_mhz=bandwidth_mhz,
+                    power_budget=TOTAL_POWER_BUDGET,
+                    latency_limit_ms=latency_limit_ms,
+                )
+
+                rows.append({
+                    "experiment": experiment_name,
+                    "sweep_value": value,
+                    "repeat": repeat,
+                    "model": model_name,
+                    "throughput_mbps": result["throughput_mbps"],
+                    "energy_proxy": result["energy_proxy"],
+                    "total_power": result["total_power"],
+                    "allocated_rbs": result["allocated_rbs"],
+                    "allocated_bandwidth_mhz": (
+                        result["allocated_bandwidth_mhz"]
+                    ),
+                    "users_served": result["users_served"],
+                })
+
+        print(
+            f"Completed {experiment_name}: "
+            f"value={value}"
+        )
+
+    return pd.DataFrame(rows)
+
+
+# A. Energy against increasing latency constraints.
+energy_latency_df = run_comparison_sweep(
+    "energy_vs_latency",
+    LATENCY_LEVELS_MS,
+    lambda latency: (
+        TOTAL_RBS,
+        TOTAL_BANDWIDTH_MHZ,
+        latency,
+    ),
+)
+
+# B. Throughput against increasing bandwidth.
+# Preserve the 0.2 MHz/RB simplified relationship.
+throughput_bandwidth_df = run_comparison_sweep(
+    "throughput_vs_bandwidth",
+    BANDWIDTH_LEVELS_MHZ,
+    lambda bandwidth: (
+        int(round(bandwidth / 0.2)),
+        bandwidth,
+        20.0,
+    ),
+)
+
+# C. Throughput against increasing RBs.
+throughput_rbs_df = run_comparison_sweep(
+    "throughput_vs_rbs",
+    RB_LEVELS,
+    lambda rbs: (
+        rbs,
+        rbs * 0.2,
+        20.0,
+    ),
+)
+
+energy_latency_df.to_csv(
+    CSV_DIR / "energy_vs_latency.csv", index=False
+)
+throughput_bandwidth_df.to_csv(
+    CSV_DIR / "throughput_vs_bandwidth.csv", index=False
+)
+throughput_rbs_df.to_csv(
+    CSV_DIR / "throughput_vs_rbs.csv", index=False
+)
+
+print("\nAll evaluation tables saved.")
+
+#
+# ============================================================
+# BLOCK 7: PLOT AND SAVE COMPARISON FIGURES
+# ============================================================
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 19,
+    "axes.labelsize": 20,
+    "xtick.labelsize": 20,
+    "ytick.labelsize": 20,
+    "legend.fontsize": 25,
+    "lines.linewidth": 2.5,
+})
+
+MODEL_STYLES = {
+    "RBF-DDQN": ("o", "-"),
+    "DDQN": ("s", "--"),
+    "GGN-DDQN": ("^", "-."),
+    "GCN-DDQN": ("D", ":"),
+}
+
+# Display names used only in plot legends.
+MODEL_DISPLAY_NAMES = {
+    "RBF-DDQN": "Ours",
+    "DDQN": "DDQN",
+    "GGN-DDQN": "GGN-DDQN",
+    "GCN-DDQN": "GCN-DDQN",
+}
+
+
+def plot_model_comparison(
+    df,
+    x_label,
+    y_column,
+    y_label,
+    filename,
+):
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    for model_name in MODEL_NAMES:
+        subset = df[df["model"] == model_name]
+
+        summary = (
+            subset.groupby("sweep_value")[y_column]
+            .agg(["mean", "std"])
+            .reset_index()
+        )
+
+        marker, linestyle = MODEL_STYLES[model_name]
+
+        ax.errorbar(
+            summary["sweep_value"],
+            summary["mean"],
+            yerr=summary["std"].fillna(0.0),
+            label=MODEL_DISPLAY_NAMES[model_name],
+            marker=marker,
+            linestyle=linestyle,
+            markersize=7,
+            capsize=4,
+        )
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_xlim(left=0)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.legend(loc="best", ncol=2)
+
+    fig.tight_layout()
+
+    fig.savefig(
+        FIG_DIR / f"{filename}.png",
+        dpi=600,
+        bbox_inches="tight",
+    )
+    fig.savefig(
+        FIG_DIR / f"{filename}.eps",
+        format="eps",
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    plt.show()
+    plt.close(fig)
+
+
+# ------------------------------------------------------------
+# Figure 1: Energy consumption vs. latency constraint
+# ------------------------------------------------------------
+plot_model_comparison(
+    energy_latency_df,
+    x_label="Maximum permitted latency (ms)",
+    y_column="energy_proxy",
+    y_label="Energy proxy per scheduling interval",
+    filename="Energy_vs_Latency",
+)
+
+# ------------------------------------------------------------
+# Figure 2: Throughput vs. available bandwidth
+# ------------------------------------------------------------
+plot_model_comparison(
+    throughput_bandwidth_df,
+    x_label="Available bandwidth (MHz)",
+    y_column="throughput_mbps",
+    y_label="Aggregate throughput (Mbps)",
+    filename="Throughput_vs_Bandwidth",
+)
+
+# ------------------------------------------------------------
+# Figure 3: Throughput vs. available RBs
+# ------------------------------------------------------------
+plot_model_comparison(
+    throughput_rbs_df,
+    x_label="Available resource blocks (RBs)",
+    y_column="throughput_mbps",
+    y_label="Aggregate throughput (Mbps)",
+    filename="Throughput_vs_RBs",
+)
+
+print("\n" + "=" * 70)
+print("FOUR-MODEL COMPARISON COMPLETE")
+print("=" * 70)
+print("Models:", ", ".join(MODEL_NAMES))
+print("Figures:", FIG_DIR)
+print("CSV tables:", CSV_DIR)
+print("Checkpoints:", CHECKPOINT_DIR)
+print("=" * 70)
