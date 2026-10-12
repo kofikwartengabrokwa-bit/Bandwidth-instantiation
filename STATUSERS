@@ -1,0 +1,372 @@
+E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py 
+==============================================================================
+BLOCK 1: RBF-EDGE-COVER-DDQN EXPERIMENT CONFIGURATION
+==============================================================================
+
+[System]
+Operating system       : Windows-10-10.0.22621-SP0
+Python version         : 3.11.5
+Python executable      : E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe
+NumPy version          : 1.24.3
+Pandas version         : 2.1.0
+PyTorch version        : 2.1.2+cu118
+CUDA available         : False
+Selected device        : cpu
+
+[Project]
+Project root           : E:\Abrokwa\PycharmProjects\pythonProject1
+Simulation directory   : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Database path          : E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db
+Database exists        : True
+Database size (MB)     : 5.152
+
+[Radio Resources]
+Bandwidth (MHz)        : 20.0
+Total PRBs             : 100
+Bandwidth per PRB (MHz): 0.2
+Power budget (W)       : 40.0
+Maximum users per PRB  : 10
+
+[Traffic Classes]
+eMBB         {'weight': 0.25, 'min_rate_mbps': 10.0, 'target_rate_mbps': 50.0, 'max_latency_ms': 100.0, 'min_reliability': 0.99, 'priority': 2}
+uRLLC        {'weight': 0.2, 'min_rate_mbps': 1.0, 'target_rate_mbps': 10.0, 'max_latency_ms': 5.0, 'min_reliability': 0.99999, 'priority': 5}
+MTM          {'weight': 0.15, 'min_rate_mbps': 0.05, 'target_rate_mbps': 0.25, 'max_latency_ms': 1000.0, 'min_reliability': 0.99, 'priority': 1}
+IoT          {'weight': 0.2, 'min_rate_mbps': 0.1, 'target_rate_mbps': 1.0, 'max_latency_ms': 100.0, 'min_reliability': 0.99, 'priority': 2}
+Vehicular    {'weight': 0.2, 'min_rate_mbps': 5.0, 'target_rate_mbps': 20.0, 'max_latency_ms': 10.0, 'min_reliability': 0.999, 'priority': 4}
+
+[Training]
+Random seed            : 1220
+Episodes               : 1000
+Steps per episode      : 100
+Evaluation episodes    : 20
+Learning rate          : 0.0003
+Discount factor        : 0.99
+Replay buffer capacity : 50000
+Batch size             : 128
+
+[Scalability]
+User counts            : [100, 200, 300, 400, 500, 600, 800, 1000]
+
+[Algorithms]
+RBF-EdgeCover-DDQN       Plot label: Ours
+GGN-DDQN                 Plot label: GGN-DDQN
+GCN-DDQN                 Plot label: GCN-DDQN
+DDQN                     Plot label: DDQN
+
+[Output Directories]
+Results                : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN
+CSV                    : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv
+Figures                : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\figures
+Models                 : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+Checkpoints            : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models\checkpoints
+Logs                   : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\logs
+
+[Database Validation]
+Available tables       : ['lower_layer_data']
+
+Block 1 completed successfully.
+No training has started.
+No source database has been modified.
+==============================================================================
+
+===========================================================================
+BLOCK 2: RADIO DATASET LOADING AND VALIDATION
+===========================================================================
+Project directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Database path: E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db
+Database exists: True
+Database tables: ['lower_layer_data']
+
+Dataset shape: (45244, 25)
+Rows: 45,244
+Columns: 25
+
+--- Dataset columns and data types ---
+            column   dtype  missing  unique_values
+           dlBytes   int64        0          44737
+             dlMcs   int64        0             23
+            dlBler float64        0          28623
+           ulBytes   int64        0          43888
+             ulMcs   int64        0             21
+            ulBler float64        0          30258
+                ri   int64        0              1
+               phr   int64        0             32
+             pcmax   int64        0              6
+              rsrq float64        0             22
+              sinr float64        0             61
+              rsrp   int64        0             31
+              rssi float64        0            157
+               cqi   int64        0              3
+          pucchSnr float64        0             35
+          puschSnr float64        0             87
+             ue_id float64        0              9
+         timestamp float64        0          31550
+            cellid float64        0              1
+           in_sync float64        0              1
+              rnti  object     1540             45
+               pmi  object        0              1
+      traffic_type   int64        0              2
+   attack_category  object        0              6
+attack_subcategory  object        0             19
+
+--- Column classification ---
+Identifier columns: ['ue_id', 'timestamp', 'rnti']
+Label/category columns: ['traffic_type', 'attack_category', 'attack_subcategory']
+Constant numerical columns: ['ri', 'cellid', 'in_sync']
+Candidate numerical features: 18
+Usable numerical features: 15
+Feature names: ['dlBytes', 'dlMcs', 'dlBler', 'ulBytes', 'ulMcs', 'ulBler', 'phr', 'pcmax', 'rsrq', 'sinr', 'rsrp', 'rssi', 'cqi', 'pucchSnr', 'puschSnr']
+
+--- Data quality checks ---
+Missing cells in original data: 1,540
+Duplicate rows: 0
+Rows with invalid radio features: 0
+Usable rows: 45,244
+
+--- Traffic-type distribution ---
+traffic_type
+1    34580
+0    10664
+
+--- Numerical feature statistics ---
+            count          mean           std    min           25%           50%           75%           max
+dlBytes   45244.0  5.281520e+08  1.009603e+09    0.0  2.298549e+07  5.430307e+07  3.123111e+08  4.066047e+09
+dlMcs     45244.0  1.320162e+01  5.339175e+00    0.0  9.000000e+00  1.200000e+01  1.800000e+01  2.700000e+01
+dlBler    45244.0  1.635500e-01  2.886642e-01    0.0  0.000000e+00  4.943350e-02  1.191222e-01  9.898450e-01
+ulBytes   45244.0  8.894351e+08  1.551875e+09    0.0  5.522737e+07  1.073774e+08  9.806346e+08  5.249338e+09
+ulMcs     45244.0  9.457630e+00  3.494340e+00    0.0  6.000000e+00  9.000000e+00  1.200000e+01  2.000000e+01
+ulBler    45244.0  2.011635e-01  3.340186e-01    0.0  1.259525e-02  6.457000e-02  1.380002e-01  1.000000e+00
+phr       45244.0  1.970310e+01  4.641555e+00   -2.0  1.700000e+01  1.900000e+01  2.300000e+01  3.800000e+01
+pcmax     45244.0  2.078123e+01  1.193089e+01  -29.0  2.300000e+01  2.400000e+01  2.400000e+01  2.500000e+01
+rsrq      45244.0 -1.090909e+01  6.145877e-01  -32.0 -1.100000e+01 -1.100000e+01 -1.050000e+01 -1.050000e+01
+sinr      45244.0  1.640526e+01  5.756581e+00  -10.5  1.250000e+01  1.650000e+01  2.150000e+01  2.350000e+01
+rsrp      45244.0 -9.965052e+01  4.472136e+00 -123.0 -1.030000e+02 -1.000000e+02 -9.600000e+01 -9.000000e+01
+rssi      45244.0 -6.872819e+01  6.501045e+00  -84.4 -7.240000e+01 -7.100000e+01 -6.890000e+01 -5.140000e+01
+cqi       45244.0  1.472509e+01  6.837328e-01   13.0  1.500000e+01  1.500000e+01  1.500000e+01  1.500000e+01
+pucchSnr  45244.0  1.717140e+01  6.381331e+00    1.0  1.800000e+01  1.900000e+01  2.000000e+01  4.400000e+01
+puschSnr  45244.0  1.736417e+01  7.906955e+00    0.5  1.600000e+01  1.850000e+01  2.050000e+01  4.350000e+01
+
+--- Block 2 summary ---
+Clean dataset shape: (45244, 25)
+Radio features: 15
+Traffic column: traffic_type
+Column report: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\dataset_column_report.csv
+Feature summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\radio_feature_summary.csv
+
+Block 2 completed successfully.
+No model training has started.
+The original SQLite database was not modified.
+
+===========================================================================
+BLOCK 3: SHARED RAN SLICING ENVIRONMENT
+===========================================================================
+Dataset rows used: 45,244
+Numerical radio features used: 15
+Resource pool: 100 RBs / 20.0 MHz
+Maximum transmit-power budget: 40.0 W
+
+--- Environment smoke-test results ---
+State dimension: 28
+Action dimension: 5
+Users per slice: [25, 20, 15, 20, 20]
+Episode steps: 100
+Total allocated RBs: 100
+Final RB allocation: [23, 19, 22, 15, 21]
+Episode reward: 47.1429
+Estimated rate (Mbps): [4.3266, 4.1351, 5.5015, 2.6032, 4.3672]
+Estimated latency (ms): [2.8696, 0.2132, 25.4545, 15.3333, 0.6905]
+Power allocation (W): [9.2, 7.6, 8.8, 6.0, 8.4]
+Energy per 1-ms interval (J): [0.0092, 0.0076, 0.0088, 0.006, 0.0084]
+
+Block 3 completed successfully.
+The random-policy smoke test passed.
+No learning agent has been trained.
+
+===========================================================================
+BLOCK 4: REPLAY BUFFER AND DDQN NETWORK COMPONENTS
+===========================================================================
+Device: cpu
+State dimension: 28
+Action dimension: 5
+Replay capacity: 50,000
+Batch size: 128
+Discount factor: 0.99
+Learning rate: 0.0003
+
+--- Replay buffer test ---
+Stored transitions: 10
+Sample state batch shape: (4, 28)
+Sample action batch shape: (4,)
+
+--- Neural-network forward-pass tests ---
+DDQN                   | Q-value shape: (4, 5) | parameters: 20,869
+GCN-DDQN               | Q-value shape: (4, 5) | parameters: 34,821
+GGN-DDQN               | Q-value shape: (4, 5) | parameters: 150,149
+RBF-EdgeCover-DDQN     | Q-value shape: (4, 5) | parameters: 27,269
+
+Block 4 completed successfully.
+Replay buffer and four Q-network architectures passed smoke tests.
+No episode training has started.
+
+===========================================================================
+BLOCK 5: DDQN AGENT IMPLEMENTATION
+===========================================================================
+Device: cpu
+Algorithms: ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+Batch size: 128
+Replay capacity: 50,000
+Warm-up transitions: 500
+
+RBF initialization states: (256, 28)
+
+--- Agent initialization and learning smoke test ---
+[transformers] Disabling PyTorch because PyTorch >= 2.4 is required but found 2.1.2+cu118
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+RBF-EdgeCover-DDQN     | action=0 | buffer= 500 | loss=0.117270 | epsilon=0.9765
+GGN-DDQN               | action=3 | buffer= 500 | loss=0.195496 | epsilon=0.9765
+GCN-DDQN               | action=1 | buffer= 500 | loss=0.185395 | epsilon=0.9765
+DDQN                   | action=2 | buffer= 500 | loss=0.181221 | epsilon=0.9765
+
+Block 5 completed successfully.
+All four agents selected valid actions and completed a learning update.
+The test updates above are component checks, not full episode training.
+========================================================================
+BLOCK 6: FULL TRAINING AND EVALUATION
+========================================================================
+Device: cpu
+Episodes per algorithm/load: 1000
+Evaluation episodes: 20
+User loads: [100, 200, 300, 400, 500, 600, 800, 1000]
+Algorithms: ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+Models saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+
+########################################################################
+TRAINING FOR USER LOAD: 100
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 100
+Episode    1/1000 | Mean reward=  44.7525 | Loss=      nan | Epsilon=0.9953
+Episode   50/1000 | Mean reward=  45.8698 | Loss=  0.01597 | Epsilon=0.7899
+Episode  100/1000 | Mean reward=  46.0322 | Loss=  0.03135 | Epsilon=0.6262
+Episode  150/1000 | Mean reward=  45.9381 | Loss=  0.06204 | Epsilon=0.4987
+Episode  200/1000 | Mean reward=  45.8810 | Loss=  0.06753 | Epsilon=0.3995
+Episode  250/1000 | Mean reward=  45.9785 | Loss=  0.07332 | Epsilon=0.3222
+Episode  300/1000 | Mean reward=  45.8599 | Loss=  0.11424 | Epsilon=0.2620
+Episode  350/1000 | Mean reward=  45.9273 | Loss=  0.07233 | Epsilon=0.2151
+Episode  400/1000 | Mean reward=  45.9722 | Loss=  0.06663 | Epsilon=0.1786
+Episode  450/1000 | Mean reward=  46.0529 | Loss=  0.06281 | Epsilon=0.1501
+Episode  500/1000 | Mean reward=  46.0604 | Loss=  0.05276 | Epsilon=0.1280
+Episode  550/1000 | Mean reward=  46.0812 | Loss=  0.03065 | Epsilon=0.1107
+Episode  600/1000 | Mean reward=  46.2258 | Loss=  0.01744 | Epsilon=0.0973
+Episode  650/1000 | Mean reward=  46.1073 | Loss=  0.01870 | Epsilon=0.0868
+Episode  700/1000 | Mean reward=  46.0683 | Loss=  0.01106 | Epsilon=0.0787
+Episode  750/1000 | Mean reward=  46.3008 | Loss=  0.01478 | Epsilon=0.0723
+Episode  800/1000 | Mean reward=  46.1875 | Loss=  0.01121 | Epsilon=0.0674
+Episode  850/1000 | Mean reward=  46.1613 | Loss=  0.00994 | Epsilon=0.0636
+Episode  900/1000 | Mean reward=  46.0019 | Loss=  0.01151 | Epsilon=0.0606
+Episode  950/1000 | Mean reward=  46.1866 | Loss=  0.01411 | Epsilon=0.0582
+Episode 1000/1000 | Mean reward=  46.1473 | Loss=  0.01774 | Epsilon=0.0564
+Completed RBF-EdgeCover-DDQN at 100 users | Elapsed=9.13 min | Model saved: RBF_EdgeCover_DDQN_users_100.pt
+
+Algorithm: GGN-DDQN | Users: 100
+Episode    1/1000 | Mean reward=  48.9304 | Loss=      nan | Epsilon=0.9953
+Episode   50/1000 | Mean reward=  48.7696 | Loss=  0.02475 | Epsilon=0.7899
+Episode  100/1000 | Mean reward=  48.7042 | Loss=  0.04159 | Epsilon=0.6262
+Episode  150/1000 | Mean reward=  47.3666 | Loss=  0.08329 | Epsilon=0.4987
+Episode  200/1000 | Mean reward=  47.8701 | Loss=  0.09979 | Epsilon=0.3995
+Episode  250/1000 | Mean reward=  47.4101 | Loss=  0.10500 | Epsilon=0.3222
+Episode  300/1000 | Mean reward=  47.6666 | Loss=  0.18847 | Epsilon=0.2620
+Episode  350/1000 | Mean reward=  46.5873 | Loss=  0.14341 | Epsilon=0.2151
+Episode  400/1000 | Mean reward=  45.6766 | Loss=  0.13058 | Epsilon=0.1786
+Episode  450/1000 | Mean reward=  45.1303 | Loss=  0.21865 | Epsilon=0.1501
+Episode  500/1000 | Mean reward=  44.4880 | Loss=  0.22442 | Epsilon=0.1280
+Episode  550/1000 | Mean reward=  45.4996 | Loss=  0.18505 | Epsilon=0.1107
+Episode  600/1000 | Mean reward=  46.3337 | Loss=  0.21296 | Epsilon=0.0973
+Episode  650/1000 | Mean reward=  47.2507 | Loss=  0.32275 | Epsilon=0.0868
+Episode  700/1000 | Mean reward=  46.5715 | Loss=  0.24499 | Epsilon=0.0787
+Episode  750/1000 | Mean reward=  45.8178 | Loss=  0.29058 | Epsilon=0.0723
+Episode  800/1000 | Mean reward=  46.2743 | Loss=  0.26614 | Epsilon=0.0674
+Episode  850/1000 | Mean reward=  46.3851 | Loss=  0.24588 | Epsilon=0.0636
+Episode  900/1000 | Mean reward=  45.5836 | Loss=  0.32532 | Epsilon=0.0606
+Episode  950/1000 | Mean reward=  46.0074 | Loss=  0.29136 | Epsilon=0.0582
+Episode 1000/1000 | Mean reward=  46.2691 | Loss=  0.35872 | Epsilon=0.0564
+Completed GGN-DDQN at 100 users | Elapsed=24.40 min | Model saved: GGN_DDQN_users_100.pt
+
+Algorithm: GCN-DDQN | Users: 100
+Episode    1/1000 | Mean reward=  47.9433 | Loss=      nan | Epsilon=0.9953
+Episode   50/1000 | Mean reward=  48.7694 | Loss=  0.02529 | Epsilon=0.7899
+Episode  100/1000 | Mean reward=  50.0838 | Loss=  0.04398 | Epsilon=0.6262
+Episode  150/1000 | Mean reward=  49.2615 | Loss=  0.08748 | Epsilon=0.4987
+Episode  200/1000 | Mean reward=  49.1242 | Loss=  0.10499 | Epsilon=0.3995
+Episode  250/1000 | Mean reward=  47.6265 | Loss=  0.11144 | Epsilon=0.3222
+Episode  300/1000 | Mean reward=  48.4228 | Loss=  0.20227 | Epsilon=0.2620
+Episode  350/1000 | Mean reward=  46.7675 | Loss=  0.15186 | Epsilon=0.2151
+Episode  400/1000 | Mean reward=  46.8486 | Loss=  0.13474 | Epsilon=0.1786
+Episode  450/1000 | Mean reward=  45.3565 | Loss=  0.22927 | Epsilon=0.1501
+Episode  500/1000 | Mean reward=  45.6287 | Loss=  0.23546 | Epsilon=0.1280
+Episode  550/1000 | Mean reward=  44.3883 | Loss=  0.19071 | Epsilon=0.1107
+Episode  600/1000 | Mean reward=  45.7298 | Loss=  0.21925 | Epsilon=0.0973
+Episode  650/1000 | Mean reward=  46.5761 | Loss=  0.33692 | Epsilon=0.0868
+Episode  700/1000 | Mean reward=  47.4570 | Loss=  0.25291 | Epsilon=0.0787
+Episode  750/1000 | Mean reward=  46.1536 | Loss=  0.30287 | Epsilon=0.0723
+Episode  800/1000 | Mean reward=  47.0238 | Loss=  0.27479 | Epsilon=0.0674
+Episode  850/1000 | Mean reward=  45.4486 | Loss=  0.25364 | Epsilon=0.0636
+Episode  900/1000 | Mean reward=  45.5666 | Loss=  0.33675 | Epsilon=0.0606
+Episode  950/1000 | Mean reward=  45.9973 | Loss=  0.30306 | Epsilon=0.0582
+Episode 1000/1000 | Mean reward=  44.5687 | Loss=  0.36762 | Epsilon=0.0564
+Completed GCN-DDQN at 100 users | Elapsed=9.10 min | Model saved: GCN_DDQN_users_100.pt
+
+Algorithm: DDQN | Users: 100
+Episode    1/1000 | Mean reward=  46.6810 | Loss=      nan | Epsilon=0.9953
+Episode   50/1000 | Mean reward=  48.9729 | Loss=  0.02310 | Epsilon=0.7899
+Episode  100/1000 | Mean reward=  50.5770 | Loss=  0.03980 | Epsilon=0.6262
+Episode  150/1000 | Mean reward=  51.8020 | Loss=  0.07663 | Epsilon=0.4987
+Episode  200/1000 | Mean reward=  53.9402 | Loss=  0.09213 | Epsilon=0.3995
+Episode  250/1000 | Mean reward=  55.1070 | Loss=  0.09400 | Epsilon=0.3222
+Episode  300/1000 | Mean reward=  55.8448 | Loss=  0.16453 | Epsilon=0.2620
+Episode  350/1000 | Mean reward=  55.8824 | Loss=  0.11417 | Epsilon=0.2151
+Episode  400/1000 | Mean reward=  55.9000 | Loss=  0.09714 | Epsilon=0.1786
+Episode  450/1000 | Mean reward=  55.5400 | Loss=  0.15658 | Epsilon=0.1501
+Episode  500/1000 | Mean reward=  55.6845 | Loss=  0.15894 | Epsilon=0.1280
+Episode  550/1000 | Mean reward=  55.8708 | Loss=  0.11724 | Epsilon=0.1107
+Episode  600/1000 | Mean reward=  55.7874 | Loss=  0.12790 | Epsilon=0.0973
+Episode  650/1000 | Mean reward=  56.0857 | Loss=  0.19195 | Epsilon=0.0868
+Episode  700/1000 | Mean reward=  55.5777 | Loss=  0.12981 | Epsilon=0.0787
+Episode  750/1000 | Mean reward=  55.4643 | Loss=  0.14975 | Epsilon=0.0723
+Episode  800/1000 | Mean reward=  55.3340 | Loss=  0.12280 | Epsilon=0.0674
+Episode  850/1000 | Mean reward=  54.7977 | Loss=  0.10125 | Epsilon=0.0636
+Episode  900/1000 | Mean reward=  55.0694 | Loss=  0.11678 | Epsilon=0.0606
+Episode  950/1000 | Mean reward=  54.3463 | Loss=  0.09142 | Epsilon=0.0582
+Episode 1000/1000 | Mean reward=  54.3951 | Loss=  0.09182 | Epsilon=0.0564
+Completed DDQN at 100 users | Elapsed=5.30 min | Model saved: DDQN_users_100.pt
+
+########################################################################
+TRAINING FOR USER LOAD: 200
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 200
+Episode    1/1000 | Mean reward=  38.2491 | Loss=      nan | Epsilon=0.9953
+Episode   50/1000 | Mean reward=  38.0539 | Loss=  0.01090 | Epsilon=0.7899
+Episode  100/1000 | Mean reward=  37.7539 | Loss=  0.02165 | Epsilon=0.6262
+Episode  150/1000 | Mean reward=  37.8910 | Loss=  0.04119 | Epsilon=0.4987
+Episode  200/1000 | Mean reward=  38.0765 | Loss=  0.04928 | Epsilon=0.3995
+Episode  250/1000 | Mean reward=  37.8115 | Loss=  0.04799 | Epsilon=0.3222
+Episode  300/1000 | Mean reward=  37.7635 | Loss=  0.07940 | Epsilon=0.2620
+Episode  350/1000 | Mean reward=  37.8608 | Loss=  0.05418 | Epsilon=0.2151
+Episode  400/1000 | Mean reward=  37.7223 | Loss=  0.04326 | Epsilon=0.1786
+Episode  450/1000 | Mean reward=  37.8428 | Loss=  0.06347 | Epsilon=0.1501
+Episode  500/1000 | Mean reward=  37.7272 | Loss=  0.05661 | Epsilon=0.1280
+Episode  550/1000 | Mean reward=  37.8643 | Loss=  0.03745 | Epsilon=0.1107
+Episode  600/1000 | Mean reward=  37.9627 | Loss=  0.03575 | Epsilon=0.0973
+Episode  650/1000 | Mean reward=  37.7128 | Loss=  0.04340 | Epsilon=0.0868
+Episode  700/1000 | Mean reward=  37.6782 | Loss=  0.02586 | Epsilon=0.0787
+Episode  750/1000 | Mean reward=  37.5450 | Loss=  0.02465 | Epsilon=0.0723
+Episode  800/1000 | Mean reward=  37.8361 | Loss=  0.01600 | Epsilon=0.0674
+Episode  850/1000 | Mean reward=  37.7131 | Loss=  0.01031 | Epsilon=0.0636
+Episode  900/1000 | Mean reward=  37.5605 | Loss=  0.00832 | Epsilon=0.0606
+Episode  950/1000 | Mean reward=  37.8125 | Loss=  0.00482 | Epsilon=0.0582
+Episode 1000/1000 | Mean reward=  37.7546 | Loss=  0.00286 | Epsilon=0.0564
+Completed RBF-EdgeCover-DDQN at 200 users | Elapsed=8.64 min | Model saved: RBF_EdgeCover_DDQN_users_200.pt
+
+Algorithm: GGN-DDQN | Users: 200
+Episode    1/1000 | Mean reward=  41.1639 | Loss=      nan | Epsilon=0.9953
