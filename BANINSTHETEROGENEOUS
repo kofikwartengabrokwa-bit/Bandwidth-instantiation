@@ -1,0 +1,4602 @@
+
+# ============================================================
+# BLOCK 1: PROJECT CONFIGURATION, IMPORTS, AND VALIDATION
+# Project: RBF-EdgeCover-DDQN for 5G RAN Slicing
+#
+# Algorithms:
+#   1. RBF-EdgeCover-DDQN (Ours)
+#   2. GGN-DDQN
+#   3. GCN-DDQN
+#   4. DDQN
+#
+# Run this block before proceeding to Block 2.
+# ============================================================
+
+import os
+import sys
+import random
+import sqlite3
+import platform
+import importlib.util
+from pathlib import Path
+from collections import Counter
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+
+# ============================================================
+# 1.1 PROJECT PATHS
+# ============================================================
+
+PROJECT_ROOT = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1"
+)
+
+BASE_DIR = PROJECT_ROOT / "pythonProject3"
+
+DATASET_FILE = PROJECT_ROOT / "Lower_Layer_Data.db"
+
+RESULT_DIR = (
+    BASE_DIR / "results" / "RBF_EdgeCover_DDQN"
+)
+
+CSV_DIR = RESULT_DIR / "csv"
+FIGURE_DIR = RESULT_DIR / "figures"
+MODEL_DIR = RESULT_DIR / "models"
+CHECKPOINT_DIR = MODEL_DIR / "checkpoints"
+LOG_DIR = RESULT_DIR / "logs"
+
+for folder in (
+    CSV_DIR,
+    FIGURE_DIR,
+    MODEL_DIR,
+    CHECKPOINT_DIR,
+    LOG_DIR,
+):
+    folder.mkdir(parents=True, exist_ok=True)
+
+
+# ============================================================
+# 1.2 REPRODUCIBLE EXPERIMENT CONFIGURATION
+# ============================================================
+
+SEED = 1220
+
+# User-load scalability experiments.
+USER_COUNTS = [
+    100, 200, 300, 400, 500, 600, 800, 1000
+]
+
+# The five traffic classes in your configuration.
+TRAFFIC_CLASSES = [
+    "eMBB",
+    "uRLLC",
+    "MTM",
+    "IoT",
+    "Vehicular",
+]
+
+# Ours is listed first in the comparison plots.
+ALGORITHMS = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN",
+]
+
+ALGORITHM_LABELS = {
+    "RBF-EdgeCover-DDQN": "Ours",
+    "GGN-DDQN": "GGN-DDQN",
+    "GCN-DDQN": "GCN-DDQN",
+    "DDQN": "DDQN",
+}
+
+
+# ============================================================
+# 1.3 TRAINING CONFIGURATION
+# ============================================================
+
+# These preserve the settings supplied in your original code.
+NUM_EPISODES = 1000
+MAX_STEPS_PER_EPISODE = 100
+EVALUATION_EPISODES = 20
+
+# A training schedule for later blocks.
+# The number of episodes actually used will be controlled
+# explicitly in the training block.
+LEARNING_RATE = 3e-4
+GAMMA = 0.99
+REPLAY_BUFFER_CAPACITY = 50000
+BATCH_SIZE = 128
+TARGET_UPDATE_INTERVAL = 250
+EPSILON_START = 1.0
+EPSILON_END = 0.05
+EPSILON_DECAY_STEPS = 20000
+
+# These are initial architecture settings, to be used later.
+HIDDEN_DIM = 128
+
+
+# ============================================================
+# 1.4 RADIO RESOURCE BUDGETS
+# ============================================================
+
+TOTAL_BANDWIDTH_MHZ = 20.0
+TOTAL_RBS = 100
+MAX_TRANSMIT_POWER_W = 40.0
+
+# Preserve the occupancy abstraction in your earlier block.
+MAX_USERS_PER_RB = 10
+
+RB_BANDWIDTH_MHZ = TOTAL_BANDWIDTH_MHZ / TOTAL_RBS
+
+
+# ============================================================
+# 1.5 TRAFFIC PROFILES
+# ============================================================
+
+TRAFFIC_PROFILES = {
+    "eMBB": {
+        "weight": 0.25,
+        "min_rate_mbps": 10.0,
+        "target_rate_mbps": 50.0,
+        "max_latency_ms": 100.0,
+        "min_reliability": 0.99,
+        "priority": 2,
+    },
+
+    "uRLLC": {
+        "weight": 0.20,
+        "min_rate_mbps": 1.0,
+        "target_rate_mbps": 10.0,
+        "max_latency_ms": 5.0,
+        "min_reliability": 0.99999,
+        "priority": 5,
+    },
+
+    "MTM": {
+        "weight": 0.15,
+        "min_rate_mbps": 0.05,
+        "target_rate_mbps": 0.25,
+        "max_latency_ms": 1000.0,
+        "min_reliability": 0.99,
+        "priority": 1,
+    },
+
+    "IoT": {
+        "weight": 0.20,
+        "min_rate_mbps": 0.1,
+        "target_rate_mbps": 1.0,
+        "max_latency_ms": 100.0,
+        "min_reliability": 0.99,
+        "priority": 2,
+    },
+
+    "Vehicular": {
+        "weight": 0.20,
+        "min_rate_mbps": 5.0,
+        "target_rate_mbps": 20.0,
+        "max_latency_ms": 10.0,
+        "min_reliability": 0.999,
+        "priority": 4,
+    },
+}
+
+
+# ============================================================
+# 1.6 RBF-EDGE-COVER CONFIGURATION
+# ============================================================
+
+RBF_NUM_CENTERS = 64
+
+# None means estimate the RBF width from training observations.
+RBF_SIGMA = None
+
+RBF_EPS = 1e-8
+
+# Edge-cover candidate selection will be implemented in a
+# subsequent block and integrated into the proposed policy.
+EDGE_COVER_MAX_USERS_PER_RB = MAX_USERS_PER_RB
+
+
+# ============================================================
+# 1.7 COMPUTATION DEVICE
+# ============================================================
+
+DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+
+
+# ============================================================
+# 1.8 RANDOM-SEED INITIALIZATION
+# ============================================================
+
+def set_global_seed(seed=SEED):
+    """Initialize random generators for reproducibility."""
+
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+    # Deterministic settings, where supported.
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+set_global_seed(SEED)
+
+
+# ============================================================
+# 1.9 PLOTTING STYLE
+# ============================================================
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 19,
+    "axes.labelsize": 20,
+    "xtick.labelsize": 17,
+    "ytick.labelsize": 17,
+    "legend.fontsize": 15,
+    "lines.linewidth": 2.2,
+    "axes.linewidth": 1.2,
+    "savefig.dpi": 600,
+    "figure.dpi": 150,
+    "axes.grid": True,
+    "grid.linestyle": "--",
+    "grid.alpha": 0.30,
+})
+
+
+# ============================================================
+# 1.10 CONFIGURATION VALIDATION
+# ============================================================
+
+assert len(TRAFFIC_CLASSES) == 5
+
+assert set(TRAFFIC_CLASSES) == set(TRAFFIC_PROFILES.keys())
+
+assert np.isclose(
+    sum(
+        TRAFFIC_PROFILES[c]["weight"]
+        for c in TRAFFIC_CLASSES
+    ),
+    1.0,
+), "Traffic-class weights must sum to one."
+
+assert TOTAL_BANDWIDTH_MHZ > 0
+assert TOTAL_RBS > 0
+assert MAX_TRANSMIT_POWER_W > 0
+
+assert NUM_EPISODES > 0
+assert MAX_STEPS_PER_EPISODE > 0
+assert EVALUATION_EPISODES > 0
+
+assert len(USER_COUNTS) == len(set(USER_COUNTS))
+assert all(n > 0 for n in USER_COUNTS)
+
+assert len(ALGORITHMS) == 4
+
+
+# ============================================================
+# 1.11 SYSTEM AND DATABASE CHECKS
+# ============================================================
+
+print("=" * 78)
+print("BLOCK 1: RBF-EDGE-COVER-DDQN EXPERIMENT CONFIGURATION")
+print("=" * 78)
+
+print("\n[System]")
+print("Operating system       :", platform.platform())
+print("Python version         :", sys.version.split()[0])
+print("Python executable      :", sys.executable)
+print("NumPy version          :", np.__version__)
+print("Pandas version         :", pd.__version__)
+print("PyTorch version        :", torch.__version__)
+print("CUDA available         :", torch.cuda.is_available())
+print("Selected device        :", DEVICE)
+
+if torch.cuda.is_available():
+    print("GPU device              :", torch.cuda.get_device_name(0))
+
+print("\n[Project]")
+print("Project root           :", PROJECT_ROOT)
+print("Simulation directory   :", BASE_DIR)
+print("Database path          :", DATASET_FILE)
+print("Database exists        :", DATASET_FILE.is_file())
+
+if DATASET_FILE.is_file():
+    print(
+        "Database size (MB)     :",
+        round(DATASET_FILE.stat().st_size / (1024 ** 2), 3)
+    )
+
+print("\n[Radio Resources]")
+print("Bandwidth (MHz)        :", TOTAL_BANDWIDTH_MHZ)
+print("Total PRBs             :", TOTAL_RBS)
+print("Bandwidth per PRB (MHz):", RB_BANDWIDTH_MHZ)
+print("Power budget (W)       :", MAX_TRANSMIT_POWER_W)
+print("Maximum users per PRB  :", MAX_USERS_PER_RB)
+
+print("\n[Traffic Classes]")
+for traffic_class in TRAFFIC_CLASSES:
+    print(
+        f"{traffic_class:12s}",
+        TRAFFIC_PROFILES[traffic_class]
+    )
+
+print("\n[Training]")
+print("Random seed            :", SEED)
+print("Episodes               :", NUM_EPISODES)
+print("Steps per episode      :", MAX_STEPS_PER_EPISODE)
+print("Evaluation episodes    :", EVALUATION_EPISODES)
+print("Learning rate          :", LEARNING_RATE)
+print("Discount factor        :", GAMMA)
+print("Replay buffer capacity :", REPLAY_BUFFER_CAPACITY)
+print("Batch size             :", BATCH_SIZE)
+
+print("\n[Scalability]")
+print("User counts            :", USER_COUNTS)
+
+print("\n[Algorithms]")
+for algorithm in ALGORITHMS:
+    print(
+        f"{algorithm:24s}",
+        "Plot label:",
+        ALGORITHM_LABELS[algorithm]
+    )
+
+print("\n[Output Directories]")
+print("Results                :", RESULT_DIR)
+print("CSV                    :", CSV_DIR)
+print("Figures                :", FIGURE_DIR)
+print("Models                 :", MODEL_DIR)
+print("Checkpoints            :", CHECKPOINT_DIR)
+print("Logs                   :", LOG_DIR)
+
+print("\n[Database Validation]")
+
+if not DATASET_FILE.is_file():
+    raise FileNotFoundError(
+        "The database was not found. Check DATASET_FILE."
+    )
+
+with sqlite3.connect(str(DATASET_FILE)) as conn:
+    table_names = pd.read_sql_query(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type='table'
+        ORDER BY name
+        """,
+        conn,
+    )["name"].tolist()
+
+print("Available tables       :", table_names)
+
+if "lower_layer_data" not in table_names:
+    raise RuntimeError(
+        "Expected table 'lower_layer_data' was not found. "
+        "Please inspect the available table names above."
+    )
+
+print("\nBlock 1 completed successfully.")
+print("No training has started.")
+print("No source database has been modified.")
+print("=" * 78)
+
+
+# ============================================================
+# BLOCK 2: LOAD AND VALIDATE THE REAL RADIO DATASET
+# ============================================================
+
+import sqlite3
+import numpy as np
+import pandas as pd
+from pathlib import Path
+
+print("\n" + "=" * 75)
+print("BLOCK 2: RADIO DATASET LOADING AND VALIDATION")
+print("=" * 75)
+
+# ------------------------------------------------------------
+# 2.1 Explicitly define paths (does not depend on Block 1)
+# ------------------------------------------------------------
+PROJECT_DIR = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3"
+)
+
+DB_PATH = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db"
+)
+
+OUTPUT_DIR = PROJECT_DIR / "results" / "RBF_EdgeCover_DDQN"
+CSV_DIR = OUTPUT_DIR / "csv"
+
+CSV_DIR.mkdir(parents=True, exist_ok=True)
+
+if not DB_PATH.exists():
+    raise FileNotFoundError(
+        f"Database not found: {DB_PATH}\n"
+        "Check that Lower_Layer_Data.db exists at this location."
+    )
+
+print(f"Project directory: {PROJECT_DIR}")
+print(f"Database path: {DB_PATH}")
+print(f"Database exists: {DB_PATH.exists()}")
+
+# ------------------------------------------------------------
+# 2.2 Load the source table
+# ------------------------------------------------------------
+with sqlite3.connect(str(DB_PATH)) as conn:
+    table_names = pd.read_sql_query(
+        "SELECT name FROM sqlite_master WHERE type='table'",
+        conn
+    )["name"].tolist()
+
+    print(f"Database tables: {table_names}")
+
+    if "lower_layer_data" not in table_names:
+        raise RuntimeError(
+            "Table 'lower_layer_data' was not found. "
+            f"Available tables: {table_names}"
+        )
+
+    DATA_DF = pd.read_sql_query(
+        'SELECT * FROM "lower_layer_data"',
+        conn
+    )
+
+if DATA_DF.empty:
+    raise RuntimeError("The source table is empty.")
+
+print(f"\nDataset shape: {DATA_DF.shape}")
+print(f"Rows: {len(DATA_DF):,}")
+print(f"Columns: {len(DATA_DF.columns)}")
+
+# ------------------------------------------------------------
+# 2.3 Inspect columns and data quality
+# ------------------------------------------------------------
+COLUMN_REPORT = pd.DataFrame({
+    "column": DATA_DF.columns,
+    "dtype": [str(DATA_DF[c].dtype) for c in DATA_DF.columns],
+    "missing": [int(DATA_DF[c].isna().sum()) for c in DATA_DF.columns],
+    "unique_values": [
+        int(DATA_DF[c].nunique(dropna=True))
+        for c in DATA_DF.columns
+    ]
+})
+
+print("\n--- Dataset columns and data types ---")
+print(COLUMN_REPORT.to_string(index=False))
+
+# ------------------------------------------------------------
+# 2.4 Identify identifier, label, and numerical columns
+# ------------------------------------------------------------
+def normalize_column_name(column):
+    return (
+        str(column).strip().lower()
+        .replace("-", "_")
+        .replace(" ", "_")
+    )
+
+NORMALIZED_COLUMNS = {
+    c: normalize_column_name(c) for c in DATA_DF.columns
+}
+
+IDENTIFIER_NAMES = {
+    "rnti", "imsi", "ue_id", "user_id", "subscriber_id",
+    "timestamp", "time", "row_id", "id"
+}
+
+LABEL_NAMES = {
+    "traffic_type", "attack_category", "attack_subcategory",
+    "label", "class", "target"
+}
+
+IDENTIFIER_COLUMNS = [
+    c for c in DATA_DF.columns
+    if NORMALIZED_COLUMNS[c] in IDENTIFIER_NAMES
+]
+
+LABEL_COLUMNS = [
+    c for c in DATA_DF.columns
+    if NORMALIZED_COLUMNS[c] in LABEL_NAMES
+]
+
+NUMERIC_COLUMNS = DATA_DF.select_dtypes(
+    include=[np.number]
+).columns.tolist()
+
+EXCLUDED_COLUMNS = set(IDENTIFIER_COLUMNS + LABEL_COLUMNS)
+
+CANDIDATE_FEATURES = [
+    c for c in NUMERIC_COLUMNS
+    if c not in EXCLUDED_COLUMNS
+]
+
+CONSTANT_COLUMNS = [
+    c for c in CANDIDATE_FEATURES
+    if DATA_DF[c].nunique(dropna=True) <= 1
+]
+
+RADIO_FEATURE_COLUMNS = [
+    c for c in CANDIDATE_FEATURES
+    if c not in CONSTANT_COLUMNS
+]
+
+if not RADIO_FEATURE_COLUMNS:
+    raise RuntimeError(
+        "No varying numerical radio features were detected. "
+        "Inspect the dataset column report."
+    )
+
+print("\n--- Column classification ---")
+print("Identifier columns:", IDENTIFIER_COLUMNS)
+print("Label/category columns:", LABEL_COLUMNS)
+print("Constant numerical columns:", CONSTANT_COLUMNS)
+print("Candidate numerical features:", len(CANDIDATE_FEATURES))
+print("Usable numerical features:", len(RADIO_FEATURE_COLUMNS))
+print("Feature names:", RADIO_FEATURE_COLUMNS)
+
+# ------------------------------------------------------------
+# 2.5 Clean invalid feature values in a working copy
+# ------------------------------------------------------------
+DATA_CLEAN_DF = DATA_DF.copy()
+
+for column in RADIO_FEATURE_COLUMNS:
+    DATA_CLEAN_DF[column] = pd.to_numeric(
+        DATA_CLEAN_DF[column], errors="coerce"
+    )
+
+DATA_CLEAN_DF[RADIO_FEATURE_COLUMNS] = (
+    DATA_CLEAN_DF[RADIO_FEATURE_COLUMNS]
+    .replace([np.inf, -np.inf], np.nan)
+)
+
+MISSING_TOTAL = int(DATA_DF.isna().sum().sum())
+DUPLICATE_ROWS = int(DATA_DF.duplicated().sum())
+
+INVALID_FEATURE_ROWS = int(
+    DATA_CLEAN_DF[RADIO_FEATURE_COLUMNS]
+    .isna().any(axis=1).sum()
+)
+
+DATA_CLEAN_DF = DATA_CLEAN_DF.dropna(
+    subset=RADIO_FEATURE_COLUMNS
+).copy()
+
+if DATA_CLEAN_DF.empty:
+    raise RuntimeError(
+        "No usable records remain after removing invalid feature rows."
+    )
+
+print("\n--- Data quality checks ---")
+print(f"Missing cells in original data: {MISSING_TOTAL:,}")
+print(f"Duplicate rows: {DUPLICATE_ROWS:,}")
+print(f"Rows with invalid radio features: {INVALID_FEATURE_ROWS:,}")
+print(f"Usable rows: {len(DATA_CLEAN_DF):,}")
+
+# ------------------------------------------------------------
+# 2.6 Traffic-type distribution
+# ------------------------------------------------------------
+TRAFFIC_TYPE_COLUMN = next(
+    (
+        c for c in DATA_CLEAN_DF.columns
+        if NORMALIZED_COLUMNS[c] == "traffic_type"
+    ),
+    None
+)
+
+if TRAFFIC_TYPE_COLUMN is not None:
+    TRAFFIC_COUNTS = (
+        DATA_CLEAN_DF[TRAFFIC_TYPE_COLUMN]
+        .fillna("Unknown")
+        .astype(str)
+        .value_counts()
+    )
+
+    print("\n--- Traffic-type distribution ---")
+    print(TRAFFIC_COUNTS.to_string())
+else:
+    TRAFFIC_COUNTS = None
+    print("\nNo traffic_type column detected.")
+
+# ------------------------------------------------------------
+# 2.7 Numerical feature summary
+# ------------------------------------------------------------
+FEATURE_SUMMARY = DATA_CLEAN_DF[
+    RADIO_FEATURE_COLUMNS
+].describe().T
+
+print("\n--- Numerical feature statistics ---")
+print(FEATURE_SUMMARY.to_string())
+
+# ------------------------------------------------------------
+# 2.8 Save reports
+# ------------------------------------------------------------
+DATASET_REPORT_PATH = CSV_DIR / "dataset_column_report.csv"
+FEATURE_SUMMARY_PATH = CSV_DIR / "radio_feature_summary.csv"
+
+COLUMN_REPORT.to_csv(DATASET_REPORT_PATH, index=False)
+FEATURE_SUMMARY.to_csv(FEATURE_SUMMARY_PATH)
+
+print("\n--- Block 2 summary ---")
+print(f"Clean dataset shape: {DATA_CLEAN_DF.shape}")
+print(f"Radio features: {len(RADIO_FEATURE_COLUMNS)}")
+print(f"Traffic column: {TRAFFIC_TYPE_COLUMN}")
+print(f"Column report: {DATASET_REPORT_PATH}")
+print(f"Feature summary: {FEATURE_SUMMARY_PATH}")
+print("\nBlock 2 completed successfully.")
+print("No model training has started.")
+print("The original SQLite database was not modified.")
+
+
+
+# ============================================================
+# BLOCK 3: SELF-CONTAINED SHARED RAN SLICING ENVIRONMENT
+# ============================================================
+
+import numpy as np
+import pandas as pd
+from pathlib import Path
+
+print("\n" + "=" * 75)
+print("BLOCK 3: SHARED RAN SLICING ENVIRONMENT")
+print("=" * 75)
+
+# ------------------------------------------------------------
+# 3.1 SELF-CONTAINED CONFIGURATION
+# ------------------------------------------------------------
+SEED = 1220
+
+USER_COUNTS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+TOTAL_RBS = 100
+TOTAL_BANDWIDTH_MHZ = 20.0
+TOTAL_POWER_W = 40.0
+MAX_USERS_PER_RB = 10
+MAX_STEPS_PER_EPISODE = TOTAL_RBS
+SLOT_DURATION_S = 0.001
+
+SLICE_NAMES = ["eMBB", "uRLLC", "MTM", "IoT", "Vehicular"]
+NUM_SLICES = len(SLICE_NAMES)
+NUMERICAL_EPS = 1e-8
+
+# Traffic profiles: all rates are in Mbps and latencies in ms.
+TRAFFIC_PROFILES = {
+    "eMBB": {
+        "weight": 0.25, "min_rate_mbps": 10.0,
+        "target_rate_mbps": 50.0, "max_latency_ms": 100.0,
+        "reliability": 0.99, "priority": 2
+    },
+    "uRLLC": {
+        "weight": 0.20, "min_rate_mbps": 1.0,
+        "target_rate_mbps": 10.0, "max_latency_ms": 5.0,
+        "reliability": 0.99999, "priority": 5
+    },
+    "MTM": {
+        "weight": 0.15, "min_rate_mbps": 0.05,
+        "target_rate_mbps": 0.25, "max_latency_ms": 1000.0,
+        "reliability": 0.99, "priority": 1
+    },
+    "IoT": {
+        "weight": 0.20, "min_rate_mbps": 0.1,
+        "target_rate_mbps": 1.0, "max_latency_ms": 100.0,
+        "reliability": 0.99, "priority": 2
+    },
+    "Vehicular": {
+        "weight": 0.20, "min_rate_mbps": 5.0,
+        "target_rate_mbps": 20.0, "max_latency_ms": 10.0,
+        "reliability": 0.999, "priority": 4
+    }
+}
+
+SLICE_WEIGHTS = np.array(
+    [TRAFFIC_PROFILES[s]["weight"] for s in SLICE_NAMES],
+    dtype=np.float64
+)
+SLICE_MIN_RATE = np.array(
+    [TRAFFIC_PROFILES[s]["min_rate_mbps"] for s in SLICE_NAMES],
+    dtype=np.float64
+)
+SLICE_TARGET_RATE = np.array(
+    [TRAFFIC_PROFILES[s]["target_rate_mbps"] for s in SLICE_NAMES],
+    dtype=np.float64
+)
+SLICE_MAX_LATENCY = np.array(
+    [TRAFFIC_PROFILES[s]["max_latency_ms"] for s in SLICE_NAMES],
+    dtype=np.float64
+)
+SLICE_RELIABILITY = np.array(
+    [TRAFFIC_PROFILES[s]["reliability"] for s in SLICE_NAMES],
+    dtype=np.float64
+)
+SLICE_PRIORITY = np.array(
+    [TRAFFIC_PROFILES[s]["priority"] for s in SLICE_NAMES],
+    dtype=np.float64
+)
+NORMALIZED_PRIORITY = (
+    SLICE_PRIORITY / SLICE_PRIORITY.max()
+)
+
+# ------------------------------------------------------------
+# 3.2 VALIDATE THE BLOCK 2 OUTPUT
+# ------------------------------------------------------------
+if "DATA_CLEAN_DF" not in globals():
+    raise RuntimeError(
+        "DATA_CLEAN_DF is missing. Run the corrected Block 2 first."
+    )
+
+if "RADIO_FEATURE_COLUMNS" not in globals():
+    raise RuntimeError(
+        "RADIO_FEATURE_COLUMNS is missing. Run the corrected Block 2 first."
+    )
+
+RADIO_FEATURE_COLUMNS = [
+    c for c in RADIO_FEATURE_COLUMNS
+    if c in DATA_CLEAN_DF.columns
+    and pd.api.types.is_numeric_dtype(DATA_CLEAN_DF[c])
+]
+
+if not RADIO_FEATURE_COLUMNS:
+    raise RuntimeError("No usable numerical radio features were found.")
+
+RADIO_RAW = DATA_CLEAN_DF[
+    RADIO_FEATURE_COLUMNS
+].to_numpy(dtype=np.float64)
+
+FINITE_ROWS = np.isfinite(RADIO_RAW).all(axis=1)
+RADIO_RAW = RADIO_RAW[FINITE_ROWS]
+
+if RADIO_RAW.shape[0] == 0:
+    raise RuntimeError("No finite radio-feature rows remain.")
+
+# Percentile scaling limits the influence of extreme observations.
+RADIO_LOWER = np.percentile(RADIO_RAW, 1, axis=0)
+RADIO_UPPER = np.percentile(RADIO_RAW, 99, axis=0)
+RADIO_RANGE = np.maximum(
+    RADIO_UPPER - RADIO_LOWER, NUMERICAL_EPS
+)
+
+RADIO_MATRIX_NORM = np.clip(
+    (RADIO_RAW - RADIO_LOWER) / RADIO_RANGE,
+    0.0,
+    1.0
+)
+
+VARIABLE_MASK = (
+    np.std(RADIO_MATRIX_NORM, axis=0) > NUMERICAL_EPS
+)
+RADIO_MATRIX_NORM = RADIO_MATRIX_NORM[:, VARIABLE_MASK]
+
+if RADIO_MATRIX_NORM.shape[1] == 0:
+    raise RuntimeError(
+        "All numerical features are constant after preprocessing."
+    )
+
+# Explicitly defined proxy, not a calibrated physical SINR estimate.
+RADIO_QUALITY_PROXY = np.clip(
+    RADIO_MATRIX_NORM.mean(axis=1), 0.05, 1.0
+)
+
+print(f"Dataset rows used: {len(RADIO_MATRIX_NORM):,}")
+print(f"Numerical radio features used: {RADIO_MATRIX_NORM.shape[1]}")
+print(f"Resource pool: {TOTAL_RBS} RBs / {TOTAL_BANDWIDTH_MHZ} MHz")
+print(f"Maximum transmit-power budget: {TOTAL_POWER_W} W")
+
+# ------------------------------------------------------------
+# 3.3 TRAFFIC USER COUNTS
+# ------------------------------------------------------------
+def allocate_users_by_profile(total_users):
+    """Distribute users according to configured traffic proportions."""
+    total_users = int(total_users)
+
+    if total_users < 1:
+        raise ValueError("total_users must be greater than zero.")
+
+    exact_counts = (
+        total_users * SLICE_WEIGHTS / SLICE_WEIGHTS.sum()
+    )
+    counts = np.floor(exact_counts).astype(int)
+    remainder = total_users - counts.sum()
+
+    if remainder > 0:
+        order = np.argsort(-(exact_counts - counts))
+        counts[order[:remainder]] += 1
+
+    assert counts.sum() == total_users
+    return counts
+
+
+# ------------------------------------------------------------
+# 3.4 SHARED ENVIRONMENT
+# ------------------------------------------------------------
+class RANSlicingEnvironment:
+    """
+    Shared custom RAN slicing environment.
+
+    Action:
+        Allocate the next RB to one of five traffic classes.
+
+    Observation:
+        Per-class user share, RB share, radio-quality proxy,
+        demand share, remaining resources, and episode progress.
+
+    Rate, latency, and energy are modeled estimates. They are not
+    direct measurements of physical-layer performance.
+    """
+
+    def __init__(self, total_users, seed=SEED):
+        self.total_users = int(total_users)
+        self.seed = int(seed)
+        self.rng = np.random.default_rng(self.seed)
+        self.num_users_per_slice = allocate_users_by_profile(
+            self.total_users
+        )
+
+        # 5 vectors of length NUM_SLICES plus 3 global scalars.
+        self.state_dim = 5 * NUM_SLICES + 3
+        self.action_dim = NUM_SLICES
+        self.reset(seed=self.seed)
+
+    def _sample_radio_conditions(self):
+        idx = self.rng.integers(
+            0, len(RADIO_MATRIX_NORM), size=NUM_SLICES
+        )
+        features = RADIO_MATRIX_NORM[idx]
+        quality = RADIO_QUALITY_PROXY[idx]
+        return features, quality
+
+    def _get_state(self):
+        user_share = (
+            self.num_users_per_slice / max(self.total_users, 1)
+        )
+        rb_share = self.rb_allocation / TOTAL_RBS
+
+        demand_share = user_share.copy()
+        power_share = self.power_allocation_w / TOTAL_POWER_W
+
+        state = np.concatenate([
+            user_share,
+            rb_share,
+            self.radio_quality,
+            demand_share,
+            power_share,
+            np.array([
+                self.remaining_rbs / TOTAL_RBS,
+                self.remaining_power_w / TOTAL_POWER_W,
+                self.steps / MAX_STEPS_PER_EPISODE
+            ])
+        ]).astype(np.float32)
+
+        if state.shape != (self.state_dim,):
+            raise RuntimeError(
+                f"Unexpected state shape {state.shape}; "
+                f"expected {(self.state_dim,)}"
+            )
+
+        return state
+
+    def reset(self, seed=None):
+        if seed is not None:
+            self.rng = np.random.default_rng(int(seed))
+
+        self.steps = 0
+        self.remaining_rbs = TOTAL_RBS
+        self.remaining_power_w = TOTAL_POWER_W
+
+        self.rb_allocation = np.zeros(
+            NUM_SLICES, dtype=np.int32
+        )
+        self.power_allocation_w = np.zeros(
+            NUM_SLICES, dtype=np.float64
+        )
+
+        self.radio_features, self.radio_quality = (
+            self._sample_radio_conditions()
+        )
+
+        self.done = False
+        return self._get_state()
+
+    def _estimate_metrics(self):
+        rb = self.rb_allocation.astype(np.float64)
+        users = self.num_users_per_slice.astype(np.float64)
+
+        rb_share = rb / TOTAL_RBS
+        bandwidth_mhz = rb_share * TOTAL_BANDWIDTH_MHZ
+
+        # Simplified rate model. Replace with calibrated SINR/MCS
+        # mapping when the dataset's physical radio fields are verified.
+        spectral_efficiency = 0.5 + 3.0 * self.radio_quality
+        contention = np.maximum(
+            users / MAX_USERS_PER_RB, 1.0
+        )
+
+        data_rate_mbps = (
+            bandwidth_mhz * spectral_efficiency / contention
+        )
+        data_rate_mbps = np.where(
+            rb > 0, data_rate_mbps, 0.0
+        )
+
+        # Simplified load-dependent latency model.
+        base_latency_ms = np.array([
+            2.0, 0.15, 20.0, 10.0, 0.5
+        ])
+
+        load_pressure = users / np.maximum(
+            rb * MAX_USERS_PER_RB, 1.0
+        )
+
+        latency_ms = base_latency_ms * (
+            1.0 + 4.0 * load_pressure
+        )
+
+        latency_ms = np.where(
+            rb > 0,
+            latency_ms,
+            2.0 * SLICE_MAX_LATENCY
+        )
+
+        # Split the total 40-W power budget across allocated RBs.
+        # Energy is reported for one modeled 1-ms interval.
+        power_w = np.zeros(NUM_SLICES, dtype=np.float64)
+
+        if rb.sum() > 0:
+            power_w = TOTAL_POWER_W * rb / rb.sum()
+
+        energy_j = power_w * SLOT_DURATION_S
+
+        return {
+            "data_rate_mbps": data_rate_mbps,
+            "latency_ms": latency_ms,
+            "power_w": power_w,
+            "energy_j": energy_j,
+            "bandwidth_mhz": bandwidth_mhz,
+            "rb_allocation": rb.astype(int),
+            "user_counts": users.astype(int)
+        }
+
+    def _calculate_reward(self):
+        metrics = self._estimate_metrics()
+
+        rate = metrics["data_rate_mbps"]
+        latency = metrics["latency_ms"]
+
+        target_satisfaction = np.clip(
+            rate / np.maximum(SLICE_TARGET_RATE, NUMERICAL_EPS),
+            0.0, 1.0
+        )
+
+        minimum_rate_satisfaction = np.clip(
+            rate / np.maximum(SLICE_MIN_RATE, NUMERICAL_EPS),
+            0.0, 1.0
+        )
+
+        latency_satisfaction = (
+            latency <= SLICE_MAX_LATENCY
+        ).astype(np.float64)
+
+        reliability_weight = (
+            SLICE_RELIABILITY / SLICE_RELIABILITY.max()
+        )
+
+        slice_reward = (
+            0.50 * target_satisfaction
+            + 0.25 * minimum_rate_satisfaction
+            + 0.15 * latency_satisfaction
+            + 0.10 * reliability_weight * target_satisfaction
+        )
+
+        reward = float(
+            np.sum(NORMALIZED_PRIORITY * slice_reward)
+            / np.sum(NORMALIZED_PRIORITY)
+        )
+
+        return reward, metrics
+
+    def step(self, action):
+        if self.done:
+            raise RuntimeError(
+                "Episode finished; call reset() before step()."
+            )
+
+        action = int(action)
+
+        if not 0 <= action < NUM_SLICES:
+            raise ValueError(
+                f"Action must be between 0 and {NUM_SLICES - 1}."
+            )
+
+        if self.remaining_rbs <= 0:
+            raise RuntimeError("No RBs remain to allocate.")
+
+        # One action assigns exactly one RB to a slice.
+        self.rb_allocation[action] += 1
+        self.remaining_rbs -= 1
+        self.steps += 1
+
+        # The 40-W total power budget is fully distributed once
+        # the first RB is assigned.
+        if self.rb_allocation.sum() > 0:
+            self.power_allocation_w = (
+                TOTAL_POWER_W
+                * self.rb_allocation
+                / self.rb_allocation.sum()
+            )
+        else:
+            self.power_allocation_w.fill(0.0)
+
+        self.remaining_power_w = max(
+            TOTAL_POWER_W - self.power_allocation_w.sum(), 0.0
+        )
+
+        reward, metrics = self._calculate_reward()
+
+        self.done = (
+            self.remaining_rbs == 0
+            or self.steps >= MAX_STEPS_PER_EPISODE
+        )
+
+        next_state = self._get_state()
+
+        info = {
+            "metrics": metrics,
+            "rb_allocation": self.rb_allocation.copy(),
+            "power_allocation_w": self.power_allocation_w.copy(),
+            "remaining_rbs": self.remaining_rbs
+        }
+
+        return next_state, reward, self.done, info
+
+
+# ------------------------------------------------------------
+# 3.5 ENVIRONMENT SMOKE TEST
+# ------------------------------------------------------------
+TEST_USERS = 100
+
+TEST_ENV = RANSlicingEnvironment(
+    total_users=TEST_USERS,
+    seed=SEED
+)
+
+state = TEST_ENV.reset(seed=SEED)
+
+assert state.shape == (TEST_ENV.state_dim,)
+assert TEST_ENV.action_dim == NUM_SLICES
+assert TEST_ENV.num_users_per_slice.sum() == TEST_USERS
+
+episode_reward = 0.0
+steps = 0
+done = False
+
+while not done:
+    action = int(TEST_ENV.rng.integers(0, NUM_SLICES))
+    state, reward, done, info = TEST_ENV.step(action)
+    episode_reward += reward
+    steps += 1
+
+metrics = info["metrics"]
+
+assert steps == TOTAL_RBS
+assert TEST_ENV.rb_allocation.sum() == TOTAL_RBS
+assert np.isclose(TEST_ENV.power_allocation_w.sum(), TOTAL_POWER_W)
+
+print("\n--- Environment smoke-test results ---")
+print(f"State dimension: {TEST_ENV.state_dim}")
+print(f"Action dimension: {TEST_ENV.action_dim}")
+print(f"Users per slice: {TEST_ENV.num_users_per_slice.tolist()}")
+print(f"Episode steps: {steps}")
+print(f"Total allocated RBs: {TEST_ENV.rb_allocation.sum()}")
+print(f"Final RB allocation: {TEST_ENV.rb_allocation.tolist()}")
+print(f"Episode reward: {episode_reward:.4f}")
+print(
+    "Estimated rate (Mbps):",
+    np.round(metrics["data_rate_mbps"], 4).tolist()
+)
+print(
+    "Estimated latency (ms):",
+    np.round(metrics["latency_ms"], 4).tolist()
+)
+print(
+    "Power allocation (W):",
+    np.round(metrics["power_w"], 4).tolist()
+)
+print(
+    "Energy per 1-ms interval (J):",
+    np.round(metrics["energy_j"], 6).tolist()
+)
+
+print("\nBlock 3 completed successfully.")
+print("The random-policy smoke test passed.")
+print("No learning agent has been trained.")
+
+# ============================================================
+# BLOCK 4: REPLAY BUFFER AND DDQN NETWORK COMPONENTS
+# ============================================================
+
+import random
+from collections import deque
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+print("\n" + "=" * 75)
+print("BLOCK 4: REPLAY BUFFER AND DDQN NETWORK COMPONENTS")
+print("=" * 75)
+
+# ------------------------------------------------------------
+# 4.1 SELF-CONTAINED TRAINING CONFIGURATION
+# ------------------------------------------------------------
+SEED = 1220
+
+DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+
+GAMMA = 0.99
+LEARNING_RATE = 3e-4
+BATCH_SIZE = 128
+REPLAY_CAPACITY = 50_000
+TARGET_UPDATE_FREQUENCY = 250
+
+EPSILON_START = 1.0
+EPSILON_END = 0.05
+EPSILON_DECAY_STEPS = 20_000
+
+HIDDEN_DIM = 128
+RBF_NUM_CENTERS = 64
+RBF_SIGMA = None
+RBF_EPS = 1e-8
+
+NUM_ACTIONS = NUM_SLICES
+STATE_DIM = TEST_ENV.state_dim
+
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(SEED)
+
+print(f"Device: {DEVICE}")
+if torch.cuda.is_available():
+    print(f"GPU: {torch.cuda.get_device_name(0)}")
+
+print(f"State dimension: {STATE_DIM}")
+print(f"Action dimension: {NUM_ACTIONS}")
+print(f"Replay capacity: {REPLAY_CAPACITY:,}")
+print(f"Batch size: {BATCH_SIZE}")
+print(f"Discount factor: {GAMMA}")
+print(f"Learning rate: {LEARNING_RATE}")
+
+# ------------------------------------------------------------
+# 4.2 EXPERIENCE REPLAY BUFFER
+# ------------------------------------------------------------
+class ReplayBuffer:
+    """Stores state-transition experiences for off-policy DDQN."""
+
+    def __init__(self, capacity=REPLAY_CAPACITY, seed=SEED):
+        self.buffer = deque(maxlen=int(capacity))
+        self.rng = random.Random(seed)
+
+    def push(self, state, action, reward, next_state, done):
+        self.buffer.append((
+            np.asarray(state, dtype=np.float32).copy(),
+            int(action),
+            float(reward),
+            np.asarray(next_state, dtype=np.float32).copy(),
+            float(done)
+        ))
+
+    def sample(self, batch_size):
+        if len(self.buffer) < batch_size:
+            raise ValueError(
+                f"Need {batch_size} transitions; "
+                f"buffer currently contains {len(self.buffer)}."
+            )
+
+        batch = self.rng.sample(list(self.buffer), batch_size)
+
+        states, actions, rewards, next_states, dones = zip(*batch)
+
+        return (
+            np.stack(states).astype(np.float32),
+            np.asarray(actions, dtype=np.int64),
+            np.asarray(rewards, dtype=np.float32),
+            np.stack(next_states).astype(np.float32),
+            np.asarray(dones, dtype=np.float32)
+        )
+
+    def __len__(self):
+        return len(self.buffer)
+
+
+# ------------------------------------------------------------
+# 4.3 STANDARD DDQN MLP
+# ------------------------------------------------------------
+class DDQNNetwork(nn.Module):
+    """Baseline MLP Q-network."""
+
+    def __init__(
+        self,
+        state_dim=STATE_DIM,
+        action_dim=NUM_ACTIONS,
+        hidden_dim=HIDDEN_DIM
+    ):
+        super().__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
+        )
+
+    def forward(self, state):
+        return self.network(state)
+
+
+# ------------------------------------------------------------
+# 4.4 GRAPH STRUCTURE FOR GCN/GGN ENCODERS
+# ------------------------------------------------------------
+def build_slice_adjacency():
+    """
+    Construct a fixed undirected slice-interaction graph.
+
+    eMBB, uRLLC, and Vehicular have stronger modeled interactions
+    with one another because their service allocations compete
+    for the same radio-resource pool. Every slice also has a
+    self-loop.
+
+    This is a configured interaction graph, not a graph learned
+    from the database.
+    """
+    adjacency = np.eye(NUM_SLICES, dtype=np.float32)
+
+    edges = [
+        (0, 1),  # eMBB <-> uRLLC
+        (0, 4),  # eMBB <-> Vehicular
+        (1, 4),  # uRLLC <-> Vehicular
+        (0, 2),  # eMBB <-> MTM
+        (2, 3),  # MTM <-> IoT
+        (3, 4),  # IoT <-> Vehicular
+        (1, 3)   # uRLLC <-> IoT
+    ]
+
+    for i, j in edges:
+        adjacency[i, j] = 1.0
+        adjacency[j, i] = 1.0
+
+    degree = adjacency.sum(axis=1)
+    inv_sqrt_degree = 1.0 / np.sqrt(np.maximum(degree, 1.0))
+
+    normalized = (
+        inv_sqrt_degree[:, None]
+        * adjacency
+        * inv_sqrt_degree[None, :]
+    )
+
+    return torch.tensor(normalized, dtype=torch.float32)
+
+
+SLICE_ADJACENCY = build_slice_adjacency().to(DEVICE)
+
+
+# ------------------------------------------------------------
+# 4.5 STATE-TO-GRAPH CONVERSION
+# ------------------------------------------------------------
+def state_to_slice_nodes(state):
+    """
+    Convert the environment observation into five slice nodes.
+
+    Block 3's state contains:
+      [user share, RB share, radio quality, demand share,
+       power share] for each of the five slices, followed by
+       three global scalars.
+
+    Returns a matrix with shape (batch, number_of_slices, 5).
+    """
+    if state.ndim == 1:
+        state = state.unsqueeze(0)
+
+    batch_size = state.shape[0]
+    expected_dim = 5 * NUM_SLICES + 3
+
+    if state.shape[1] != expected_dim:
+        raise ValueError(
+            f"Expected state dimension {expected_dim}, "
+            f"received {state.shape[1]}."
+        )
+
+    per_slice = state[:, :5 * NUM_SLICES].reshape(
+        batch_size, 5, NUM_SLICES
+    )
+
+    node_features = per_slice.transpose(1, 2).contiguous()
+
+    return node_features
+
+
+# ------------------------------------------------------------
+# 4.6 GCN-DDQN NETWORK
+# ------------------------------------------------------------
+class GCNLayer(nn.Module):
+    """One normalized graph-convolution layer."""
+
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        self.linear = nn.Linear(input_dim, output_dim)
+
+    def forward(self, node_features, adjacency):
+        # node_features: batch x nodes x feature_dim
+        aggregated = torch.matmul(adjacency, node_features)
+        return torch.relu(self.linear(aggregated))
+
+
+class GCNDDQNNetwork(nn.Module):
+    """Graph-convolution encoder followed by a Q-value head."""
+
+    def __init__(
+        self,
+        action_dim=NUM_ACTIONS,
+        hidden_dim=HIDDEN_DIM
+    ):
+        super().__init__()
+
+        self.gcn1 = GCNLayer(5, hidden_dim)
+        self.gcn2 = GCNLayer(hidden_dim, hidden_dim)
+
+        # Five node embeddings are pooled into one state embedding.
+        self.q_head = nn.Sequential(
+            nn.Linear(hidden_dim + 3, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
+        )
+
+    def forward(self, state):
+        if state.ndim == 1:
+            state = state.unsqueeze(0)
+
+        node_features = state_to_slice_nodes(state)
+
+        node_embeddings = self.gcn1(
+            node_features, SLICE_ADJACENCY
+        )
+        node_embeddings = self.gcn2(
+            node_embeddings, SLICE_ADJACENCY
+        )
+
+        pooled = node_embeddings.mean(dim=1)
+        global_features = state[:, 5 * NUM_SLICES:]
+
+        combined = torch.cat(
+            [pooled, global_features], dim=1
+        )
+
+        return self.q_head(combined)
+
+
+# ------------------------------------------------------------
+# 4.7 GGN-DDQN NETWORK
+# ------------------------------------------------------------
+class GatedGraphLayer(nn.Module):
+    """
+    Gated message-passing layer.
+
+    The graph neighborhood produces a message for each slice;
+    a learned gate controls how much of that message updates
+    the current node representation.
+    """
+
+    def __init__(self, input_dim, hidden_dim):
+        super().__init__()
+
+        self.message_linear = nn.Linear(
+            input_dim, hidden_dim
+        )
+        self.self_linear = nn.Linear(
+            input_dim, hidden_dim
+        )
+        self.gate_linear = nn.Linear(
+            2 * hidden_dim, hidden_dim
+        )
+
+    def forward(self, node_features, adjacency):
+        neighbors = torch.matmul(
+            adjacency, node_features
+        )
+
+        message = torch.tanh(
+            self.message_linear(neighbors)
+        )
+
+        self_information = torch.tanh(
+            self.self_linear(node_features)
+        )
+
+        gate = torch.sigmoid(
+            self.gate_linear(
+                torch.cat([message, self_information], dim=-1)
+            )
+        )
+
+        return gate * message + (1.0 - gate) * self_information
+
+
+class GGNDDQNNetwork(nn.Module):
+    """Gated graph-neural-network encoder with DDQN Q-values."""
+
+    def __init__(
+        self,
+        action_dim=NUM_ACTIONS,
+        hidden_dim=HIDDEN_DIM
+    ):
+        super().__init__()
+
+        self.input_linear = nn.Linear(5, hidden_dim)
+        self.ggn1 = GatedGraphLayer(hidden_dim, hidden_dim)
+        self.ggn2 = GatedGraphLayer(hidden_dim, hidden_dim)
+
+        self.q_head = nn.Sequential(
+            nn.Linear(hidden_dim + 3, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
+        )
+
+    def forward(self, state):
+        if state.ndim == 1:
+            state = state.unsqueeze(0)
+
+        node_features = state_to_slice_nodes(state)
+        node_features = torch.relu(
+            self.input_linear(node_features)
+        )
+
+        node_embeddings = self.ggn1(
+            node_features, SLICE_ADJACENCY
+        )
+        node_embeddings = self.ggn2(
+            node_embeddings, SLICE_ADJACENCY
+        )
+
+        pooled = node_embeddings.mean(dim=1)
+        global_features = state[:, 5 * NUM_SLICES:]
+
+        combined = torch.cat(
+            [pooled, global_features], dim=1
+        )
+
+        return self.q_head(combined)
+
+
+# ------------------------------------------------------------
+# 4.8 RBF STATE ENCODER FOR OUR METHOD
+# ------------------------------------------------------------
+class RBFStateEncoder(nn.Module):
+    """
+    Gaussian RBF state encoder.
+
+    Centers are initialized from sampled training states in
+    the next block. This class supports either fixed centers
+    or trainable centers.
+    """
+
+    def __init__(
+        self,
+        input_dim=STATE_DIM,
+        num_centers=RBF_NUM_CENTERS,
+        sigma=RBF_SIGMA,
+        trainable_centers=False
+    ):
+        super().__init__()
+
+        self.input_dim = int(input_dim)
+        self.num_centers = int(num_centers)
+        self.sigma = sigma
+
+        self.centers = nn.Parameter(
+            torch.zeros(num_centers, input_dim),
+            requires_grad=trainable_centers
+        )
+
+        self.output_dim = num_centers
+
+    def initialize_centers(self, state_samples):
+        """
+        Initialize centers from observed states.
+
+        state_samples: NumPy array with shape (N, input_dim).
+        """
+        state_samples = np.asarray(
+            state_samples, dtype=np.float32
+        )
+
+        if state_samples.ndim != 2:
+            raise ValueError(
+                "state_samples must be a two-dimensional array."
+            )
+
+        if state_samples.shape[1] != self.input_dim:
+            raise ValueError(
+                f"Expected {self.input_dim} state features; "
+                f"received {state_samples.shape[1]}."
+            )
+
+        rng = np.random.default_rng(SEED)
+
+        if len(state_samples) >= self.num_centers:
+            indices = rng.choice(
+                len(state_samples),
+                size=self.num_centers,
+                replace=False
+            )
+        else:
+            indices = rng.choice(
+                len(state_samples),
+                size=self.num_centers,
+                replace=True
+            )
+
+        center_values = state_samples[indices]
+
+        with torch.no_grad():
+            self.centers.copy_(
+                torch.as_tensor(
+                    center_values,
+                    dtype=torch.float32,
+                    device=self.centers.device
+                )
+            )
+
+        # Estimate width from the median positive pairwise
+        # center distance, unless sigma was configured explicitly.
+        if self.sigma is None:
+            center_tensor = self.centers.detach()
+            distances = torch.cdist(
+                center_tensor, center_tensor, p=2
+            )
+
+            positive_distances = distances[
+                distances > RBF_EPS
+            ]
+
+            if positive_distances.numel() > 0:
+                estimated_sigma = torch.median(
+                    positive_distances
+                ).item()
+            else:
+                estimated_sigma = 1.0
+
+            self.sigma = max(
+                float(estimated_sigma), 1e-3
+            )
+
+        return self
+
+    def forward(self, state):
+        if state.ndim == 1:
+            state = state.unsqueeze(0)
+
+        distances_sq = torch.sum(
+            (
+                state.unsqueeze(1)
+                - self.centers.unsqueeze(0)
+            ) ** 2,
+            dim=2
+        )
+
+        width = max(float(self.sigma or 1.0), 1e-3)
+
+        return torch.exp(
+            -distances_sq / (2.0 * width ** 2)
+        )
+
+
+class RBFEdgeCoverDDQNNetwork(nn.Module):
+    """RBF feature map followed by a DDQN Q-value head."""
+
+    def __init__(
+        self,
+        state_dim=STATE_DIM,
+        action_dim=NUM_ACTIONS,
+        hidden_dim=HIDDEN_DIM,
+        num_centers=RBF_NUM_CENTERS
+    ):
+        super().__init__()
+
+        self.encoder = RBFStateEncoder(
+            input_dim=state_dim,
+            num_centers=num_centers,
+            sigma=RBF_SIGMA,
+            trainable_centers=False
+        )
+
+        self.q_head = nn.Sequential(
+            nn.Linear(num_centers, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
+        )
+
+    def initialize_centers(self, state_samples):
+        self.encoder.initialize_centers(state_samples)
+        return self
+
+    def forward(self, state):
+        features = self.encoder(state)
+        return self.q_head(features)
+
+
+# ------------------------------------------------------------
+# 4.9 NETWORK FACTORY
+# ------------------------------------------------------------
+def create_q_network(algorithm):
+    """
+    Return an uninitialized algorithm-specific Q-network.
+    The RBF centers for Ours must be initialized from states
+    before meaningful training.
+    """
+    if algorithm == "DDQN":
+        model = DDQNNetwork()
+
+    elif algorithm == "GCN-DDQN":
+        model = GCNDDQNNetwork()
+
+    elif algorithm == "GGN-DDQN":
+        model = GGNDDQNNetwork()
+
+    elif algorithm == "RBF-EdgeCover-DDQN":
+        model = RBFEdgeCoverDDQNNetwork()
+
+    else:
+        raise ValueError(
+            f"Unknown algorithm: {algorithm}"
+        )
+
+    return model.to(DEVICE)
+
+
+# ------------------------------------------------------------
+# 4.10 COMPONENT TESTS
+# ------------------------------------------------------------
+TEST_BUFFER = ReplayBuffer(capacity=1000, seed=SEED)
+
+test_state = TEST_ENV.reset(seed=SEED)
+
+# Create a few valid transitions using the environment.
+for _ in range(10):
+    action = int(TEST_ENV.rng.integers(0, NUM_ACTIONS))
+    next_state, reward, done, _ = TEST_ENV.step(action)
+
+    TEST_BUFFER.push(
+        test_state, action, reward, next_state, done
+    )
+
+    test_state = next_state
+
+    if done:
+        test_state = TEST_ENV.reset(seed=SEED + 1)
+
+print("\n--- Replay buffer test ---")
+print(f"Stored transitions: {len(TEST_BUFFER)}")
+
+if len(TEST_BUFFER) >= 4:
+    batch = TEST_BUFFER.sample(4)
+    print("Sample state batch shape:", batch[0].shape)
+    print("Sample action batch shape:", batch[1].shape)
+
+# Sample states for the RBF center initialization smoke test.
+rng = np.random.default_rng(SEED)
+rbf_sample_states = np.stack([
+    RANSlicingEnvironment(
+        total_users=100,
+        seed=int(rng.integers(0, 1_000_000))
+    ).reset()
+    for _ in range(RBF_NUM_CENTERS)
+]).astype(np.float32)
+
+print("\n--- Neural-network forward-pass tests ---")
+
+for algorithm in [
+    "DDQN",
+    "GCN-DDQN",
+    "GGN-DDQN",
+    "RBF-EdgeCover-DDQN"
+]:
+    network = create_q_network(algorithm)
+
+    if algorithm == "RBF-EdgeCover-DDQN":
+        network.initialize_centers(rbf_sample_states)
+
+    test_tensor = torch.as_tensor(
+        rbf_sample_states[:4],
+        dtype=torch.float32,
+        device=DEVICE
+    )
+
+    with torch.no_grad():
+        q_values = network(test_tensor)
+
+    assert q_values.shape == (4, NUM_ACTIONS), (
+        f"{algorithm} returned {tuple(q_values.shape)}; "
+        f"expected (4, {NUM_ACTIONS})."
+    )
+
+    assert torch.isfinite(q_values).all(), (
+        f"{algorithm} returned non-finite Q-values."
+    )
+
+    print(
+        f"{algorithm:22s} | "
+        f"Q-value shape: {tuple(q_values.shape)} | "
+        f"parameters: {sum(p.numel() for p in network.parameters()):,}"
+    )
+
+print("\nBlock 4 completed successfully.")
+print("Replay buffer and four Q-network architectures passed smoke tests.")
+print("No episode training has started.")
+
+# ============================================================
+# BLOCK 5: DDQN AGENTS AND EDGE-COVER-INSPIRED ACTION FILTER
+# ============================================================
+
+import copy
+import random
+from collections import deque
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+print("\n" + "=" * 75)
+print("BLOCK 5: DDQN AGENT IMPLEMENTATION")
+print("=" * 75)
+
+# ------------------------------------------------------------
+# 5.1 AGENT CONFIGURATION
+# ------------------------------------------------------------
+AGENT_SEED = 1220
+AGENT_GAMMA = 0.99
+AGENT_LR = 3e-4
+AGENT_BATCH_SIZE = 128
+AGENT_REPLAY_CAPACITY = 50_000
+AGENT_TARGET_UPDATE = 250
+
+AGENT_EPSILON_START = 1.0
+AGENT_EPSILON_END = 0.05
+AGENT_EPSILON_DECAY = 20_000
+
+AGENT_WARMUP_STEPS = 500
+AGENT_GRAD_CLIP = 10.0
+
+AGENT_ALGORITHMS = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN"
+]
+
+AGENT_DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+
+random.seed(AGENT_SEED)
+np.random.seed(AGENT_SEED)
+torch.manual_seed(AGENT_SEED)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(AGENT_SEED)
+
+print(f"Device: {AGENT_DEVICE}")
+print(f"Algorithms: {AGENT_ALGORITHMS}")
+print(f"Batch size: {AGENT_BATCH_SIZE}")
+print(f"Replay capacity: {AGENT_REPLAY_CAPACITY:,}")
+print(f"Warm-up transitions: {AGENT_WARMUP_STEPS}")
+
+# ------------------------------------------------------------
+# 5.2 EDGE-COVER-INSPIRED CANDIDATE ACTIONS
+# ------------------------------------------------------------
+def edge_cover_candidate_actions(env):
+    """
+    Return eligible traffic-slice actions for RBF-EdgeCover-DDQN.
+
+    Stage 1:
+        Prefer slices that have not received any RB, improving
+        initial resource coverage across traffic classes.
+
+    Stage 2:
+        Prefer slices that have not met their modeled minimum
+        rate or maximum latency requirements.
+
+    Stage 3:
+        If no slice violates these modeled conditions, retain
+        all slice actions as candidates.
+
+    This is a demand-aware heuristic. It is not an exact graph
+    edge-cover algorithm or a guarantee of QoS feasibility.
+    """
+    if env.remaining_rbs <= 0:
+        return np.ones(NUM_SLICES, dtype=bool)
+
+    # Ensure every slice can become represented in the allocation.
+    uncovered = env.rb_allocation == 0
+
+    if uncovered.any():
+        return uncovered.astype(bool)
+
+    metrics = env._estimate_metrics()
+
+    rate = metrics["data_rate_mbps"]
+    latency = metrics["latency_ms"]
+
+    below_minimum_rate = rate < SLICE_MIN_RATE
+    latency_violation = latency > SLICE_MAX_LATENCY
+
+    # Include slices with unmet demand or a QoS violation.
+    eligible = below_minimum_rate | latency_violation
+
+    if not eligible.any():
+        eligible = np.ones(NUM_SLICES, dtype=bool)
+
+    # When RBs are scarce, restrict candidates to the slices
+    # with the largest normalized service deficits.
+    rate_deficit = np.clip(
+        (SLICE_MIN_RATE - rate)
+        / np.maximum(SLICE_MIN_RATE, NUMERICAL_EPS),
+        0.0,
+        1.0
+    )
+
+    latency_deficit = np.clip(
+        (latency - SLICE_MAX_LATENCY)
+        / np.maximum(SLICE_MAX_LATENCY, NUMERICAL_EPS),
+        0.0,
+        1.0
+    )
+
+    deficit_score = (
+        0.65 * rate_deficit
+        + 0.35 * latency_deficit
+    ) * NORMALIZED_PRIORITY
+
+    # Keep at least one valid action.
+    if not eligible.any():
+        eligible[np.argmax(deficit_score)] = True
+
+    return eligible.astype(bool)
+
+
+def all_action_candidates(env):
+    """All five actions are eligible for the baseline algorithms."""
+    return np.ones(NUM_SLICES, dtype=bool)
+
+
+# ------------------------------------------------------------
+# 5.3 REPLAY BUFFER WITH NEXT-ACTION MASKS
+# ------------------------------------------------------------
+class MaskedReplayBuffer:
+    """
+    Stores transitions and the candidate-action mask for the
+    next state. This permits masked Double-DQN next-action
+    selection for the proposed method.
+    """
+
+    def __init__(self, capacity=AGENT_REPLAY_CAPACITY, seed=AGENT_SEED):
+        self.buffer = deque(maxlen=int(capacity))
+        self.rng = random.Random(seed)
+
+    def push(
+        self, state, action, reward, next_state, done, next_mask
+    ):
+        state = np.asarray(state, dtype=np.float32).copy()
+        next_state = np.asarray(next_state, dtype=np.float32).copy()
+        next_mask = np.asarray(next_mask, dtype=bool).copy()
+
+        if next_mask.shape != (NUM_ACTIONS,):
+            raise ValueError(
+                f"Invalid action-mask shape: {next_mask.shape}"
+            )
+
+        # Every nonterminal next state must have at least one
+        # eligible action.
+        if not bool(next_mask.any()):
+            raise ValueError("Next-state action mask has no valid actions.")
+
+        self.buffer.append((
+            state,
+            int(action),
+            float(reward),
+            next_state,
+            float(done),
+            next_mask
+        ))
+
+    def sample(self, batch_size):
+        if len(self.buffer) < batch_size:
+            raise ValueError(
+                f"Need {batch_size} transitions; "
+                f"buffer has {len(self.buffer)}."
+            )
+
+        batch = self.rng.sample(list(self.buffer), batch_size)
+
+        states, actions, rewards, next_states, dones, masks = zip(
+            *batch
+        )
+
+        return (
+            np.stack(states).astype(np.float32),
+            np.asarray(actions, dtype=np.int64),
+            np.asarray(rewards, dtype=np.float32),
+            np.stack(next_states).astype(np.float32),
+            np.asarray(dones, dtype=np.float32),
+            np.stack(masks).astype(bool)
+        )
+
+    def __len__(self):
+        return len(self.buffer)
+
+
+# ------------------------------------------------------------
+# 5.4 DOUBLE DQN AGENT
+# ------------------------------------------------------------
+class DDQNAgent:
+    """
+    Double DQN agent with:
+      - online Q-network,
+      - target Q-network,
+      - epsilon-greedy exploration,
+      - experience replay,
+      - gradient clipping,
+      - optional RBF/edge-cover behavior.
+
+    All algorithms use the same optimization procedure.
+    """
+
+    def __init__(
+        self,
+        algorithm,
+        state_dim=STATE_DIM,
+        action_dim=NUM_ACTIONS,
+        seed=AGENT_SEED,
+        rbf_state_samples=None
+    ):
+        self.algorithm = algorithm
+        self.state_dim = int(state_dim)
+        self.action_dim = int(action_dim)
+        self.device = AGENT_DEVICE
+        self.rng = np.random.default_rng(seed)
+        self.steps = 0
+        self.learn_steps = 0
+
+        random.seed(seed)
+        torch.manual_seed(seed)
+
+        self.online_net = create_q_network(
+            algorithm
+        ).to(self.device)
+
+        # Initialize the RBF centers using states sampled from
+        # the environment, rather than leaving them at zero.
+        if algorithm == "RBF-EdgeCover-DDQN":
+            if rbf_state_samples is None:
+                raise ValueError(
+                    "RBF-EdgeCover-DDQN requires rbf_state_samples."
+                )
+
+            self.online_net.initialize_centers(
+                rbf_state_samples
+            )
+
+        self.target_net = copy.deepcopy(
+            self.online_net
+        ).to(self.device)
+
+        self.target_net.eval()
+
+        for parameter in self.target_net.parameters():
+            parameter.requires_grad = False
+
+        self.optimizer = optim.Adam(
+            self.online_net.parameters(),
+            lr=AGENT_LR
+        )
+
+        self.loss_function = nn.SmoothL1Loss()
+
+        self.replay_buffer = MaskedReplayBuffer(
+            capacity=AGENT_REPLAY_CAPACITY,
+            seed=seed
+        )
+
+    def epsilon(self):
+        """Exponential epsilon decay based on environment steps."""
+        return AGENT_EPSILON_END + (
+            AGENT_EPSILON_START - AGENT_EPSILON_END
+        ) * np.exp(-self.steps / AGENT_EPSILON_DECAY)
+
+    def candidate_mask(self, env):
+        if self.algorithm == "RBF-EdgeCover-DDQN":
+            return edge_cover_candidate_actions(env)
+
+        return all_action_candidates(env)
+
+    def select_action(self, state, env, explore=True):
+        """
+        Select an action from the current candidate set.
+
+        Exploration and exploitation both respect the proposed
+        method's action-candidate filter.
+        """
+        mask = self.candidate_mask(env)
+        valid_actions = np.flatnonzero(mask)
+
+        if len(valid_actions) == 0:
+            valid_actions = np.arange(self.action_dim)
+
+        epsilon = self.epsilon() if explore else 0.0
+
+        if explore and self.rng.random() < epsilon:
+            action = int(self.rng.choice(valid_actions))
+        else:
+            state_tensor = torch.as_tensor(
+                state,
+                dtype=torch.float32,
+                device=self.device
+            ).unsqueeze(0)
+
+            self.online_net.eval()
+
+            with torch.no_grad():
+                q_values = self.online_net(state_tensor)[0].cpu().numpy()
+
+            self.online_net.train()
+
+            # Exclude actions outside the candidate set.
+            q_values[~mask] = -np.inf
+            action = int(np.argmax(q_values))
+
+        if explore:
+            self.steps += 1
+
+        return action
+
+    def remember(
+        self, state, action, reward, next_state, done, env_after_step
+    ):
+        next_mask = self.candidate_mask(env_after_step)
+
+        self.replay_buffer.push(
+            state,
+            action,
+            reward,
+            next_state,
+            done,
+            next_mask
+        )
+
+    def optimize_model(self):
+        """Perform one Double-DQN optimization update."""
+        if len(self.replay_buffer) < max(
+            AGENT_BATCH_SIZE, AGENT_WARMUP_STEPS
+        ):
+            return None
+
+        (
+            states,
+            actions,
+            rewards,
+            next_states,
+            dones,
+            next_masks
+        ) = self.replay_buffer.sample(AGENT_BATCH_SIZE)
+
+        states_t = torch.as_tensor(
+            states, dtype=torch.float32, device=self.device
+        )
+        actions_t = torch.as_tensor(
+            actions, dtype=torch.int64, device=self.device
+        ).unsqueeze(1)
+        rewards_t = torch.as_tensor(
+            rewards, dtype=torch.float32, device=self.device
+        )
+        next_states_t = torch.as_tensor(
+            next_states, dtype=torch.float32, device=self.device
+        )
+        dones_t = torch.as_tensor(
+            dones, dtype=torch.float32, device=self.device
+        )
+        next_masks_t = torch.as_tensor(
+            next_masks, dtype=torch.bool, device=self.device
+        )
+
+        # Q(s,a) from the online network.
+        current_q = self.online_net(states_t).gather(
+            1, actions_t
+        ).squeeze(1)
+
+        with torch.no_grad():
+            # Double DQN: the online network selects the next action.
+            online_next_q = self.online_net(next_states_t)
+
+            # Apply candidate-action constraints for Ours.
+            online_next_q = online_next_q.masked_fill(
+                ~next_masks_t, -1e9
+            )
+
+            next_actions = online_next_q.argmax(
+                dim=1, keepdim=True
+            )
+
+            # The target network evaluates the selected action.
+            target_next_q = self.target_net(
+                next_states_t
+            ).gather(1, next_actions).squeeze(1)
+
+            target_q = rewards_t + (
+                AGENT_GAMMA
+                * (1.0 - dones_t)
+                * target_next_q
+            )
+
+        loss = self.loss_function(current_q, target_q)
+
+        self.optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+
+        nn.utils.clip_grad_norm_(
+            self.online_net.parameters(),
+            AGENT_GRAD_CLIP
+        )
+
+        self.optimizer.step()
+        self.learn_steps += 1
+
+        if self.learn_steps % AGENT_TARGET_UPDATE == 0:
+            self.target_net.load_state_dict(
+                self.online_net.state_dict()
+            )
+
+        return float(loss.item())
+
+
+# ------------------------------------------------------------
+# 5.5 INITIALIZE RBF CENTERS FROM ENVIRONMENT STATES
+# ------------------------------------------------------------
+def collect_initial_states(
+    number_of_states=256,
+    total_users=100,
+    seed=AGENT_SEED
+):
+    """
+    Collect states by taking random actions in the shared
+    environment. These states are used only to initialize
+    the RBF centers before agent training.
+    """
+    rng = np.random.default_rng(seed)
+
+    env = RANSlicingEnvironment(
+        total_users=total_users,
+        seed=seed
+    )
+
+    collected = []
+
+    while len(collected) < number_of_states:
+        state = env.reset(
+            seed=int(rng.integers(0, 2**31 - 1))
+        )
+        collected.append(state.copy())
+
+        done = False
+
+        while not done and len(collected) < number_of_states:
+            action = int(rng.integers(0, NUM_ACTIONS))
+            state, _, done, _ = env.step(action)
+            collected.append(state.copy())
+
+    return np.asarray(
+        collected[:number_of_states],
+        dtype=np.float32
+    )
+
+
+RBF_INITIALIZATION_STATES = collect_initial_states(
+    number_of_states=max(256, RBF_NUM_CENTERS),
+    total_users=100,
+    seed=AGENT_SEED
+)
+
+print(
+    "\nRBF initialization states:",
+    RBF_INITIALIZATION_STATES.shape
+)
+
+# ------------------------------------------------------------
+# 5.6 SMOKE TEST: ACTION SELECTION AND ONE LEARNING UPDATE
+# ------------------------------------------------------------
+print("\n--- Agent initialization and learning smoke test ---")
+
+TEST_AGENTS = {}
+
+for index, algorithm in enumerate(AGENT_ALGORITHMS):
+    agent = DDQNAgent(
+        algorithm=algorithm,
+        seed=AGENT_SEED + index,
+        rbf_state_samples=(
+            RBF_INITIALIZATION_STATES
+            if algorithm == "RBF-EdgeCover-DDQN"
+            else None
+        )
+    )
+
+    env = RANSlicingEnvironment(
+        total_users=100,
+        seed=AGENT_SEED + index
+    )
+
+    state = env.reset(seed=AGENT_SEED + index)
+
+    # Check that action selection returns a valid action.
+    action = agent.select_action(
+        state, env, explore=False
+    )
+
+    assert 0 <= action < NUM_ACTIONS
+
+    # Fill the replay buffer with enough transitions for one update.
+    for transition_idx in range(AGENT_WARMUP_STEPS):
+        if transition_idx == 0:
+            state = env.reset(
+                seed=AGENT_SEED + index + 100
+            )
+
+        action = agent.select_action(
+            state, env, explore=True
+        )
+
+        next_state, reward, done, _ = env.step(action)
+
+        agent.remember(
+            state,
+            action,
+            reward,
+            next_state,
+            done,
+            env
+        )
+
+        state = next_state
+
+        if done:
+            state = env.reset(
+                seed=AGENT_SEED + index + 200 + transition_idx
+            )
+
+    loss = agent.optimize_model()
+
+    assert loss is not None
+    assert np.isfinite(loss)
+
+    TEST_AGENTS[algorithm] = agent
+
+    print(
+        f"{algorithm:22s} | "
+        f"action={action} | "
+        f"buffer={len(agent.replay_buffer):4d} | "
+        f"loss={loss:.6f} | "
+        f"epsilon={agent.epsilon():.4f}"
+    )
+
+print("\nBlock 5 completed successfully.")
+print("All four agents selected valid actions and completed a learning update.")
+print("The test updates above are component checks, not full episode training.")
+
+
+# ============================================================
+# BLOCK 6: FULL EPISODE TRAINING AND EVALUATION
+# ============================================================
+
+import copy
+import time
+import numpy as np
+import pandas as pd
+import torch
+
+from pathlib import Path
+
+# ------------------------------------------------------------
+# 1. TRAINING CONFIGURATION
+# ------------------------------------------------------------
+
+NUM_EPISODES = 1000
+EVALUATION_EPISODES = 20
+LEARN_EVERY = 4
+LOG_INTERVAL = 50
+CHECKPOINT_INTERVAL = 100
+
+TRAINING_SEED = 1220
+
+ALGORITHMS = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN"
+]
+
+USER_LOADS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+# ------------------------------------------------------------
+# 2. OUTPUT DIRECTORIES
+# ------------------------------------------------------------
+
+OUTPUT_DIR = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3"
+) / "results" / "RBF_EdgeCover_DDQN"
+
+CSV_DIR = OUTPUT_DIR / "csv"
+MODEL_DIR = OUTPUT_DIR / "models"
+CHECKPOINT_DIR = OUTPUT_DIR / "checkpoints"
+
+for directory in [CSV_DIR, MODEL_DIR, CHECKPOINT_DIR]:
+    directory.mkdir(parents=True, exist_ok=True)
+
+print("=" * 72)
+print("BLOCK 6: FULL TRAINING AND EVALUATION")
+print("=" * 72)
+print(f"Device: {AGENT_DEVICE}")
+print(f"Episodes per algorithm/load: {NUM_EPISODES}")
+print(f"Evaluation episodes: {EVALUATION_EPISODES}")
+print(f"User loads: {USER_LOADS}")
+print(f"Algorithms: {ALGORITHMS}")
+print(f"Models saved to: {MODEL_DIR}")
+
+# ------------------------------------------------------------
+# 3. HELPER: RUN ONE EPISODE
+# ------------------------------------------------------------
+
+def run_training_episode(env, agent, episode_seed, train=True):
+    """
+    Run one complete episode.
+
+    Returns:
+        episode_reward: cumulative episode reward
+        mean_loss: mean optimization loss, or NaN if no update
+        final_info: metrics from the final environment step
+    """
+
+    state = env.reset(seed=int(episode_seed))
+    episode_reward = 0.0
+    episode_losses = []
+    done = False
+    final_info = {}
+
+    while not done:
+        action = agent.select_action(
+            state,
+            env,
+            explore=train
+        )
+
+        next_state, reward, done, info = env.step(action)
+
+        if train:
+            agent.remember(
+                state,
+                action,
+                reward,
+                next_state,
+                done,
+                env
+            )
+
+            # Reduce update frequency to limit training time.
+            if (
+                agent.steps >= AGENT_WARMUP_STEPS
+                and agent.steps % LEARN_EVERY == 0
+            ):
+                loss = agent.optimize_model()
+
+                if loss is not None and np.isfinite(loss):
+                    episode_losses.append(float(loss))
+
+        episode_reward += float(reward)
+        state = next_state
+        final_info = info
+
+    mean_loss = (
+        float(np.mean(episode_losses))
+        if episode_losses else np.nan
+    )
+
+    return episode_reward, mean_loss, final_info
+
+
+# ------------------------------------------------------------
+# 4. HELPER: EXTRACT FINAL SLICE METRICS
+# ------------------------------------------------------------
+
+def extract_final_metrics(info):
+    """
+    Convert final environment metrics into a flat result row.
+    Uses the metric names returned by RANSlicingEnvironment.
+    """
+
+    row = {}
+
+    for metric_name in [
+        "data_rate_mbps",
+        "latency_ms",
+        "energy_j",
+        "rb_allocation",
+        "bandwidth_mhz",
+        "power_w"
+    ]:
+        if metric_name in info:
+            values = np.asarray(info[metric_name]).reshape(-1)
+
+            for slice_idx, slice_name in enumerate(SLICE_NAMES):
+                if slice_idx < len(values):
+                    row[f"{slice_name}_{metric_name}"] = float(
+                        values[slice_idx]
+                    )
+
+    # Preserve additional scalar diagnostics, if present.
+    for key, value in info.items():
+        if key not in [
+            "data_rate_mbps",
+            "latency_ms",
+            "energy_j",
+            "rb_allocation",
+            "bandwidth_mhz",
+            "power_w"
+        ]:
+            if np.isscalar(value) and isinstance(
+                value, (int, float, np.integer, np.floating)
+            ):
+                row[key] = float(value)
+
+    return row
+
+
+# ------------------------------------------------------------
+# 5. HELPER: EVALUATE A TRAINED AGENT
+# ------------------------------------------------------------
+
+def evaluate_agent(agent, total_users, base_seed, num_episodes=20):
+    """
+    Evaluate without exploration or replay-buffer updates.
+    The same evaluation seeds are reused across algorithms.
+    """
+
+    evaluation_rows = []
+
+    for eval_episode in range(num_episodes):
+        eval_seed = base_seed + 900000 + eval_episode
+
+        eval_env = RANSlicingEnvironment(
+            total_users=total_users,
+            seed=eval_seed
+        )
+
+        episode_reward, _, final_info = run_training_episode(
+            eval_env,
+            agent,
+            episode_seed=eval_seed,
+            train=False
+        )
+
+        row = {
+            "user_count": total_users,
+            "evaluation_episode": eval_episode + 1,
+            "episode_reward": episode_reward
+        }
+
+        row.update(extract_final_metrics(final_info))
+        evaluation_rows.append(row)
+
+    return pd.DataFrame(evaluation_rows)
+
+
+# ------------------------------------------------------------
+# 6. MAIN TRAINING LOOP
+# ------------------------------------------------------------
+
+training_records = []
+evaluation_frames = []
+training_start_time = time.time()
+
+for user_count in USER_LOADS:
+
+    print("\n" + "#" * 72)
+    print(f"TRAINING FOR USER LOAD: {user_count}")
+    print("#" * 72)
+
+    for algorithm_idx, algorithm in enumerate(ALGORITHMS):
+
+        scenario_seed = (
+            TRAINING_SEED
+            + user_count * 100
+            + algorithm_idx * 10000
+        )
+
+        np.random.seed(scenario_seed)
+        torch.manual_seed(scenario_seed)
+
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(scenario_seed)
+
+        # Each algorithm receives its own environment and agent.
+        train_env = RANSlicingEnvironment(
+            total_users=user_count,
+            seed=scenario_seed
+        )
+        rbf_samples = collect_initial_states(256, user_count)
+        # Collect representative states for RBF center initialization.
+        # The RBF model uses these only during initialization.
+
+        #rbf_samples = collect_initial_states(256, train_env)
+
+        agent = DDQNAgent(
+            algorithm=algorithm,
+            rbf_state_samples=rbf_samples
+        )
+
+        print(f"\nAlgorithm: {algorithm} | Users: {user_count}")
+        scenario_start_time = time.time()
+
+        # -------------------- Training episodes --------------------
+        for episode in range(1, NUM_EPISODES + 1):
+
+            episode_seed = scenario_seed + episode
+
+            episode_reward, mean_loss, _ = run_training_episode(
+                train_env,
+                agent,
+                episode_seed=episode_seed,
+                train=True
+            )
+
+            training_records.append({
+                "algorithm": algorithm,
+                "user_count": user_count,
+                "episode": episode,
+                "episode_reward": episode_reward,
+                "mean_loss": mean_loss,
+                "epsilon": agent.epsilon
+            })
+
+            # Periodic progress report.
+            if episode % LOG_INTERVAL == 0 or episode == 1:
+                recent = [
+                    record["episode_reward"]
+                    for record in training_records[-LOG_INTERVAL:]
+                    if record["algorithm"] == algorithm
+                    and record["user_count"] == user_count
+                ]
+
+                recent_reward = (
+                    float(np.mean(recent))
+                    if recent else float(episode_reward)
+                )
+
+                print(
+                    f"Episode {episode:4d}/{NUM_EPISODES} | "
+                    f"Mean reward={recent_reward:9.4f} | "
+                    f"Loss={mean_loss:9.5f} | "
+                    f"Epsilon={agent.epsilon() if callable(agent.epsilon) else agent.epsilon:.4f}"
+                )
+
+            # Periodic checkpoints for recovery.
+            if episode % CHECKPOINT_INTERVAL == 0:
+                checkpoint_path = CHECKPOINT_DIR / (
+                    f"{algorithm.replace('-', '_')}"
+                    f"_users_{user_count}_ep_{episode}.pt"
+                )
+
+                torch.save({
+                    "algorithm": algorithm,
+                    "user_count": user_count,
+                    "episode": episode,
+                    "online_state_dict": agent.online_net.state_dict(),
+                    "target_state_dict": agent.target_net.state_dict(),
+                    "optimizer_state_dict": agent.optimizer.state_dict(),
+                    "epsilon": (
+    agent.epsilon() if callable(agent.epsilon) else agent.epsilon
+)
+                }, checkpoint_path)
+
+        # -------------------- Save final trained model --------------------
+        model_path = MODEL_DIR / (
+            f"{algorithm.replace('-', '_')}_users_{user_count}.pt"
+        )
+
+        torch.save({
+            "algorithm": algorithm,
+            "user_count": user_count,
+            "online_state_dict": agent.online_net.state_dict(),
+            "target_state_dict": agent.target_net.state_dict(),
+            "epsilon": agent.epsilon
+        }, model_path)
+
+        # -------------------- Evaluation --------------------
+        evaluation_df = evaluate_agent(
+            agent=agent,
+            total_users=user_count,
+            base_seed=scenario_seed,
+            num_episodes=EVALUATION_EPISODES
+        )
+
+        evaluation_df.insert(0, "algorithm", algorithm)
+        evaluation_frames.append(evaluation_df)
+
+        elapsed_s = time.time() - scenario_start_time
+
+        print(
+            f"Completed {algorithm} at {user_count} users | "
+            f"Elapsed={elapsed_s / 60:.2f} min | "
+            f"Model saved: {model_path.name}"
+        )
+
+        # Save partial results after every scenario.
+        pd.DataFrame(training_records).to_csv(
+            CSV_DIR / "training_history_partial.csv",
+            index=False
+        )
+
+        pd.concat(
+            evaluation_frames,
+            ignore_index=True
+        ).to_csv(
+            CSV_DIR / "evaluation_results_partial.csv",
+            index=False
+        )
+
+
+# ------------------------------------------------------------
+# 7. SAVE FINAL RESULTS
+# ------------------------------------------------------------
+
+TRAINING_HISTORY_DF = pd.DataFrame(training_records)
+
+if evaluation_frames:
+    EVALUATION_RESULTS_DF = pd.concat(
+        evaluation_frames,
+        ignore_index=True
+    )
+else:
+    EVALUATION_RESULTS_DF = pd.DataFrame()
+
+training_csv = CSV_DIR / "training_history.csv"
+evaluation_csv = CSV_DIR / "evaluation_results.csv"
+
+TRAINING_HISTORY_DF.to_csv(training_csv, index=False)
+EVALUATION_RESULTS_DF.to_csv(evaluation_csv, index=False)
+
+# Aggregate evaluation means and standard deviations.
+if not EVALUATION_RESULTS_DF.empty:
+
+    numeric_cols = EVALUATION_RESULTS_DF.select_dtypes(
+        include=[np.number]
+    ).columns.tolist()
+
+    group_cols = ["algorithm", "user_count"]
+    metric_cols = [
+        col for col in numeric_cols
+        if col not in [
+            "user_count",
+            "evaluation_episode"
+        ]
+    ]
+
+    EVALUATION_SUMMARY_DF = (
+        EVALUATION_RESULTS_DF
+        .groupby(group_cols)[metric_cols]
+        .agg(["mean", "std"])
+        .reset_index()
+    )
+
+    EVALUATION_SUMMARY_DF.columns = [
+        "_".join(str(part) for part in col if str(part))
+        if isinstance(col, tuple) else str(col)
+        for col in EVALUATION_SUMMARY_DF.columns
+    ]
+
+    summary_csv = CSV_DIR / "evaluation_summary.csv"
+    EVALUATION_SUMMARY_DF.to_csv(summary_csv, index=False)
+
+else:
+    EVALUATION_SUMMARY_DF = pd.DataFrame()
+    summary_csv = CSV_DIR / "evaluation_summary.csv"
+
+total_elapsed = time.time() - training_start_time
+
+print("\n" + "=" * 72)
+print("BLOCK 6 COMPLETED")
+print("=" * 72)
+print(f"Total elapsed time: {total_elapsed / 3600:.2f} hours")
+print(f"Training history: {training_csv}")
+print(f"Evaluation results: {evaluation_csv}")
+print(f"Evaluation summary: {summary_csv}")
+print(f"Trained models: {MODEL_DIR}")
+print(f"Checkpoints: {CHECKPOINT_DIR}")
+
+print("\nTraining history preview:")
+print(TRAINING_HISTORY_DF.tail(10).to_string(index=False))
+
+print("\nEvaluation summary preview:")
+if not EVALUATION_SUMMARY_DF.empty:
+    print(EVALUATION_SUMMARY_DF.head(12).to_string(index=False))
+
+# ============================================================
+# BLOCK 6: FULL TRAINING AND EVALUATION
+# ============================================================
+
+import time
+import numpy as np
+import pandas as pd
+import torch
+
+from pathlib import Path
+
+# ------------------------------------------------------------
+# 1. CONFIGURATION
+# ------------------------------------------------------------
+
+NUM_EPISODES = 1000
+EVALUATION_EPISODES = 20
+LEARN_EVERY = 4
+LOG_INTERVAL = 50
+CHECKPOINT_INTERVAL = 100
+
+TRAINING_SEED = 1220
+
+ALGORITHMS = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN"
+]
+
+USER_LOADS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+# ------------------------------------------------------------
+# 2. OUTPUT DIRECTORIES
+# ------------------------------------------------------------
+
+OUTPUT_DIR = (
+    Path(r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3")
+    / "results" / "RBF_EdgeCover_DDQN"
+)
+
+CSV_DIR = OUTPUT_DIR / "csv"
+MODEL_DIR = OUTPUT_DIR / "models"
+CHECKPOINT_DIR = OUTPUT_DIR / "checkpoints"
+
+for directory in [CSV_DIR, MODEL_DIR, CHECKPOINT_DIR]:
+    directory.mkdir(parents=True, exist_ok=True)
+
+print("=" * 72)
+print("BLOCK 6: FULL TRAINING AND EVALUATION")
+print("=" * 72)
+print(f"Device: {AGENT_DEVICE}")
+print(f"Episodes per algorithm/load: {NUM_EPISODES}")
+print(f"Evaluation episodes: {EVALUATION_EPISODES}")
+print(f"User loads: {USER_LOADS}")
+print(f"Algorithms: {ALGORITHMS}")
+print(f"Models saved to: {MODEL_DIR}")
+
+# ------------------------------------------------------------
+# 3. RUN ONE COMPLETE EPISODE
+# ------------------------------------------------------------
+
+def run_training_episode(env, agent, episode_seed, train=True):
+    state = env.reset(seed=int(episode_seed))
+
+    episode_reward = 0.0
+    episode_losses = []
+    done = False
+    final_info = {}
+
+    while not done:
+        action = agent.select_action(
+            state,
+            env,
+            explore=train
+        )
+
+        next_state, reward, done, info = env.step(action)
+
+        if train:
+            agent.remember(
+                state,
+                action,
+                reward,
+                next_state,
+                done,
+                env
+            )
+
+            if (
+                agent.steps >= AGENT_WARMUP_STEPS
+                and agent.steps % LEARN_EVERY == 0
+            ):
+                loss = agent.optimize_model()
+
+                if loss is not None and np.isfinite(loss):
+                    episode_losses.append(float(loss))
+
+        episode_reward += float(reward)
+        state = next_state
+        final_info = info
+
+    mean_loss = (
+        float(np.mean(episode_losses))
+        if episode_losses else np.nan
+    )
+
+    return episode_reward, mean_loss, final_info
+
+
+# ------------------------------------------------------------
+# 4. EXTRACT FINAL ENVIRONMENT METRICS
+# ------------------------------------------------------------
+
+def extract_final_metrics(info):
+    row = {}
+
+    metric_keys = [
+        "data_rate_mbps",
+        "latency_ms",
+        "energy_j",
+        "rb_allocation",
+        "bandwidth_mhz",
+        "power_w"
+    ]
+
+    for metric_name in metric_keys:
+        if metric_name not in info:
+            continue
+
+        values = np.asarray(info[metric_name]).reshape(-1)
+
+        for idx, slice_name in enumerate(SLICE_NAMES):
+            if idx < len(values):
+                row[f"{slice_name}_{metric_name}"] = float(
+                    values[idx]
+                )
+
+    for key, value in info.items():
+        if key in metric_keys:
+            continue
+
+        if np.isscalar(value) and isinstance(
+            value, (int, float, np.integer, np.floating)
+        ):
+            row[key] = float(value)
+
+    return row
+
+
+# ------------------------------------------------------------
+# 5. EVALUATE A TRAINED AGENT
+# ------------------------------------------------------------
+
+def evaluate_agent(agent, total_users, base_seed, num_episodes):
+    evaluation_rows = []
+
+    for eval_episode in range(num_episodes):
+        eval_seed = base_seed + 900000 + eval_episode
+
+        eval_env = RANSlicingEnvironment(
+            total_users=total_users,
+            seed=eval_seed
+        )
+
+        episode_reward, _, final_info = run_training_episode(
+            eval_env,
+            agent,
+            episode_seed=eval_seed,
+            train=False
+        )
+
+        row = {
+            "user_count": total_users,
+            "evaluation_episode": eval_episode + 1,
+            "episode_reward": episode_reward
+        }
+
+        row.update(extract_final_metrics(final_info))
+        evaluation_rows.append(row)
+
+    return pd.DataFrame(evaluation_rows)
+
+
+# ------------------------------------------------------------
+# 6. FULL TRAINING LOOP
+# ------------------------------------------------------------
+
+training_records = []
+evaluation_frames = []
+
+training_start_time = time.time()
+
+for user_count in USER_LOADS:
+
+    print("\n" + "#" * 72)
+    print(f"TRAINING FOR USER LOAD: {user_count}")
+    print("#" * 72)
+
+    for algorithm_idx, algorithm in enumerate(ALGORITHMS):
+
+        scenario_seed = (
+            TRAINING_SEED
+            + user_count * 100
+            + algorithm_idx * 10000
+        )
+
+        np.random.seed(scenario_seed)
+        torch.manual_seed(scenario_seed)
+
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(scenario_seed)
+
+        train_env = RANSlicingEnvironment(
+            total_users=user_count,
+            seed=scenario_seed
+        )
+
+        # IMPORTANT:
+        # Block 5 defines collect_initial_states(number_of_states, env).
+        # Therefore, the number of states must come FIRST.
+        rbf_samples = collect_initial_states(256, train_env)
+
+        agent = DDQNAgent(
+            algorithm=algorithm,
+            rbf_state_samples=rbf_samples
+        )
+
+        print(f"\nAlgorithm: {algorithm} | Users: {user_count}")
+
+        scenario_start_time = time.time()
+        recent_rewards = []
+
+        # ---------------- Training episodes ----------------
+        for episode in range(1, NUM_EPISODES + 1):
+
+            episode_seed = scenario_seed + episode
+
+            episode_reward, mean_loss, _ = run_training_episode(
+                train_env,
+                agent,
+                episode_seed=episode_seed,
+                train=True
+            )
+
+            training_records.append({
+                "algorithm": algorithm,
+                "user_count": user_count,
+                "episode": episode,
+                "episode_reward": episode_reward,
+                "mean_loss": mean_loss,
+                "epsilon": agent.epsilon
+            })
+
+            recent_rewards.append(episode_reward)
+
+            if episode % LOG_INTERVAL == 0 or episode == 1:
+                window_rewards = recent_rewards[-LOG_INTERVAL:]
+
+                print(
+                    f"Episode {episode:4d}/{NUM_EPISODES} | "
+                    f"Mean reward="
+                    f"{np.mean(window_rewards):9.4f} | "
+                    f"Loss={mean_loss:9.5f} | "
+                    f"Epsilon={agent.epsilon:.4f}"
+                )
+
+            # ---------------- Periodic checkpoint ----------------
+            if episode % CHECKPOINT_INTERVAL == 0:
+                checkpoint_path = CHECKPOINT_DIR / (
+                    f"{algorithm.replace('-', '_')}"
+                    f"_users_{user_count}_ep_{episode}.pt"
+                )
+
+                torch.save({
+                    "algorithm": algorithm,
+                    "user_count": user_count,
+                    "episode": episode,
+                    "online_state_dict": agent.online_net.state_dict(),
+                    "target_state_dict": agent.target_net.state_dict(),
+                    "optimizer_state_dict": agent.optimizer.state_dict(),
+                    "epsilon": agent.epsilon
+                }, checkpoint_path)
+
+        # ---------------- Save final model ----------------
+        model_path = MODEL_DIR / (
+            f"{algorithm.replace('-', '_')}_users_{user_count}.pt"
+        )
+
+        torch.save({
+            "algorithm": algorithm,
+            "user_count": user_count,
+            "online_state_dict": agent.online_net.state_dict(),
+            "target_state_dict": agent.target_net.state_dict(),
+            "epsilon": agent.epsilon
+        }, model_path)
+
+        # ---------------- Evaluation ----------------
+        evaluation_df = evaluate_agent(
+            agent=agent,
+            total_users=user_count,
+            base_seed=scenario_seed,
+            num_episodes=EVALUATION_EPISODES
+        )
+
+        evaluation_df.insert(0, "algorithm", algorithm)
+        evaluation_frames.append(evaluation_df)
+
+        elapsed_minutes = (
+            time.time() - scenario_start_time
+        ) / 60.0
+
+        print(
+            f"Completed {algorithm} at {user_count} users | "
+            f"Elapsed={elapsed_minutes:.2f} min"
+        )
+
+        # Save partial files so completed work is retained.
+        pd.DataFrame(training_records).to_csv(
+            CSV_DIR / "training_history_partial.csv",
+            index=False
+        )
+
+        pd.concat(
+            evaluation_frames,
+            ignore_index=True
+        ).to_csv(
+            CSV_DIR / "evaluation_results_partial.csv",
+            index=False
+        )
+
+
+# ------------------------------------------------------------
+# 7. SAVE FINAL TRAINING AND EVALUATION RESULTS
+# ------------------------------------------------------------
+
+TRAINING_HISTORY_DF = pd.DataFrame(training_records)
+
+EVALUATION_RESULTS_DF = (
+    pd.concat(evaluation_frames, ignore_index=True)
+    if evaluation_frames
+    else pd.DataFrame()
+)
+
+training_csv = CSV_DIR / "training_history.csv"
+evaluation_csv = CSV_DIR / "evaluation_results.csv"
+
+TRAINING_HISTORY_DF.to_csv(training_csv, index=False)
+EVALUATION_RESULTS_DF.to_csv(evaluation_csv, index=False)
+
+# Aggregate evaluation means and standard deviations.
+if not EVALUATION_RESULTS_DF.empty:
+
+    numeric_cols = EVALUATION_RESULTS_DF.select_dtypes(
+        include=[np.number]
+    ).columns.tolist()
+
+    group_cols = ["algorithm", "user_count"]
+
+    metric_cols = [
+        col for col in numeric_cols
+        if col not in ["user_count", "evaluation_episode"]
+    ]
+
+    EVALUATION_SUMMARY_DF = (
+        EVALUATION_RESULTS_DF
+        .groupby(group_cols)[metric_cols]
+        .agg(["mean", "std"])
+        .reset_index()
+    )
+
+    EVALUATION_SUMMARY_DF.columns = [
+        "_".join(str(part) for part in col if str(part))
+        if isinstance(col, tuple) else str(col)
+        for col in EVALUATION_SUMMARY_DF.columns
+    ]
+
+else:
+    EVALUATION_SUMMARY_DF = pd.DataFrame()
+
+summary_csv = CSV_DIR / "evaluation_summary.csv"
+EVALUATION_SUMMARY_DF.to_csv(summary_csv, index=False)
+
+# ------------------------------------------------------------
+# 8. COMPLETION REPORT
+# ------------------------------------------------------------
+
+total_elapsed_hours = (
+    time.time() - training_start_time
+) / 3600.0
+
+print("\n" + "=" * 72)
+print("BLOCK 6 COMPLETED")
+print("=" * 72)
+
+print(f"Total elapsed time: {total_elapsed_hours:.2f} hours")
+print(f"Training history: {training_csv}")
+print(f"Evaluation results: {evaluation_csv}")
+print(f"Evaluation summary: {summary_csv}")
+print(f"Trained models: {MODEL_DIR}")
+print(f"Checkpoints: {CHECKPOINT_DIR}")
+
+print("\nTraining history preview:")
+print(TRAINING_HISTORY_DF.tail(10).to_string(index=False))
+
+print("\nEvaluation summary preview:")
+if not EVALUATION_SUMMARY_DF.empty:
+    print(EVALUATION_SUMMARY_DF.head(12).to_string(index=False))
+
+
+
+# ============================================================
+# BLOCK 7: PLOT AND SAVE COMPARISON FIGURES
+# ============================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from pathlib import Path
+
+# ------------------------------------------------------------
+# 1. CONFIGURATION
+# ------------------------------------------------------------
+
+OUTPUT_DIR = (
+    Path(r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3")
+    / "results" / "RBF_EdgeCover_DDQN"
+)
+
+CSV_DIR = OUTPUT_DIR / "csv"
+PLOT_DIR = OUTPUT_DIR / "figures"
+PLOT_DIR.mkdir(parents=True, exist_ok=True)
+
+RESULTS_FILE = CSV_DIR / "evaluation_results.csv"
+
+ALGORITHM_ORDER = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN"
+]
+
+ALGORITHM_LABELS = {
+    "RBF-EdgeCover-DDQN": "Ours",
+    "GGN-DDQN": "GGN-DDQN",
+    "GCN-DDQN": "GCN-DDQN",
+    "DDQN": "DDQN"
+}
+
+USER_LOADS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+# ------------------------------------------------------------
+# 2. LOAD EVALUATION RESULTS
+# ------------------------------------------------------------
+
+if not RESULTS_FILE.exists():
+    raise FileNotFoundError(
+        f"Evaluation results not found: {RESULTS_FILE}\n"
+        "Run Block 6 successfully before running Block 7."
+    )
+
+EVALUATION_RESULTS_DF = pd.read_csv(RESULTS_FILE)
+
+required_columns = {"algorithm", "user_count"}
+
+missing_columns = required_columns - set(
+    EVALUATION_RESULTS_DF.columns
+)
+
+if missing_columns:
+    raise ValueError(
+        f"Missing required result columns: {missing_columns}"
+    )
+
+print("=" * 72)
+print("BLOCK 7: PLOT AND SAVE COMPARISON FIGURES")
+print("=" * 72)
+print(f"Loaded results: {RESULTS_FILE}")
+print(f"Evaluation rows: {len(EVALUATION_RESULTS_DF)}")
+
+# ------------------------------------------------------------
+# 3. PLOT STYLE
+# ------------------------------------------------------------
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 19,
+    "axes.labelsize": 20,
+    "xtick.labelsize": 17,
+    "ytick.labelsize": 17,
+    "legend.fontsize": 15,
+    "lines.linewidth": 2.5,
+    "lines.markersize": 8,
+    "figure.dpi": 150,
+    "savefig.dpi": 600,
+    "axes.grid": True,
+    "grid.linestyle": "--",
+    "grid.alpha": 0.35,
+    "axes.spines.top": False,
+    "axes.spines.right": False
+})
+
+LINE_STYLES = {
+    "RBF-EdgeCover-DDQN": ("o", "-"),
+    "GGN-DDQN": ("s", "--"),
+    "GCN-DDQN": ("^", "-."),
+    "DDQN": ("D", ":")
+}
+
+# ------------------------------------------------------------
+# 4. IDENTIFY AVAILABLE METRICS
+# ------------------------------------------------------------
+
+# Each tuple contains:
+# (CSV column, y-axis label, output filename)
+
+PLOT_METRICS = [
+    ("eMBB_data_rate_mbps", "eMBB Data Rate (Mbps)",
+     "embb_data_rate"),
+    ("uRLLC_data_rate_mbps", "uRLLC Data Rate (Mbps)",
+     "urllc_data_rate"),
+
+    ("eMBB_latency_ms", "eMBB Latency (ms)",
+     "embb_latency"),
+    ("uRLLC_latency_ms", "uRLLC Latency (ms)",
+     "urllc_latency"),
+
+    ("eMBB_energy_j", "eMBB Energy Consumption (J)",
+     "embb_energy"),
+    ("uRLLC_energy_j", "uRLLC Energy Consumption (J)",
+     "urllc_energy"),
+
+    ("eMBB_rb_allocation", "eMBB RB Allocation",
+     "embb_rb_allocation"),
+    ("uRLLC_rb_allocation", "uRLLC RB Allocation",
+     "urllc_rb_allocation"),
+
+    ("episode_reward", "Episode Reward",
+     "episode_reward")
+]
+
+available_metrics = [
+    metric for metric in PLOT_METRICS
+    if metric[0] in EVALUATION_RESULTS_DF.columns
+]
+
+if not available_metrics:
+    print("\nAvailable columns:")
+    print(EVALUATION_RESULTS_DF.columns.tolist())
+
+    raise ValueError(
+        "No expected plotting metrics were found. "
+        "Check the actual metric names in evaluation_results.csv."
+    )
+
+print("\nMetrics available for plotting:")
+for column, label, filename in available_metrics:
+    print(f"  {column}")
+
+# ------------------------------------------------------------
+# 5. AGGREGATE EVALUATION MEANS AND STANDARD DEVIATIONS
+# ------------------------------------------------------------
+
+group_columns = ["algorithm", "user_count"]
+
+metric_columns = [
+    metric[0] for metric in available_metrics
+]
+
+AGGREGATED_RESULTS_DF = (
+    EVALUATION_RESULTS_DF
+    .groupby(group_columns)[metric_columns]
+    .agg(["mean", "std"])
+    .reset_index()
+)
+
+# ------------------------------------------------------------
+# 6. GENERATE INDIVIDUAL COMPARISON FIGURES
+# ------------------------------------------------------------
+
+def plot_metric(metric_column, y_label, file_stem):
+
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+
+    plotted_any = False
+
+    for algorithm in ALGORITHM_ORDER:
+
+        algorithm_data = (
+            EVALUATION_RESULTS_DF[
+                EVALUATION_RESULTS_DF["algorithm"] == algorithm
+            ]
+            .groupby("user_count")[metric_column]
+            .agg(["mean", "std"])
+            .reindex(USER_LOADS)
+        )
+
+        valid = algorithm_data["mean"].notna()
+
+        if not valid.any():
+            continue
+
+        x_values = algorithm_data.index.to_numpy()[valid]
+        means = algorithm_data.loc[valid, "mean"].to_numpy()
+        stds = algorithm_data.loc[valid, "std"].fillna(0).to_numpy()
+
+        marker, linestyle = LINE_STYLES[algorithm]
+
+        label = ALGORITHM_LABELS.get(algorithm, algorithm)
+
+        ax.plot(
+            x_values,
+            means,
+            marker=marker,
+            linestyle=linestyle,
+            label=label
+        )
+
+        # Standard-deviation shading illustrates variation
+        # across evaluation episodes.
+        lower = means - stds
+        upper = means + stds
+
+        if "latency" in metric_column.lower():
+            lower = np.maximum(lower, 0)
+
+        if "energy" in metric_column.lower():
+            lower = np.maximum(lower, 0)
+
+        if "rb_allocation" in metric_column.lower():
+            lower = np.maximum(lower, 0)
+
+        ax.fill_between(
+            x_values,
+            lower,
+            upper,
+            alpha=0.12
+        )
+
+        plotted_any = True
+
+    if not plotted_any:
+        plt.close(fig)
+        print(f"Skipped {file_stem}: no valid values.")
+        return
+
+    ax.set_xlabel("Number of Users")
+    ax.set_ylabel(y_label)
+    ax.set_xticks(USER_LOADS)
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
+    ax.legend(
+        loc="best",
+        frameon=True,
+        ncol=2
+    )
+
+    ax.grid(True, linestyle="--", alpha=0.35)
+    fig.tight_layout()
+
+    png_path = PLOT_DIR / f"{file_stem}.png"
+    eps_path = PLOT_DIR / f"{file_stem}.eps"
+
+    fig.savefig(
+        png_path,
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    fig.savefig(
+        eps_path,
+        format="eps",
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    plt.close(fig)
+
+    print(f"Saved: {png_path.name}")
+    print(f"Saved: {eps_path.name}")
+
+
+for metric_column, y_label, file_stem in available_metrics:
+    plot_metric(metric_column, y_label, file_stem)
+
+# ------------------------------------------------------------
+# 7. SAVE AGGREGATED SUMMARY
+# ------------------------------------------------------------
+
+summary_path = CSV_DIR / "evaluation_summary_for_plots.csv"
+
+AGGREGATED_RESULTS_DF.to_csv(
+    summary_path,
+    index=False
+)
+
+print("\n" + "=" * 72)
+print("BLOCK 7 COMPLETED")
+print("=" * 72)
+print(f"Figures saved to: {PLOT_DIR}")
+print(f"Aggregated summary saved to: {summary_path}")
+print(f"Figures generated: {len(available_metrics)} metrics")
+
+
+
+# ============================================================
+# BLOCK 8: TRAINING CONVERGENCE AND LOSS COMPARISON
+# ============================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from pathlib import Path
+
+# ------------------------------------------------------------
+# 1. CONFIGURATION
+# ------------------------------------------------------------
+
+OUTPUT_DIR = (
+    Path(r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3")
+    / "results" / "RBF_EdgeCover_DDQN"
+)
+
+CSV_DIR = OUTPUT_DIR / "csv"
+PLOT_DIR = OUTPUT_DIR / "figures"
+PLOT_DIR.mkdir(parents=True, exist_ok=True)
+
+HISTORY_FILE = CSV_DIR / "training_history.csv"
+
+ALGORITHM_ORDER = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN"
+]
+
+ALGORITHM_LABELS = {
+    "RBF-EdgeCover-DDQN": "Ours",
+    "GGN-DDQN": "GGN-DDQN",
+    "GCN-DDQN": "GCN-DDQN",
+    "DDQN": "DDQN"
+}
+
+USER_LOADS = [100, 200, 300, 400, 500, 600, 800, 1000]
+SMOOTH_WINDOW = 25
+
+# ------------------------------------------------------------
+# 2. LOAD TRAINING HISTORY
+# ------------------------------------------------------------
+
+if not HISTORY_FILE.exists():
+    raise FileNotFoundError(
+        f"Training history not found: {HISTORY_FILE}\n"
+        "Complete Block 6 before running Block 8."
+    )
+
+TRAINING_HISTORY_DF = pd.read_csv(HISTORY_FILE)
+
+required_columns = {
+    "algorithm",
+    "user_count",
+    "episode",
+    "episode_reward",
+    "mean_loss"
+}
+
+missing_columns = required_columns - set(
+    TRAINING_HISTORY_DF.columns
+)
+
+if missing_columns:
+    raise ValueError(
+        f"Missing columns in training history: {missing_columns}"
+    )
+
+print("=" * 72)
+print("BLOCK 8: TRAINING CONVERGENCE AND LOSS COMPARISON")
+print("=" * 72)
+print(f"Loaded: {HISTORY_FILE}")
+print(f"Rows: {len(TRAINING_HISTORY_DF)}")
+
+# ------------------------------------------------------------
+# 3. PLOT SETTINGS
+# ------------------------------------------------------------
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 19,
+    "axes.labelsize": 20,
+    "xtick.labelsize": 17,
+    "ytick.labelsize": 17,
+    "legend.fontsize": 15,
+    "lines.linewidth": 2.5,
+    "lines.markersize": 7,
+    "figure.dpi": 150,
+    "savefig.dpi": 600,
+    "axes.grid": True,
+    "grid.linestyle": "--",
+    "grid.alpha": 0.35,
+    "axes.spines.top": False,
+    "axes.spines.right": False
+})
+
+LINE_STYLES = {
+    "RBF-EdgeCover-DDQN": ("o", "-"),
+    "GGN-DDQN": ("s", "--"),
+    "GCN-DDQN": ("^", "-."),
+    "DDQN": ("D", ":")
+}
+
+
+# ------------------------------------------------------------
+# 4. SMOOTHING FUNCTION
+# ------------------------------------------------------------
+
+def smooth_series(values, window=25):
+    values = np.asarray(values, dtype=float)
+
+    if len(values) < 2 or window <= 1:
+        return values
+
+    return (
+        pd.Series(values)
+        .rolling(
+            window=min(window, len(values)),
+            min_periods=1
+        )
+        .mean()
+        .to_numpy()
+    )
+
+
+# ------------------------------------------------------------
+# 5. GENERAL CONVERGENCE PLOT FUNCTION
+# ------------------------------------------------------------
+
+def plot_training_metric(
+    metric_column,
+    y_label,
+    filename,
+    user_count,
+    use_smoothing=True
+):
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+
+    subset = TRAINING_HISTORY_DF[
+        TRAINING_HISTORY_DF["user_count"] == user_count
+    ]
+
+    plotted_any = False
+
+    for algorithm in ALGORITHM_ORDER:
+
+        algorithm_data = (
+            subset[subset["algorithm"] == algorithm]
+            .sort_values("episode")
+        )
+
+        if algorithm_data.empty:
+            continue
+
+        x = algorithm_data["episode"].to_numpy()
+        y = pd.to_numeric(
+            algorithm_data[metric_column],
+            errors="coerce"
+        ).to_numpy(dtype=float)
+
+        valid = np.isfinite(y)
+        x = x[valid]
+        y = y[valid]
+
+        if len(y) == 0:
+            continue
+
+        if use_smoothing:
+            y = smooth_series(y, SMOOTH_WINDOW)
+
+        marker, linestyle = LINE_STYLES[algorithm]
+
+        ax.plot(
+            x,
+            y,
+            linestyle=linestyle,
+            marker=marker,
+            markevery=max(1, len(x) // 12),
+            label=ALGORITHM_LABELS.get(algorithm, algorithm)
+        )
+
+        plotted_any = True
+
+    if not plotted_any:
+        plt.close(fig)
+        print(
+            f"Skipped {filename}: no valid data for "
+            f"{user_count} users."
+        )
+        return
+
+    ax.set_xlabel("Training Episode")
+    ax.set_ylabel(y_label)
+    ax.set_xlim(left=0)
+    ax.legend(loc="best", frameon=True, ncol=2)
+    ax.grid(True, linestyle="--", alpha=0.35)
+
+    if "loss" in metric_column.lower():
+        ax.set_ylim(bottom=0)
+
+    fig.tight_layout()
+
+    png_path = PLOT_DIR / filename.replace(".eps", ".png")
+    eps_path = PLOT_DIR / filename
+
+    fig.savefig(
+        png_path,
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    fig.savefig(
+        eps_path,
+        format="eps",
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    plt.close(fig)
+
+    print(f"Saved: {png_path.name}")
+    print(f"Saved: {eps_path.name}")
+
+
+# ------------------------------------------------------------
+# 6. GENERATE CONVERGENCE FIGURES
+# ------------------------------------------------------------
+
+# Choose a representative user load for detailed convergence plots.
+REPRESENTATIVE_USER_LOAD = 500
+
+if REPRESENTATIVE_USER_LOAD not in (
+    TRAINING_HISTORY_DF["user_count"].unique()
+):
+    available_loads = sorted(
+        TRAINING_HISTORY_DF["user_count"].unique()
+    )
+    REPRESENTATIVE_USER_LOAD = available_loads[0]
+
+print(
+    f"\nRepresentative load for convergence plots: "
+    f"{REPRESENTATIVE_USER_LOAD} users"
+)
+
+plot_training_metric(
+    metric_column="episode_reward",
+    y_label="Episode Reward",
+    filename="convergence_reward_500_users.eps",
+    user_count=REPRESENTATIVE_USER_LOAD,
+    use_smoothing=True
+)
+
+plot_training_metric(
+    metric_column="mean_loss",
+    y_label="Training Loss",
+    filename="convergence_loss_500_users.eps",
+    user_count=REPRESENTATIVE_USER_LOAD,
+    use_smoothing=True
+)
+
+# ------------------------------------------------------------
+# 7. REWARD COMPARISON ACROSS ALL USER LOADS
+# ------------------------------------------------------------
+
+for user_count in USER_LOADS:
+
+    if user_count not in TRAINING_HISTORY_DF["user_count"].values:
+        continue
+
+    plot_training_metric(
+        metric_column="episode_reward",
+        y_label="Episode Reward",
+        filename=f"convergence_reward_{user_count}_users.eps",
+        user_count=user_count,
+        use_smoothing=True
+    )
+
+
+# ------------------------------------------------------------
+# 8. SAVE FINAL-EPISODE TRAINING SUMMARY
+# ------------------------------------------------------------
+
+summary_records = []
+
+for (algorithm, user_count), group in (
+    TRAINING_HISTORY_DF.groupby(["algorithm", "user_count"])
+):
+    group = group.sort_values("episode")
+
+    final_window = group.tail(
+        min(SMOOTH_WINDOW, len(group))
+    )
+
+    summary_records.append({
+        "algorithm": algorithm,
+        "user_count": int(user_count),
+        "episodes_completed": int(group["episode"].max()),
+        "final_mean_reward": float(
+            final_window["episode_reward"].mean()
+        ),
+        "final_mean_loss": float(
+            final_window["mean_loss"].mean()
+        ) if final_window["mean_loss"].notna().any() else np.nan
+    })
+
+TRAINING_SUMMARY_DF = pd.DataFrame(summary_records)
+
+summary_path = CSV_DIR / "training_convergence_summary.csv"
+TRAINING_SUMMARY_DF.to_csv(summary_path, index=False)
+
+print("\n" + "=" * 72)
+print("BLOCK 8 COMPLETED")
+print("=" * 72)
+print(f"Figures saved to: {PLOT_DIR}")
+print(f"Training summary: {summary_path}")
+
+print("\nFinal training summary:")
+print(TRAINING_SUMMARY_DF.to_string(index=False))
+
+
+
+# ============================================================
+# BLOCK 9: RESOURCE ALLOCATION AND SLICING ANALYSIS
+# ============================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from pathlib import Path
+
+# ------------------------------------------------------------
+# 1. CONFIGURATION
+# ------------------------------------------------------------
+
+OUTPUT_DIR = (
+    Path(r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3")
+    / "results" / "RBF_EdgeCover_DDQN"
+)
+
+CSV_DIR = OUTPUT_DIR / "csv"
+PLOT_DIR = OUTPUT_DIR / "figures"
+PLOT_DIR.mkdir(parents=True, exist_ok=True)
+
+RESULTS_FILE = CSV_DIR / "evaluation_results.csv"
+
+ALGORITHMS = [
+    "RBF-EdgeCover-DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN"
+]
+
+ALGORITHM_LABELS = {
+    "RBF-EdgeCover-DDQN": "Ours",
+    "GGN-DDQN": "GGN-DDQN",
+    "GCN-DDQN": "GCN-DDQN",
+    "DDQN": "DDQN"
+}
+
+USER_LOADS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+SLICE_NAMES = ["eMBB", "uRLLC", "MTM", "IoT", "Vehicular"]
+
+# ------------------------------------------------------------
+# 2. LOAD EVALUATION RESULTS
+# ------------------------------------------------------------
+
+if not RESULTS_FILE.exists():
+    raise FileNotFoundError(
+        f"Missing evaluation results: {RESULTS_FILE}\n"
+        "Complete Block 6 before running Block 9."
+    )
+
+RESULTS_DF = pd.read_csv(RESULTS_FILE)
+
+print("=" * 72)
+print("BLOCK 9: RESOURCE ALLOCATION AND SLICING ANALYSIS")
+print("=" * 72)
+print(f"Loaded {len(RESULTS_DF)} evaluation rows.")
+
+# ------------------------------------------------------------
+# 3. PLOT STYLE
+# ------------------------------------------------------------
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 19,
+    "axes.labelsize": 20,
+    "xtick.labelsize": 17,
+    "ytick.labelsize": 17,
+    "legend.fontsize": 14,
+    "lines.linewidth": 2.5,
+    "lines.markersize": 8,
+    "savefig.dpi": 600,
+    "axes.grid": True,
+    "grid.linestyle": "--",
+    "grid.alpha": 0.35,
+    "axes.spines.top": False,
+    "axes.spines.right": False
+})
+
+LINE_STYLES = {
+    "RBF-EdgeCover-DDQN": ("o", "-"),
+    "GGN-DDQN": ("s", "--"),
+    "GCN-DDQN": ("^", "-."),
+    "DDQN": ("D", ":")
+}
+
+# ------------------------------------------------------------
+# 4. BUILD RESOURCE ALLOCATION SUMMARY
+# ------------------------------------------------------------
+
+allocation_metrics = [
+    "rb_allocation",
+    "bandwidth_mhz",
+    "power_w"
+]
+
+available_allocation_metrics = []
+
+for metric in allocation_metrics:
+    for slice_name in SLICE_NAMES:
+        col = f"{slice_name}_{metric}"
+
+        if col in RESULTS_DF.columns:
+            available_allocation_metrics.append(col)
+
+if not available_allocation_metrics:
+    print("\nAvailable columns:")
+    print(RESULTS_DF.columns.tolist())
+
+    raise ValueError(
+        "No RB, bandwidth, or power allocation columns were found. "
+        "Check the metric names returned by your environment."
+    )
+
+ALLOCATION_SUMMARY_DF = (
+    RESULTS_DF
+    .groupby(["algorithm", "user_count"])[
+        available_allocation_metrics
+    ]
+    .mean()
+    .reset_index()
+)
+
+allocation_csv = CSV_DIR / "resource_allocation_summary.csv"
+
+ALLOCATION_SUMMARY_DF.to_csv(
+    allocation_csv,
+    index=False
+)
+
+print(f"Saved allocation summary: {allocation_csv}")
+
+# ------------------------------------------------------------
+# 5. RESOURCE ALLOCATION PLOT FUNCTION
+# ------------------------------------------------------------
+
+def plot_resource_metric(metric_suffix, ylabel, filename):
+
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    plotted_any = False
+
+    for algorithm in ALGORITHMS:
+
+        for slice_name in ["eMBB", "uRLLC"]:
+
+            column = f"{slice_name}_{metric_suffix}"
+
+            if column not in RESULTS_DF.columns:
+                continue
+
+            data = (
+                RESULTS_DF[
+                    RESULTS_DF["algorithm"] == algorithm
+                ]
+                .groupby("user_count")[column]
+                .mean()
+                .reindex(USER_LOADS)
+            )
+
+            valid = data.notna()
+
+            if not valid.any():
+                continue
+
+            marker, linestyle = LINE_STYLES[algorithm]
+
+            # Different marker shapes distinguish algorithms;
+            # line style distinguishes traffic slices.
+            slice_marker = (
+                marker if slice_name == "eMBB" else "x"
+            )
+
+            slice_linestyle = (
+                linestyle if slice_name == "eMBB" else ":"
+            )
+
+            label = (
+                f"{ALGORITHM_LABELS[algorithm]} ({slice_name})"
+            )
+
+            ax.plot(
+                data.index.to_numpy()[valid],
+                data.to_numpy()[valid],
+                marker=slice_marker,
+                linestyle=slice_linestyle,
+                label=label
+            )
+
+            plotted_any = True
+
+    if not plotted_any:
+        plt.close(fig)
+        print(f"Skipped {filename}: no valid values.")
+        return
+
+    ax.set_xlabel("Number of Users")
+    ax.set_ylabel(ylabel)
+    ax.set_xticks(USER_LOADS)
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
+    ax.legend(loc="best", ncol=2, frameon=True)
+    ax.grid(True, linestyle="--", alpha=0.35)
+
+    fig.tight_layout()
+
+    png_path = PLOT_DIR / filename.replace(".eps", ".png")
+    eps_path = PLOT_DIR / filename
+
+    fig.savefig(png_path, dpi=600, bbox_inches="tight")
+    fig.savefig(eps_path, format="eps", dpi=600, bbox_inches="tight")
+
+    plt.close(fig)
+
+    print(f"Saved: {png_path.name}")
+    print(f"Saved: {eps_path.name}")
+
+
+# ------------------------------------------------------------
+# 6. GENERATE RB, BANDWIDTH, AND POWER FIGURES
+# ------------------------------------------------------------
+
+if any(col.endswith("_rb_allocation") for col in RESULTS_DF.columns):
+    plot_resource_metric(
+        metric_suffix="rb_allocation",
+        ylabel="Allocated Resource Blocks",
+        filename="resource_blocks_embb_urllc.eps"
+    )
+
+if any(col.endswith("_bandwidth_mhz") for col in RESULTS_DF.columns):
+    plot_resource_metric(
+        metric_suffix="bandwidth_mhz",
+        ylabel="Allocated Bandwidth (MHz)",
+        filename="bandwidth_embb_urllc.eps"
+    )
+
+if any(col.endswith("_power_w") for col in RESULTS_DF.columns):
+    plot_resource_metric(
+        metric_suffix="power_w",
+        ylabel="Allocated Transmit Power (W)",
+        filename="power_embb_urllc.eps"
+    )
+
+# ------------------------------------------------------------
+# 7. REPORT MEAN RB ALLOCATION FOR ALL SLICES
+# ------------------------------------------------------------
+
+rb_columns = [
+    f"{slice_name}_rb_allocation"
+    for slice_name in SLICE_NAMES
+    if f"{slice_name}_rb_allocation" in RESULTS_DF.columns
+]
+
+if rb_columns:
+    print("\nMean RB allocation by algorithm and user load:")
+    print(
+        ALLOCATION_SUMMARY_DF[
+            ["algorithm", "user_count"] + rb_columns
+        ].to_string(index=False)
+    )
+
+print("\n" + "=" * 72)
+print("BLOCK 9 COMPLETED")
+print("=" * 72)
+print(f"Allocation summary: {allocation_csv}")
+print(f"Figures saved to: {PLOT_DIR}")
+
+
+
+# ============================================================
+# BLOCK 10: PERFORMANCE SUMMARY AND ALGORITHM RANKING
+# ============================================================
+
+import numpy as np
+import pandas as pd
+
+from pathlib import Path
+
+# ------------------------------------------------------------
+# 1. CONFIGURATION
+# ------------------------------------------------------------
+
+OUTPUT_DIR = (
+    Path(r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3")
+    / "results" / "RBF_EdgeCover_DDQN"
+)
+
+CSV_DIR = OUTPUT_DIR / "csv"
+CSV_DIR.mkdir(parents=True, exist_ok=True)
+
+RESULTS_FILE = CSV_DIR / "evaluation_results.csv"
+
+OUR_ALGORITHM = "RBF-EdgeCover-DDQN"
+
+BASELINES = [
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN"
+]
+
+ALGORITHMS = [
+    OUR_ALGORITHM,
+    "GGN-DDQN",
+    "GCN-DDQN",
+    "DDQN"
+]
+
+USER_LOADS = [100, 200, 300, 400, 500, 600, 800, 1000]
+
+# True means lower values are better; False means higher values are better.
+METRIC_DIRECTIONS = {
+    "episode_reward": False,
+    "eMBB_data_rate_mbps": False,
+    "uRLLC_data_rate_mbps": False,
+    "eMBB_latency_ms": True,
+    "uRLLC_latency_ms": True,
+    "eMBB_energy_j": True,
+    "uRLLC_energy_j": True,
+    "eMBB_rb_allocation": None,
+    "uRLLC_rb_allocation": None
+}
+
+# ------------------------------------------------------------
+# 2. LOAD DATA
+# ------------------------------------------------------------
+
+if not RESULTS_FILE.exists():
+    raise FileNotFoundError(
+        f"Evaluation results not found: {RESULTS_FILE}"
+    )
+
+RESULTS_DF = pd.read_csv(RESULTS_FILE)
+
+required_columns = {"algorithm", "user_count"}
+
+if not required_columns.issubset(RESULTS_DF.columns):
+    raise ValueError(
+        "Evaluation CSV must contain 'algorithm' and 'user_count'."
+    )
+
+print("=" * 72)
+print("BLOCK 10: PERFORMANCE SUMMARY AND ALGORITHM RANKING")
+print("=" * 72)
+print(f"Evaluation rows: {len(RESULTS_DF)}")
+
+# ------------------------------------------------------------
+# 3. SELECT AVAILABLE PERFORMANCE METRICS
+# ------------------------------------------------------------
+
+available_metrics = [
+    metric
+    for metric in METRIC_DIRECTIONS
+    if metric in RESULTS_DF.columns
+]
+
+if not available_metrics:
+    print("Available columns:", RESULTS_DF.columns.tolist())
+    raise ValueError("No expected performance metrics were found.")
+
+# ------------------------------------------------------------
+# 4. COMPUTE MEANS AND STANDARD DEVIATIONS
+# ------------------------------------------------------------
+
+summary_rows = []
+
+for (algorithm, user_count), group in RESULTS_DF.groupby(
+    ["algorithm", "user_count"]
+):
+    row = {
+        "algorithm": algorithm,
+        "user_count": int(user_count),
+        "evaluation_episodes": len(group)
+    }
+
+    for metric in available_metrics:
+        values = pd.to_numeric(
+            group[metric],
+            errors="coerce"
+        ).dropna()
+
+        row[f"{metric}_mean"] = (
+            float(values.mean()) if len(values) else np.nan
+        )
+
+        row[f"{metric}_std"] = (
+            float(values.std(ddof=1))
+            if len(values) > 1 else 0.0 if len(values) == 1 else np.nan
+        )
+
+    summary_rows.append(row)
+
+PERFORMANCE_SUMMARY_DF = pd.DataFrame(summary_rows)
+
+summary_path = CSV_DIR / "performance_summary.csv"
+
+PERFORMANCE_SUMMARY_DF.to_csv(
+    summary_path,
+    index=False
+)
+
+# ------------------------------------------------------------
+# 5. COMPUTE OUR IMPROVEMENT OVER THE BEST BASELINE
+# ------------------------------------------------------------
+
+improvement_rows = []
+
+for user_count in sorted(RESULTS_DF["user_count"].unique()):
+
+    load_summary = PERFORMANCE_SUMMARY_DF[
+        PERFORMANCE_SUMMARY_DF["user_count"] == user_count
+    ]
+
+    our_rows = load_summary[
+        load_summary["algorithm"] == OUR_ALGORITHM
+    ]
+
+    if our_rows.empty:
+        continue
+
+    our_row = our_rows.iloc[0]
+
+    for metric in available_metrics:
+
+        mean_col = f"{metric}_mean"
+        direction = METRIC_DIRECTIONS[metric]
+
+        our_value = our_row[mean_col]
+
+        baseline_rows = load_summary[
+            load_summary["algorithm"].isin(BASELINES)
+        ].dropna(subset=[mean_col])
+
+        if pd.isna(our_value) or baseline_rows.empty:
+            continue
+
+        # RB allocation is descriptive rather than inherently
+        # better when larger or smaller, so no ranking is assigned.
+        if direction is None:
+            continue
+
+        if direction:
+            # Lower is better: select the baseline with the lowest mean.
+            best_idx = baseline_rows[mean_col].idxmin()
+        else:
+            # Higher is better: select the baseline with the highest mean.
+            best_idx = baseline_rows[mean_col].idxmax()
+
+        best_baseline = baseline_rows.loc[best_idx]
+        baseline_value = float(best_baseline[mean_col])
+        our_value = float(our_value)
+
+        if abs(baseline_value) < 1e-12:
+            improvement_pct = np.nan
+        elif direction:
+            improvement_pct = (
+                (baseline_value - our_value)
+                / abs(baseline_value)
+            ) * 100.0
+        else:
+            improvement_pct = (
+                (our_value - baseline_value)
+                / abs(baseline_value)
+            ) * 100.0
+
+        improvement_rows.append({
+            "user_count": int(user_count),
+            "metric": metric,
+            "our_algorithm": OUR_ALGORITHM,
+            "our_mean": our_value,
+            "best_baseline": best_baseline["algorithm"],
+            "best_baseline_mean": baseline_value,
+            "metric_direction": (
+                "lower_is_better"
+                if direction else "higher_is_better"
+            ),
+            "relative_improvement_percent": improvement_pct
+        })
+
+IMPROVEMENT_DF = pd.DataFrame(improvement_rows)
+
+improvement_path = CSV_DIR / "relative_improvement_summary.csv"
+
+IMPROVEMENT_DF.to_csv(
+    improvement_path,
+    index=False
+)
+
+# ------------------------------------------------------------
+# 6. DISPLAY PERFORMANCE RESULTS
+# ------------------------------------------------------------
+
+print("\nMean performance by algorithm and user load:")
+
+display_columns = [
+    "algorithm",
+    "user_count"
+] + [
+    f"{metric}_mean"
+    for metric in available_metrics
+]
+
+print(
+    PERFORMANCE_SUMMARY_DF[display_columns]
+    .sort_values(["user_count", "algorithm"])
+    .to_string(index=False)
+)
+
+print("\nRelative improvement of Ours over the best baseline:")
+
+if not IMPROVEMENT_DF.empty:
+    print(
+        IMPROVEMENT_DF[
+            [
+                "user_count",
+                "metric",
+                "best_baseline",
+                "relative_improvement_percent"
+            ]
+        ].to_string(index=False)
+    )
+else:
+    print("No improvement comparisons could be calculated.")
+
+# ------------------------------------------------------------
+# 7. SAVE FINAL REPORT
+# ------------------------------------------------------------
+
+print("\n" + "=" * 72)
+print("BLOCK 10 COMPLETED")
+print("=" * 72)
+print(f"Performance summary: {summary_path}")
+print(f"Relative improvement summary: {improvement_path}")
+
+
+
+
+# ============================================================
+# BLOCK 11: FINAL RESULTS REPORT AND MANUSCRIPT-READY TABLES
+# ============================================================
+
+import os
+import numpy as np
+import pandas as pd
+
+# ------------------------------------------------------------
+# 1. PATHS AND CONFIGURATION
+# ------------------------------------------------------------
+RESULT_DIR = (
+    r"E:\Abrokwa\PycharmProjects\pythonProject1"
+    r"\pythonProject3\results\RBF_EdgeCover_DDQN"
+)
+CSV_DIR = os.path.join(RESULT_DIR, "csv")
+os.makedirs(CSV_DIR, exist_ok=True)
+
+RESULT_FILE = os.path.join(CSV_DIR, "evaluation_results.csv")
+
+if not os.path.exists(RESULT_FILE):
+    raise FileNotFoundError(
+        f"Missing file: {RESULT_FILE}\n"
+        "Run Block 6 successfully before executing Block 11."
+    )
+
+df = pd.read_csv(RESULT_FILE)
+
+required_columns = {"algorithm", "user_count"}
+missing = required_columns - set(df.columns)
+
+if missing:
+    raise ValueError(f"Missing required columns: {sorted(missing)}")
+
+# Use manuscript terminology for the proposed algorithm.
+df["algorithm"] = df["algorithm"].replace({
+    "RBF-EdgeCover-DDQN": "Ours"
+})
+
+print("=" * 80)
+print("FINAL RESULTS REPORT")
+print("=" * 80)
+print(f"Evaluation records: {len(df)}")
+print(f"Algorithms: {df['algorithm'].unique().tolist()}")
+print(f"User loads: {sorted(df['user_count'].dropna().unique().tolist())}")
+
+# ------------------------------------------------------------
+# 2. METRIC DEFINITIONS
+# ------------------------------------------------------------
+metric_directions = {
+    "episode_reward": "max",
+    "eMBB_data_rate_mbps": "max",
+    "uRLLC_data_rate_mbps": "max",
+    "eMBB_latency_ms": "min",
+    "uRLLC_latency_ms": "min",
+    "eMBB_energy_j": "min",
+    "uRLLC_energy_j": "min",
+    "eMBB_rb_allocation": None,
+    "uRLLC_rb_allocation": None,
+    "eMBB_bandwidth_mhz": None,
+    "uRLLC_bandwidth_mhz": None,
+    "eMBB_power_w": "min",
+    "uRLLC_power_w": "min",
+}
+
+available_metrics = [
+    metric for metric in metric_directions
+    if metric in df.columns
+]
+
+if not available_metrics:
+    raise ValueError(
+        "No recognized evaluation metrics were found. "
+        "Inspect evaluation_results.csv and update metric_directions."
+    )
+
+# ------------------------------------------------------------
+# 3. SUMMARY BY USER LOAD AND ALGORITHM
+# ------------------------------------------------------------
+group_columns = ["user_count", "algorithm"]
+
+summary = (
+    df.groupby(group_columns)[available_metrics]
+      .agg(["mean", "std"])
+      .reset_index()
+)
+
+# Flatten the multi-level column names.
+summary.columns = [
+    "_".join(str(part) for part in col if str(part))
+    if isinstance(col, tuple) else str(col)
+    for col in summary.columns
+]
+
+summary_file = os.path.join(CSV_DIR, "final_results_by_load.csv")
+summary.to_csv(summary_file, index=False)
+
+print("\nSaved per-load summary:")
+print(summary_file)
+
+# ------------------------------------------------------------
+# 4. IDENTIFY THE BEST ALGORITHM FOR EACH METRIC AND LOAD
+# ------------------------------------------------------------
+ranking_rows = []
+
+for user_count in sorted(df["user_count"].dropna().unique()):
+    subset = df[df["user_count"] == user_count]
+
+    for metric in available_metrics:
+        direction = metric_directions[metric]
+
+        # RB and bandwidth allocation are descriptive metrics;
+        # they are not ranked as universally better or worse.
+        if direction is None:
+            continue
+
+        means = subset.groupby("algorithm")[metric].mean().dropna()
+
+        if means.empty:
+            continue
+
+        best_algorithm = (
+            means.idxmax() if direction == "max" else means.idxmin()
+        )
+
+        ranking_rows.append({
+            "user_count": user_count,
+            "metric": metric,
+            "best_algorithm": best_algorithm,
+            "best_mean": means.loc[best_algorithm],
+            "direction": direction,
+        })
+
+ranking = pd.DataFrame(ranking_rows)
+ranking_file = os.path.join(CSV_DIR, "best_algorithm_by_metric.csv")
+ranking.to_csv(ranking_file, index=False)
+
+# ------------------------------------------------------------
+# 5. RELATIVE IMPROVEMENT OF OURS OVER THE BEST BASELINE
+# ------------------------------------------------------------
+improvement_rows = []
+
+for user_count in sorted(df["user_count"].dropna().unique()):
+    subset = df[df["user_count"] == user_count]
+
+    for metric in available_metrics:
+        direction = metric_directions[metric]
+
+        if direction is None:
+            continue
+
+        means = subset.groupby("algorithm")[metric].mean().dropna()
+
+        if "Ours" not in means.index:
+            continue
+
+        baseline_means = means.drop(index="Ours", errors="ignore")
+
+        if baseline_means.empty:
+            continue
+
+        if direction == "max":
+            best_baseline_algorithm = baseline_means.idxmax()
+            baseline_value = baseline_means.loc[best_baseline_algorithm]
+            ours_value = means.loc["Ours"]
+
+            improvement = (
+                (ours_value - baseline_value) / abs(baseline_value) * 100
+                if abs(baseline_value) > 1e-12 else np.nan
+            )
+
+        else:
+            best_baseline_algorithm = baseline_means.idxmin()
+            baseline_value = baseline_means.loc[best_baseline_algorithm]
+            ours_value = means.loc["Ours"]
+
+            improvement = (
+                (baseline_value - ours_value) / abs(baseline_value) * 100
+                if abs(baseline_value) > 1e-12 else np.nan
+            )
+
+        improvement_rows.append({
+            "user_count": user_count,
+            "metric": metric,
+            "ours_mean": ours_value,
+            "best_baseline": best_baseline_algorithm,
+            "best_baseline_mean": baseline_value,
+            "relative_improvement_percent": improvement,
+            "direction": direction,
+        })
+
+improvement_df = pd.DataFrame(improvement_rows)
+improvement_file = os.path.join(
+    CSV_DIR, "ours_relative_improvement_by_load.csv"
+)
+improvement_df.to_csv(improvement_file, index=False)
+
+# ------------------------------------------------------------
+# 6. AVERAGE PERFORMANCE ACROSS ALL USER LOADS
+# ------------------------------------------------------------
+overall_rows = []
+
+for metric in available_metrics:
+    direction = metric_directions[metric]
+
+    for algorithm, values in df.groupby("algorithm"):
+        overall_rows.append({
+            "algorithm": algorithm,
+            "metric": metric,
+            "mean": values[metric].mean(),
+            "std": values[metric].std(),
+            "direction": direction if direction else "descriptive",
+            "number_of_records": values[metric].count(),
+        })
+
+overall = pd.DataFrame(overall_rows)
+overall_file = os.path.join(CSV_DIR, "overall_algorithm_summary.csv")
+overall.to_csv(overall_file, index=False)
+
+# ------------------------------------------------------------
+# 7. EXCEL WORKBOOK WITH ALL TABLES
+# ------------------------------------------------------------
+excel_file = os.path.join(CSV_DIR, "final_manuscript_results.xlsx")
+
+with pd.ExcelWriter(excel_file, engine="openpyxl") as writer:
+    summary.to_excel(
+        writer, sheet_name="Results_By_Load", index=False
+    )
+    ranking.to_excel(
+        writer, sheet_name="Best_Algorithm", index=False
+    )
+    improvement_df.to_excel(
+        writer, sheet_name="Ours_Improvement", index=False
+    )
+    overall.to_excel(
+        writer, sheet_name="Overall_Summary", index=False
+    )
+
+# ------------------------------------------------------------
+# 8. DISPLAY KEY RESULTS
+# ------------------------------------------------------------
+print("\n" + "=" * 80)
+print("OVERALL PERFORMANCE")
+print("=" * 80)
+
+for metric in available_metrics:
+    print(f"\nMetric: {metric}")
+
+    display_table = (
+        overall[overall["metric"] == metric]
+        [["algorithm", "mean", "std"]]
+        .sort_values("mean", ascending=False)
+    )
+
+    print(display_table.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+
+print("\n" + "=" * 80)
+print("RELATIVE IMPROVEMENT OF OURS OVER THE BEST BASELINE")
+print("=" * 80)
+
+if not improvement_df.empty:
+    print(
+        improvement_df[
+            [
+                "user_count",
+                "metric",
+                "best_baseline",
+                "relative_improvement_percent",
+            ]
+        ].to_string(index=False, float_format=lambda x: f"{x:.2f}")
+    )
+else:
+    print("No comparable proposed-algorithm results were found.")
+
+print("\n" + "=" * 80)
+print("FILES SAVED")
+print("=" * 80)
+for path in [
+    summary_file,
+    ranking_file,
+    improvement_file,
+    overall_file,
+    excel_file,
+]:
+    print(path)
+
+print("\nBlock 11 completed successfully.")
