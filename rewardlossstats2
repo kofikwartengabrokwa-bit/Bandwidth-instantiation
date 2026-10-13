@@ -1,0 +1,1119 @@
+E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py 
+==============================================================================
+BLOCK 1: RBF-EDGE-COVER-DDQN EXPERIMENT CONFIGURATION
+==============================================================================
+
+[System]
+Operating system       : Windows-10-10.0.22621-SP0
+Python version         : 3.11.5
+Python executable      : E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe
+NumPy version          : 1.24.3
+Pandas version         : 2.1.0
+PyTorch version        : 2.1.2+cu118
+CUDA available         : False
+Selected device        : cpu
+
+[Project]
+Project root           : E:\Abrokwa\PycharmProjects\pythonProject1
+Simulation directory   : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Database path          : E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db
+Database exists        : True
+Database size (MB)     : 5.152
+
+[Radio Resources]
+Bandwidth (MHz)        : 20.0
+Total PRBs             : 100
+Bandwidth per PRB (MHz): 0.2
+Power budget (W)       : 40.0
+Maximum users per PRB  : 10
+
+[Traffic Classes]
+eMBB         {'weight': 0.25, 'min_rate_mbps': 10.0, 'target_rate_mbps': 50.0, 'max_latency_ms': 100.0, 'min_reliability': 0.99, 'priority': 2}
+uRLLC        {'weight': 0.2, 'min_rate_mbps': 1.0, 'target_rate_mbps': 10.0, 'max_latency_ms': 5.0, 'min_reliability': 0.99999, 'priority': 5}
+MTM          {'weight': 0.15, 'min_rate_mbps': 0.05, 'target_rate_mbps': 0.25, 'max_latency_ms': 1000.0, 'min_reliability': 0.99, 'priority': 1}
+IoT          {'weight': 0.2, 'min_rate_mbps': 0.1, 'target_rate_mbps': 1.0, 'max_latency_ms': 100.0, 'min_reliability': 0.99, 'priority': 2}
+Vehicular    {'weight': 0.2, 'min_rate_mbps': 5.0, 'target_rate_mbps': 20.0, 'max_latency_ms': 10.0, 'min_reliability': 0.999, 'priority': 4}
+
+[Training]
+Random seed            : 1220
+Episodes               : 1
+Steps per episode      : 100
+Evaluation episodes    : 20
+Learning rate          : 0.0003
+Discount factor        : 0.99
+Replay buffer capacity : 50000
+Batch size             : 128
+
+[Scalability]
+User counts            : [1000]
+
+[Algorithms]
+RBF-EdgeCover-DDQN       Plot label: Ours
+GGN-DDQN                 Plot label: GGN-DDQN
+GCN-DDQN                 Plot label: GCN-DDQN
+DDQN                     Plot label: DDQN
+
+[Output Directories]
+Results                : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN
+CSV                    : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv
+Figures                : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\figures
+Models                 : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+Checkpoints            : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models\checkpoints
+Logs                   : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\logs
+
+[Database Validation]
+Available tables       : ['lower_layer_data']
+
+Block 1 completed successfully.
+No training has started.
+No source database has been modified.
+==============================================================================
+
+===========================================================================
+BLOCK 2: RADIO DATASET LOADING AND VALIDATION
+===========================================================================
+Project directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Database path: E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db
+Database exists: True
+Database tables: ['lower_layer_data']
+
+Dataset shape: (45244, 25)
+Rows: 45,244
+Columns: 25
+
+--- Dataset columns and data types ---
+            column   dtype  missing  unique_values
+           dlBytes   int64        0          44737
+             dlMcs   int64        0             23
+            dlBler float64        0          28623
+           ulBytes   int64        0          43888
+             ulMcs   int64        0             21
+            ulBler float64        0          30258
+                ri   int64        0              1
+               phr   int64        0             32
+             pcmax   int64        0              6
+              rsrq float64        0             22
+              sinr float64        0             61
+              rsrp   int64        0             31
+              rssi float64        0            157
+               cqi   int64        0              3
+          pucchSnr float64        0             35
+          puschSnr float64        0             87
+             ue_id float64        0              9
+         timestamp float64        0          31550
+            cellid float64        0              1
+           in_sync float64        0              1
+              rnti  object     1540             45
+               pmi  object        0              1
+      traffic_type   int64        0              2
+   attack_category  object        0              6
+attack_subcategory  object        0             19
+
+--- Column classification ---
+Identifier columns: ['ue_id', 'timestamp', 'rnti']
+Label/category columns: ['traffic_type', 'attack_category', 'attack_subcategory']
+Constant numerical columns: ['ri', 'cellid', 'in_sync']
+Candidate numerical features: 18
+Usable numerical features: 15
+Feature names: ['dlBytes', 'dlMcs', 'dlBler', 'ulBytes', 'ulMcs', 'ulBler', 'phr', 'pcmax', 'rsrq', 'sinr', 'rsrp', 'rssi', 'cqi', 'pucchSnr', 'puschSnr']
+
+--- Data quality checks ---
+Missing cells in original data: 1,540
+Duplicate rows: 0
+Rows with invalid radio features: 0
+Usable rows: 45,244
+
+--- Traffic-type distribution ---
+traffic_type
+1    34580
+0    10664
+
+--- Numerical feature statistics ---
+            count          mean           std    min           25%           50%           75%           max
+dlBytes   45244.0  5.281520e+08  1.009603e+09    0.0  2.298549e+07  5.430307e+07  3.123111e+08  4.066047e+09
+dlMcs     45244.0  1.320162e+01  5.339175e+00    0.0  9.000000e+00  1.200000e+01  1.800000e+01  2.700000e+01
+dlBler    45244.0  1.635500e-01  2.886642e-01    0.0  0.000000e+00  4.943350e-02  1.191222e-01  9.898450e-01
+ulBytes   45244.0  8.894351e+08  1.551875e+09    0.0  5.522737e+07  1.073774e+08  9.806346e+08  5.249338e+09
+ulMcs     45244.0  9.457630e+00  3.494340e+00    0.0  6.000000e+00  9.000000e+00  1.200000e+01  2.000000e+01
+ulBler    45244.0  2.011635e-01  3.340186e-01    0.0  1.259525e-02  6.457000e-02  1.380002e-01  1.000000e+00
+phr       45244.0  1.970310e+01  4.641555e+00   -2.0  1.700000e+01  1.900000e+01  2.300000e+01  3.800000e+01
+pcmax     45244.0  2.078123e+01  1.193089e+01  -29.0  2.300000e+01  2.400000e+01  2.400000e+01  2.500000e+01
+rsrq      45244.0 -1.090909e+01  6.145877e-01  -32.0 -1.100000e+01 -1.100000e+01 -1.050000e+01 -1.050000e+01
+sinr      45244.0  1.640526e+01  5.756581e+00  -10.5  1.250000e+01  1.650000e+01  2.150000e+01  2.350000e+01
+rsrp      45244.0 -9.965052e+01  4.472136e+00 -123.0 -1.030000e+02 -1.000000e+02 -9.600000e+01 -9.000000e+01
+rssi      45244.0 -6.872819e+01  6.501045e+00  -84.4 -7.240000e+01 -7.100000e+01 -6.890000e+01 -5.140000e+01
+cqi       45244.0  1.472509e+01  6.837328e-01   13.0  1.500000e+01  1.500000e+01  1.500000e+01  1.500000e+01
+pucchSnr  45244.0  1.717140e+01  6.381331e+00    1.0  1.800000e+01  1.900000e+01  2.000000e+01  4.400000e+01
+puschSnr  45244.0  1.736417e+01  7.906955e+00    0.5  1.600000e+01  1.850000e+01  2.050000e+01  4.350000e+01
+
+--- Block 2 summary ---
+Clean dataset shape: (45244, 25)
+Radio features: 15
+Traffic column: traffic_type
+Column report: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\dataset_column_report.csv
+Feature summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\radio_feature_summary.csv
+
+Block 2 completed successfully.
+No model training has started.
+The original SQLite database was not modified.
+
+===========================================================================
+BLOCK 3: SHARED RAN SLICING ENVIRONMENT
+===========================================================================
+Dataset rows used: 45,244
+Numerical radio features used: 15
+Resource pool: 100 RBs / 20.0 MHz
+Maximum transmit-power budget: 40.0 W
+
+--- Environment smoke-test results ---
+State dimension: 28
+Action dimension: 5
+Users per slice: [25, 20, 15, 20, 20]
+Episode steps: 100
+Total allocated RBs: 100
+Final RB allocation: [23, 19, 22, 15, 21]
+Episode reward: 47.1429
+Estimated rate (Mbps): [4.3266, 4.1351, 5.5015, 2.6032, 4.3672]
+Estimated latency (ms): [2.8696, 0.2132, 25.4545, 15.3333, 0.6905]
+Power allocation (W): [9.2, 7.6, 8.8, 6.0, 8.4]
+Energy per 1-ms interval (J): [0.0092, 0.0076, 0.0088, 0.006, 0.0084]
+
+Block 3 completed successfully.
+The random-policy smoke test passed.
+No learning agent has been trained.
+
+===========================================================================
+BLOCK 4: REPLAY BUFFER AND DDQN NETWORK COMPONENTS
+===========================================================================
+Device: cpu
+State dimension: 28
+Action dimension: 5
+Replay capacity: 50,000
+Batch size: 128
+Discount factor: 0.99
+Learning rate: 0.0003
+
+--- Replay buffer test ---
+Stored transitions: 10
+Sample state batch shape: (4, 28)
+Sample action batch shape: (4,)
+
+--- Neural-network forward-pass tests ---
+DDQN                   | Q-value shape: (4, 5) | parameters: 20,869
+GCN-DDQN               | Q-value shape: (4, 5) | parameters: 34,821
+GGN-DDQN               | Q-value shape: (4, 5) | parameters: 150,149
+RBF-EdgeCover-DDQN     | Q-value shape: (4, 5) | parameters: 27,269
+
+Block 4 completed successfully.
+Replay buffer and four Q-network architectures passed smoke tests.
+No episode training has started.
+
+===========================================================================
+BLOCK 5: DDQN AGENT IMPLEMENTATION
+===========================================================================
+Device: cpu
+Algorithms: ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+Batch size: 128
+Replay capacity: 50,000
+Warm-up transitions: 500
+
+RBF initialization states: (256, 28)
+
+--- Agent initialization and learning smoke test ---
+[transformers] Disabling PyTorch because PyTorch >= 2.4 is required but found 2.1.2+cu118
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+RBF-EdgeCover-DDQN     | action=0 | buffer= 500 | loss=0.117270 | epsilon=0.9765
+GGN-DDQN               | action=3 | buffer= 500 | loss=0.195496 | epsilon=0.9765
+GCN-DDQN               | action=1 | buffer= 500 | loss=0.185395 | epsilon=0.9765
+DDQN                   | action=2 | buffer= 500 | loss=0.181221 | epsilon=0.9765
+
+Block 5 completed successfully.
+All four agents selected valid actions and completed a learning update.
+The test updates above are component checks, not full episode training.
+========================================================================
+BLOCK 6: FULL TRAINING AND EVALUATION
+========================================================================
+Device: cpu
+Episodes per algorithm/load: 10000
+Evaluation episodes: 20
+User loads: [100, 200, 300, 400, 500, 600, 800, 1000]
+Algorithms: ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+Models saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+
+########################################################################
+TRAINING FOR USER LOAD: 100
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 100
+Episode    1/10000 | Mean reward=  44.7525 | Loss=      nan | Epsilon=0.9953
+Episode   50/10000 | Mean reward=  45.8698 | Loss=  0.01597 | Epsilon=0.7899
+Episode  100/10000 | Mean reward=  46.0322 | Loss=  0.03135 | Epsilon=0.6262
+Episode  150/10000 | Mean reward=  45.9381 | Loss=  0.06204 | Epsilon=0.4987
+Episode  200/10000 | Mean reward=  45.8810 | Loss=  0.06753 | Epsilon=0.3995
+Episode  250/10000 | Mean reward=  45.9785 | Loss=  0.07332 | Epsilon=0.3222
+Episode  300/10000 | Mean reward=  45.8599 | Loss=  0.11424 | Epsilon=0.2620
+Episode  350/10000 | Mean reward=  45.9273 | Loss=  0.07233 | Epsilon=0.2151
+Episode  400/10000 | Mean reward=  45.9722 | Loss=  0.06663 | Epsilon=0.1786
+Episode  450/10000 | Mean reward=  46.0529 | Loss=  0.06281 | Epsilon=0.1501
+Episode  500/10000 | Mean reward=  46.0604 | Loss=  0.05276 | Epsilon=0.1280
+Episode  550/10000 | Mean reward=  46.0812 | Loss=  0.03065 | Epsilon=0.1107
+Episode  600/10000 | Mean reward=  46.2258 | Loss=  0.01744 | Epsilon=0.0973
+Episode  650/10000 | Mean reward=  46.1073 | Loss=  0.01870 | Epsilon=0.0868
+Episode  700/10000 | Mean reward=  46.0683 | Loss=  0.01106 | Epsilon=0.0787
+Episode  750/10000 | Mean reward=  46.3008 | Loss=  0.01478 | Epsilon=0.0723
+Episode  800/10000 | Mean reward=  46.1875 | Loss=  0.01121 | Epsilon=0.0674
+Episode  850/10000 | Mean reward=  46.1613 | Loss=  0.00994 | Epsilon=0.0636
+Episode  900/10000 | Mean reward=  46.0019 | Loss=  0.01151 | Epsilon=0.0606
+Episode  950/10000 | Mean reward=  46.1866 | Loss=  0.01411 | Epsilon=0.0582
+Episode 1000/10000 | Mean reward=  46.1473 | Loss=  0.01774 | Epsilon=0.0564
+Episode 1050/10000 | Mean reward=  46.0557 | Loss=  0.01817 | Epsilon=0.0550
+Episode 1100/10000 | Mean reward=  46.1415 | Loss=  0.02299 | Epsilon=0.0539
+Episode 1150/10000 | Mean reward=  45.9684 | Loss=  0.01961 | Epsilon=0.0530
+Episode 1200/10000 | Mean reward=  46.0462 | Loss=  0.02893 | Epsilon=0.0524
+Episode 1250/10000 | Mean reward=  46.2986 | Loss=  0.02419 | Epsilon=0.0518
+Episode 1300/10000 | Mean reward=  46.1381 | Loss=  0.02987 | Epsilon=0.0514
+Episode 1350/10000 | Mean reward=  46.0690 | Loss=  0.04088 | Epsilon=0.0511
+Episode 1400/10000 | Mean reward=  46.0381 | Loss=  0.04074 | Epsilon=0.0509
+Episode 1450/10000 | Mean reward=  45.7942 | Loss=  0.03396 | Epsilon=0.0507
+Episode 1500/10000 | Mean reward=  46.0347 | Loss=  0.04122 | Epsilon=0.0505
+Episode 1550/10000 | Mean reward=  46.0766 | Loss=  0.03853 | Epsilon=0.0504
+Episode 1600/10000 | Mean reward=  45.9464 | Loss=  0.02798 | Epsilon=0.0503
+Episode 1650/10000 | Mean reward=  46.3240 | Loss=  0.02460 | Epsilon=0.0502
+Episode 1700/10000 | Mean reward=  46.0825 | Loss=  0.02688 | Epsilon=0.0502
+Episode 1750/10000 | Mean reward=  46.0138 | Loss=  0.01978 | Epsilon=0.0502
+Episode 1800/10000 | Mean reward=  45.8434 | Loss=  0.01465 | Epsilon=0.0501
+Episode 1850/10000 | Mean reward=  45.6581 | Loss=  0.01314 | Epsilon=0.0501
+Episode 1900/10000 | Mean reward=  45.8470 | Loss=  0.01659 | Epsilon=0.0501
+Episode 1950/10000 | Mean reward=  45.9032 | Loss=  0.01052 | Epsilon=0.0501
+Episode 2000/10000 | Mean reward=  46.0301 | Loss=  0.00915 | Epsilon=0.0500
+Episode 2050/10000 | Mean reward=  45.9593 | Loss=  0.00837 | Epsilon=0.0500
+Episode 2100/10000 | Mean reward=  45.5740 | Loss=  0.01223 | Epsilon=0.0500
+Episode 2150/10000 | Mean reward=  45.6645 | Loss=  0.01772 | Epsilon=0.0500
+Episode 2200/10000 | Mean reward=  46.0386 | Loss=  0.01898 | Epsilon=0.0500
+Episode 2250/10000 | Mean reward=  45.8087 | Loss=  0.02923 | Epsilon=0.0500
+Episode 2300/10000 | Mean reward=  46.1299 | Loss=  0.03381 | Epsilon=0.0500
+Episode 2350/10000 | Mean reward=  45.9740 | Loss=  0.05268 | Epsilon=0.0500
+Episode 2400/10000 | Mean reward=  45.9092 | Loss=  0.04541 | Epsilon=0.0500
+Episode 2450/10000 | Mean reward=  45.8186 | Loss=  0.05753 | Epsilon=0.0500
+Episode 2500/10000 | Mean reward=  46.0520 | Loss=  0.10766 | Epsilon=0.0500
+Episode 2550/10000 | Mean reward=  45.8300 | Loss=  0.07920 | Epsilon=0.0500
+Episode 2600/10000 | Mean reward=  46.1465 | Loss=  0.09823 | Epsilon=0.0500
+Episode 2650/10000 | Mean reward=  45.9383 | Loss=  0.09490 | Epsilon=0.0500
+Episode 2700/10000 | Mean reward=  45.9293 | Loss=  0.08565 | Epsilon=0.0500
+Episode 2750/10000 | Mean reward=  46.0075 | Loss=  0.08827 | Epsilon=0.0500
+Episode 2800/10000 | Mean reward=  45.8723 | Loss=  0.13020 | Epsilon=0.0500
+Episode 2850/10000 | Mean reward=  45.9174 | Loss=  0.16041 | Epsilon=0.0500
+Episode 2900/10000 | Mean reward=  45.9066 | Loss=  0.16304 | Epsilon=0.0500
+Episode 2950/10000 | Mean reward=  45.4905 | Loss=  0.16407 | Epsilon=0.0500
+Episode 3000/10000 | Mean reward=  45.6244 | Loss=  0.19217 | Epsilon=0.0500
+Episode 3050/10000 | Mean reward=  45.6392 | Loss=  0.17452 | Epsilon=0.0500
+Episode 3100/10000 | Mean reward=  45.4887 | Loss=  0.20948 | Epsilon=0.0500
+Episode 3150/10000 | Mean reward=  45.7632 | Loss=  0.15137 | Epsilon=0.0500
+Episode 3200/10000 | Mean reward=  46.1847 | Loss=  0.17258 | Epsilon=0.0500
+Episode 3250/10000 | Mean reward=  46.1397 | Loss=  0.23067 | Epsilon=0.0500
+Episode 3300/10000 | Mean reward=  45.7787 | Loss=  0.27654 | Epsilon=0.0500
+Episode 3350/10000 | Mean reward=  45.9731 | Loss=  0.23156 | Epsilon=0.0500
+Episode 3400/10000 | Mean reward=  45.9645 | Loss=  0.24063 | Epsilon=0.0500
+Episode 3450/10000 | Mean reward=  45.4442 | Loss=  0.25455 | Epsilon=0.0500
+Episode 3500/10000 | Mean reward=  45.8907 | Loss=  0.17245 | Epsilon=0.0500
+Episode 3550/10000 | Mean reward=  45.6743 | Loss=  0.16585 | Epsilon=0.0500
+Episode 3600/10000 | Mean reward=  45.9091 | Loss=  0.27903 | Epsilon=0.0500
+Episode 3650/10000 | Mean reward=  45.6704 | Loss=  0.20717 | Epsilon=0.0500
+Episode 3700/10000 | Mean reward=  45.9504 | Loss=  0.30784 | Epsilon=0.0500
+Episode 3750/10000 | Mean reward=  45.8981 | Loss=  0.25906 | Epsilon=0.0500
+Episode 3800/10000 | Mean reward=  45.8966 | Loss=  0.19240 | Epsilon=0.0500
+Episode 3850/10000 | Mean reward=  46.0404 | Loss=  0.18350 | Epsilon=0.0500
+Episode 3900/10000 | Mean reward=  45.9995 | Loss=  0.23935 | Epsilon=0.0500
+Episode 3950/10000 | Mean reward=  45.9846 | Loss=  0.23051 | Epsilon=0.0500
+Episode 4000/10000 | Mean reward=  46.0157 | Loss=  0.25128 | Epsilon=0.0500
+Episode 4050/10000 | Mean reward=  45.8587 | Loss=  0.24621 | Epsilon=0.0500
+Episode 4100/10000 | Mean reward=  45.9965 | Loss=  0.30207 | Epsilon=0.0500
+Episode 4150/10000 | Mean reward=  45.9877 | Loss=  0.19735 | Epsilon=0.0500
+Episode 4200/10000 | Mean reward=  46.0696 | Loss=  0.27370 | Epsilon=0.0500
+Episode 4250/10000 | Mean reward=  45.9482 | Loss=  0.28050 | Epsilon=0.0500
+Episode 4300/10000 | Mean reward=  45.8778 | Loss=  0.29639 | Epsilon=0.0500
+Episode 4350/10000 | Mean reward=  45.7615 | Loss=  0.30112 | Epsilon=0.0500
+Episode 4400/10000 | Mean reward=  45.9501 | Loss=  0.20251 | Epsilon=0.0500
+Episode 4450/10000 | Mean reward=  45.8691 | Loss=  0.22114 | Epsilon=0.0500
+Episode 4500/10000 | Mean reward=  46.0663 | Loss=  0.27318 | Epsilon=0.0500
+Episode 4550/10000 | Mean reward=  46.1470 | Loss=  0.28240 | Epsilon=0.0500
+Episode 4600/10000 | Mean reward=  46.0748 | Loss=  0.29668 | Epsilon=0.0500
+Episode 4650/10000 | Mean reward=  45.8720 | Loss=  0.28846 | Epsilon=0.0500
+Episode 4700/10000 | Mean reward=  45.9808 | Loss=  0.22316 | Epsilon=0.0500
+Episode 4750/10000 | Mean reward=  46.0488 | Loss=  0.28187 | Epsilon=0.0500
+Episode 4800/10000 | Mean reward=  45.9467 | Loss=  0.22367 | Epsilon=0.0500
+Episode 4850/10000 | Mean reward=  45.8505 | Loss=  0.23032 | Epsilon=0.0500
+Episode 4900/10000 | Mean reward=  45.9834 | Loss=  0.21841 | Epsilon=0.0500
+Episode 4950/10000 | Mean reward=  45.9910 | Loss=  0.23099 | Epsilon=0.0500
+Episode 5000/10000 | Mean reward=  45.7145 | Loss=  0.18835 | Epsilon=0.0500
+Episode 5050/10000 | Mean reward=  45.6709 | Loss=  0.22216 | Epsilon=0.0500
+Episode 5100/10000 | Mean reward=  45.5935 | Loss=  0.24720 | Epsilon=0.0500
+Episode 5150/10000 | Mean reward=  45.5191 | Loss=  0.26243 | Epsilon=0.0500
+Episode 5200/10000 | Mean reward=  45.3168 | Loss=  0.25514 | Epsilon=0.0500
+Episode 5250/10000 | Mean reward=  45.2522 | Loss=  0.21427 | Epsilon=0.0500
+Episode 5300/10000 | Mean reward=  45.2594 | Loss=  0.19423 | Epsilon=0.0500
+Episode 5350/10000 | Mean reward=  45.0981 | Loss=  0.28541 | Epsilon=0.0500
+Episode 5400/10000 | Mean reward=  44.9921 | Loss=  0.17699 | Epsilon=0.0500
+Episode 5450/10000 | Mean reward=  45.1475 | Loss=  0.24634 | Epsilon=0.0500
+Episode 5500/10000 | Mean reward=  45.5504 | Loss=  0.21183 | Epsilon=0.0500
+Episode 5550/10000 | Mean reward=  45.4098 | Loss=  0.25326 | Epsilon=0.0500
+Episode 5600/10000 | Mean reward=  45.5212 | Loss=  0.22674 | Epsilon=0.0500
+Episode 5650/10000 | Mean reward=  45.5083 | Loss=  0.15150 | Epsilon=0.0500
+Episode 5700/10000 | Mean reward=  45.6267 | Loss=  0.27245 | Epsilon=0.0500
+Episode 5750/10000 | Mean reward=  45.6413 | Loss=  0.23913 | Epsilon=0.0500
+Episode 5800/10000 | Mean reward=  45.7922 | Loss=  0.23746 | Epsilon=0.0500
+Episode 5850/10000 | Mean reward=  45.7758 | Loss=  0.22903 | Epsilon=0.0500
+Episode 5900/10000 | Mean reward=  45.5959 | Loss=  0.22965 | Epsilon=0.0500
+Episode 5950/10000 | Mean reward=  45.6727 | Loss=  0.18678 | Epsilon=0.0500
+Episode 6000/10000 | Mean reward=  45.5635 | Loss=  0.20650 | Epsilon=0.0500
+Episode 6050/10000 | Mean reward=  45.5654 | Loss=  0.24082 | Epsilon=0.0500
+Episode 6100/10000 | Mean reward=  45.5435 | Loss=  0.17174 | Epsilon=0.0500
+Episode 6150/10000 | Mean reward=  45.5426 | Loss=  0.13353 | Epsilon=0.0500
+Episode 6200/10000 | Mean reward=  45.4332 | Loss=  0.18639 | Epsilon=0.0500
+Episode 6250/10000 | Mean reward=  45.3461 | Loss=  0.16596 | Epsilon=0.0500
+Episode 6300/10000 | Mean reward=  45.5727 | Loss=  0.19892 | Epsilon=0.0500
+Episode 6350/10000 | Mean reward=  45.5034 | Loss=  0.20487 | Epsilon=0.0500
+Episode 6400/10000 | Mean reward=  45.6695 | Loss=  0.14158 | Epsilon=0.0500
+Episode 6450/10000 | Mean reward=  45.9280 | Loss=  0.14052 | Epsilon=0.0500
+Episode 6500/10000 | Mean reward=  45.9109 | Loss=  0.22084 | Epsilon=0.0500
+Episode 6550/10000 | Mean reward=  45.6135 | Loss=  0.18371 | Epsilon=0.0500
+Episode 6600/10000 | Mean reward=  45.4837 | Loss=  0.17371 | Epsilon=0.0500
+Episode 6650/10000 | Mean reward=  45.9110 | Loss=  0.17986 | Epsilon=0.0500
+Episode 6700/10000 | Mean reward=  45.9036 | Loss=  0.25249 | Epsilon=0.0500
+Episode 6750/10000 | Mean reward=  45.9593 | Loss=  0.21672 | Epsilon=0.0500
+Episode 6800/10000 | Mean reward=  46.0024 | Loss=  0.17304 | Epsilon=0.0500
+Episode 6850/10000 | Mean reward=  45.9755 | Loss=  0.16316 | Epsilon=0.0500
+Episode 6900/10000 | Mean reward=  46.1356 | Loss=  0.22215 | Epsilon=0.0500
+Episode 6950/10000 | Mean reward=  45.9733 | Loss=  0.16469 | Epsilon=0.0500
+Episode 7000/10000 | Mean reward=  45.6578 | Loss=  0.21795 | Epsilon=0.0500
+Episode 7050/10000 | Mean reward=  45.8491 | Loss=  0.16414 | Epsilon=0.0500
+Episode 7100/10000 | Mean reward=  46.0868 | Loss=  0.14903 | Epsilon=0.0500
+Episode 7150/10000 | Mean reward=  46.0200 | Loss=  0.17859 | Epsilon=0.0500
+Episode 7200/10000 | Mean reward=  45.8517 | Loss=  0.16922 | Epsilon=0.0500
+Episode 7250/10000 | Mean reward=  45.7402 | Loss=  0.14312 | Epsilon=0.0500
+Episode 7300/10000 | Mean reward=  45.9827 | Loss=  0.16283 | Epsilon=0.0500
+Episode 7350/10000 | Mean reward=  45.8783 | Loss=  0.11167 | Epsilon=0.0500
+Episode 7400/10000 | Mean reward=  45.9449 | Loss=  0.18205 | Epsilon=0.0500
+Episode 7450/10000 | Mean reward=  45.9386 | Loss=  0.18226 | Epsilon=0.0500
+Episode 7500/10000 | Mean reward=  46.0920 | Loss=  0.22181 | Epsilon=0.0500
+Episode 7550/10000 | Mean reward=  45.8549 | Loss=  0.24206 | Epsilon=0.0500
+Episode 7600/10000 | Mean reward=  45.5740 | Loss=  0.15246 | Epsilon=0.0500
+Episode 7650/10000 | Mean reward=  45.9839 | Loss=  0.18700 | Epsilon=0.0500
+Episode 7700/10000 | Mean reward=  45.9890 | Loss=  0.16480 | Epsilon=0.0500
+Episode 7750/10000 | Mean reward=  45.5970 | Loss=  0.19227 | Epsilon=0.0500
+Episode 7800/10000 | Mean reward=  45.6011 | Loss=  0.21752 | Epsilon=0.0500
+Episode 7850/10000 | Mean reward=  45.8558 | Loss=  0.20672 | Epsilon=0.0500
+Episode 7900/10000 | Mean reward=  46.1247 | Loss=  0.22366 | Epsilon=0.0500
+Episode 7950/10000 | Mean reward=  46.1612 | Loss=  0.19890 | Epsilon=0.0500
+Episode 8000/10000 | Mean reward=  45.9053 | Loss=  0.28584 | Epsilon=0.0500
+Episode 8050/10000 | Mean reward=  46.0001 | Loss=  0.21471 | Epsilon=0.0500
+Episode 8100/10000 | Mean reward=  46.0062 | Loss=  0.23939 | Epsilon=0.0500
+Episode 8150/10000 | Mean reward=  45.9213 | Loss=  0.24048 | Epsilon=0.0500
+Episode 8200/10000 | Mean reward=  45.9278 | Loss=  0.25941 | Epsilon=0.0500
+Episode 8250/10000 | Mean reward=  46.1384 | Loss=  0.29608 | Epsilon=0.0500
+Episode 8300/10000 | Mean reward=  45.8846 | Loss=  0.15426 | Epsilon=0.0500
+Episode 8350/10000 | Mean reward=  45.8580 | Loss=  0.24844 | Epsilon=0.0500
+Episode 8400/10000 | Mean reward=  45.4932 | Loss=  0.24038 | Epsilon=0.0500
+Episode 8450/10000 | Mean reward=  45.9698 | Loss=  0.25892 | Epsilon=0.0500
+Episode 8500/10000 | Mean reward=  45.7141 | Loss=  0.25613 | Epsilon=0.0500
+Episode 8550/10000 | Mean reward=  46.2809 | Loss=  0.15943 | Epsilon=0.0500
+Episode 8600/10000 | Mean reward=  45.4131 | Loss=  0.16511 | Epsilon=0.0500
+Episode 8650/10000 | Mean reward=  45.5528 | Loss=  0.20026 | Epsilon=0.0500
+Episode 8700/10000 | Mean reward=  45.7448 | Loss=  0.20307 | Epsilon=0.0500
+Episode 8750/10000 | Mean reward=  45.7617 | Loss=  0.19879 | Epsilon=0.0500
+Episode 8800/10000 | Mean reward=  45.5370 | Loss=  0.20539 | Epsilon=0.0500
+Episode 8850/10000 | Mean reward=  45.7252 | Loss=  0.19686 | Epsilon=0.0500
+Episode 8900/10000 | Mean reward=  45.6039 | Loss=  0.23967 | Epsilon=0.0500
+Episode 8950/10000 | Mean reward=  45.8987 | Loss=  0.22040 | Epsilon=0.0500
+Episode 9000/10000 | Mean reward=  45.8453 | Loss=  0.17501 | Epsilon=0.0500
+Episode 9050/10000 | Mean reward=  45.9886 | Loss=  0.16491 | Epsilon=0.0500
+Episode 9100/10000 | Mean reward=  45.5593 | Loss=  0.21348 | Epsilon=0.0500
+Episode 9150/10000 | Mean reward=  45.9599 | Loss=  0.17771 | Epsilon=0.0500
+Episode 9200/10000 | Mean reward=  45.8726 | Loss=  0.15464 | Epsilon=0.0500
+Episode 9250/10000 | Mean reward=  45.4365 | Loss=  0.20887 | Epsilon=0.0500
+Episode 9300/10000 | Mean reward=  45.7377 | Loss=  0.14124 | Epsilon=0.0500
+Episode 9350/10000 | Mean reward=  45.4728 | Loss=  0.14801 | Epsilon=0.0500
+Episode 9400/10000 | Mean reward=  45.4606 | Loss=  0.13866 | Epsilon=0.0500
+Episode 9450/10000 | Mean reward=  45.0704 | Loss=  0.15061 | Epsilon=0.0500
+Episode 9500/10000 | Mean reward=  45.3569 | Loss=  0.23392 | Epsilon=0.0500
+Episode 9550/10000 | Mean reward=  45.1021 | Loss=  0.18058 | Epsilon=0.0500
+Episode 9600/10000 | Mean reward=  45.0246 | Loss=  0.28557 | Epsilon=0.0500
+Episode 9650/10000 | Mean reward=  45.0167 | Loss=  0.20740 | Epsilon=0.0500
+Episode 9700/10000 | Mean reward=  45.0704 | Loss=  0.17144 | Epsilon=0.0500
+Episode 9750/10000 | Mean reward=  45.1149 | Loss=  0.23210 | Epsilon=0.0500
+Episode 9800/10000 | Mean reward=  45.3086 | Loss=  0.23572 | Epsilon=0.0500
+Episode 9850/10000 | Mean reward=  45.1835 | Loss=  0.24571 | Epsilon=0.0500
+Episode 9900/10000 | Mean reward=  45.4863 | Loss=  0.22530 | Epsilon=0.0500
+Episode 9950/10000 | Mean reward=  45.7113 | Loss=  0.16534 | Epsilon=0.0500
+Episode 10000/10000 | Mean reward=  45.8086 | Loss=  0.25545 | Epsilon=0.0500
+Completed RBF-EdgeCover-DDQN at 100 users | Elapsed=71.46 min | Model saved: RBF_EdgeCover_DDQN_users_100.pt
+
+Algorithm: GGN-DDQN | Users: 100
+Episode    1/10000 | Mean reward=  48.9304 | Loss=      nan | Epsilon=0.9953
+Episode   50/10000 | Mean reward=  48.7696 | Loss=  0.02475 | Epsilon=0.7899
+Episode  100/10000 | Mean reward=  48.7042 | Loss=  0.04159 | Epsilon=0.6262
+Episode  150/10000 | Mean reward=  47.3666 | Loss=  0.08329 | Epsilon=0.4987
+Episode  200/10000 | Mean reward=  47.8701 | Loss=  0.09979 | Epsilon=0.3995
+Episode  250/10000 | Mean reward=  47.4101 | Loss=  0.10500 | Epsilon=0.3222
+Episode  300/10000 | Mean reward=  47.6666 | Loss=  0.18847 | Epsilon=0.2620
+Episode  350/10000 | Mean reward=  46.5873 | Loss=  0.14341 | Epsilon=0.2151
+Episode  400/10000 | Mean reward=  45.6766 | Loss=  0.13058 | Epsilon=0.1786
+Episode  450/10000 | Mean reward=  45.1303 | Loss=  0.21865 | Epsilon=0.1501
+Episode  500/10000 | Mean reward=  44.4880 | Loss=  0.22442 | Epsilon=0.1280
+Episode  550/10000 | Mean reward=  45.4996 | Loss=  0.18505 | Epsilon=0.1107
+Episode  600/10000 | Mean reward=  46.3337 | Loss=  0.21296 | Epsilon=0.0973
+Episode  650/10000 | Mean reward=  47.2507 | Loss=  0.32275 | Epsilon=0.0868
+Episode  700/10000 | Mean reward=  46.5715 | Loss=  0.24499 | Epsilon=0.0787
+Episode  750/10000 | Mean reward=  45.8178 | Loss=  0.29058 | Epsilon=0.0723
+Episode  800/10000 | Mean reward=  46.2743 | Loss=  0.26614 | Epsilon=0.0674
+Episode  850/10000 | Mean reward=  46.3851 | Loss=  0.24588 | Epsilon=0.0636
+Episode  900/10000 | Mean reward=  45.5836 | Loss=  0.32532 | Epsilon=0.0606
+Episode  950/10000 | Mean reward=  46.0074 | Loss=  0.29136 | Epsilon=0.0582
+Episode 1000/10000 | Mean reward=  46.2691 | Loss=  0.35872 | Epsilon=0.0564
+Episode 1050/10000 | Mean reward=  45.9540 | Loss=  0.30871 | Epsilon=0.0550
+Episode 1100/10000 | Mean reward=  47.7618 | Loss=  0.33886 | Epsilon=0.0539
+Episode 1150/10000 | Mean reward=  48.7219 | Loss=  0.23836 | Epsilon=0.0530
+Episode 1200/10000 | Mean reward=  49.4097 | Loss=  0.33664 | Epsilon=0.0524
+Episode 1250/10000 | Mean reward=  49.5712 | Loss=  0.28997 | Epsilon=0.0518
+Episode 1300/10000 | Mean reward=  48.3372 | Loss=  0.26778 | Epsilon=0.0514
+Episode 1350/10000 | Mean reward=  49.7320 | Loss=  0.34146 | Epsilon=0.0511
+Episode 1400/10000 | Mean reward=  49.3875 | Loss=  0.28313 | Epsilon=0.0509
+Episode 1450/10000 | Mean reward=  51.2871 | Loss=  0.19591 | Epsilon=0.0507
+Episode 1500/10000 | Mean reward=  50.6624 | Loss=  0.19384 | Epsilon=0.0505
+Episode 1550/10000 | Mean reward=  49.3490 | Loss=  0.16228 | Epsilon=0.0504
+Episode 1600/10000 | Mean reward=  51.6792 | Loss=  0.09637 | Epsilon=0.0503
+Episode 1650/10000 | Mean reward=  51.4575 | Loss=  0.07318 | Epsilon=0.0502
+Episode 1700/10000 | Mean reward=  51.8226 | Loss=  0.08896 | Epsilon=0.0502
+Episode 1750/10000 | Mean reward=  51.4604 | Loss=  0.08398 | Epsilon=0.0502
+Episode 1800/10000 | Mean reward=  52.5873 | Loss=  0.07017 | Epsilon=0.0501
+Episode 1850/10000 | Mean reward=  52.0807 | Loss=  0.01779 | Epsilon=0.0501
+Episode 1900/10000 | Mean reward=  51.7991 | Loss=  0.01934 | Epsilon=0.0501
+Episode 1950/10000 | Mean reward=  51.6490 | Loss=  0.03202 | Epsilon=0.0501
+Episode 2000/10000 | Mean reward=  52.5541 | Loss=  0.04416 | Epsilon=0.0500
+Episode 2050/10000 | Mean reward=  52.0994 | Loss=  0.02889 | Epsilon=0.0500
+Episode 2100/10000 | Mean reward=  52.6156 | Loss=  0.03584 | Epsilon=0.0500
+Episode 2150/10000 | Mean reward=  52.9260 | Loss=  0.02040 | Epsilon=0.0500
+Episode 2200/10000 | Mean reward=  53.4631 | Loss=  0.01868 | Epsilon=0.0500
+Episode 2250/10000 | Mean reward=  52.4747 | Loss=  0.02680 | Epsilon=0.0500
+Episode 2300/10000 | Mean reward=  53.1545 | Loss=  0.02287 | Epsilon=0.0500
+Episode 2350/10000 | Mean reward=  52.5516 | Loss=  0.02358 | Epsilon=0.0500
+Episode 2400/10000 | Mean reward=  53.1403 | Loss=  0.02396 | Epsilon=0.0500
+Episode 2450/10000 | Mean reward=  51.2312 | Loss=  0.02426 | Epsilon=0.0500
+Episode 2500/10000 | Mean reward=  51.1787 | Loss=  0.03321 | Epsilon=0.0500
+Episode 2550/10000 | Mean reward=  50.9196 | Loss=  0.02970 | Epsilon=0.0500
+Episode 2600/10000 | Mean reward=  51.7850 | Loss=  0.02265 | Epsilon=0.0500
+Episode 2650/10000 | Mean reward=  53.4467 | Loss=  0.02640 | Epsilon=0.0500
+Episode 2700/10000 | Mean reward=  53.1455 | Loss=  0.02291 | Epsilon=0.0500
+Episode 2750/10000 | Mean reward=  52.3689 | Loss=  0.03221 | Epsilon=0.0500
+Episode 2800/10000 | Mean reward=  52.3538 | Loss=  0.02997 | Epsilon=0.0500
+Episode 2850/10000 | Mean reward=  52.9565 | Loss=  0.02896 | Epsilon=0.0500
+Episode 2900/10000 | Mean reward=  52.3158 | Loss=  0.03206 | Epsilon=0.0500
+Episode 2950/10000 | Mean reward=  51.6101 | Loss=  0.02086 | Epsilon=0.0500
+Episode 3000/10000 | Mean reward=  52.2772 | Loss=  0.02199 | Epsilon=0.0500
+Episode 3050/10000 | Mean reward=  53.8121 | Loss=  0.02400 | Epsilon=0.0500
+Episode 3100/10000 | Mean reward=  53.5619 | Loss=  0.03060 | Epsilon=0.0500
+Episode 3150/10000 | Mean reward=  52.9199 | Loss=  0.03164 | Epsilon=0.0500
+Episode 3200/10000 | Mean reward=  53.4873 | Loss=  0.02672 | Epsilon=0.0500
+Episode 3250/10000 | Mean reward=  49.6357 | Loss=  0.02863 | Epsilon=0.0500
+Episode 3300/10000 | Mean reward=  50.4553 | Loss=  0.02370 | Epsilon=0.0500
+Episode 3350/10000 | Mean reward=  50.5360 | Loss=  0.02546 | Epsilon=0.0500
+Episode 3400/10000 | Mean reward=  52.9587 | Loss=  0.02520 | Epsilon=0.0500
+Episode 3450/10000 | Mean reward=  53.3011 | Loss=  0.02946 | Epsilon=0.0500
+Episode 3500/10000 | Mean reward=  53.1006 | Loss=  0.02336 | Epsilon=0.0500
+Episode 3550/10000 | Mean reward=  53.6804 | Loss=  0.01929 | Epsilon=0.0500
+Episode 3600/10000 | Mean reward=  53.9914 | Loss=  0.02751 | Epsilon=0.0500
+Episode 3650/10000 | Mean reward=  53.4825 | Loss=  0.01713 | Epsilon=0.0500
+Episode 3700/10000 | Mean reward=  54.5734 | Loss=  0.01491 | Epsilon=0.0500
+Episode 3750/10000 | Mean reward=  54.2934 | Loss=  0.02207 | Epsilon=0.0500
+Episode 3800/10000 | Mean reward=  53.1892 | Loss=  0.01602 | Epsilon=0.0500
+Episode 3850/10000 | Mean reward=  54.0493 | Loss=  0.01520 | Epsilon=0.0500
+Episode 3900/10000 | Mean reward=  53.0528 | Loss=  0.01396 | Epsilon=0.0500
+Episode 3950/10000 | Mean reward=  54.1153 | Loss=  0.01191 | Epsilon=0.0500
+Episode 4000/10000 | Mean reward=  54.6451 | Loss=  0.01710 | Epsilon=0.0500
+Episode 4050/10000 | Mean reward=  54.7385 | Loss=  0.01579 | Epsilon=0.0500
+Episode 4100/10000 | Mean reward=  54.9414 | Loss=  0.01279 | Epsilon=0.0500
+Episode 4150/10000 | Mean reward=  53.7848 | Loss=  0.01096 | Epsilon=0.0500
+Episode 4200/10000 | Mean reward=  54.7003 | Loss=  0.01247 | Epsilon=0.0500
+Episode 4250/10000 | Mean reward=  54.8089 | Loss=  0.01562 | Epsilon=0.0500
+Episode 4300/10000 | Mean reward=  55.0239 | Loss=  0.01540 | Epsilon=0.0500
+Episode 4350/10000 | Mean reward=  55.3244 | Loss=  0.00643 | Epsilon=0.0500
+Episode 4400/10000 | Mean reward=  55.2642 | Loss=  0.00590 | Epsilon=0.0500
+Episode 4450/10000 | Mean reward=  54.7941 | Loss=  0.01357 | Epsilon=0.0500
+Episode 4500/10000 | Mean reward=  55.0452 | Loss=  0.00828 | Epsilon=0.0500
+Episode 4550/10000 | Mean reward=  54.4574 | Loss=  0.00898 | Epsilon=0.0500
+Episode 4600/10000 | Mean reward=  55.7525 | Loss=  0.01072 | Epsilon=0.0500
+Episode 4650/10000 | Mean reward=  55.3108 | Loss=  0.00787 | Epsilon=0.0500
+Episode 4700/10000 | Mean reward=  55.1785 | Loss=  0.01155 | Epsilon=0.0500
+Episode 4750/10000 | Mean reward=  55.7172 | Loss=  0.00972 | Epsilon=0.0500
+Episode 4800/10000 | Mean reward=  55.5200 | Loss=  0.00906 | Epsilon=0.0500
+Episode 4850/10000 | Mean reward=  55.3689 | Loss=  0.00689 | Epsilon=0.0500
+Episode 4900/10000 | Mean reward=  56.3518 | Loss=  0.00753 | Epsilon=0.0500
+Episode 4950/10000 | Mean reward=  56.2560 | Loss=  0.00690 | Epsilon=0.0500
+Episode 5000/10000 | Mean reward=  55.7937 | Loss=  0.00711 | Epsilon=0.0500
+Episode 5050/10000 | Mean reward=  55.4260 | Loss=  0.00939 | Epsilon=0.0500
+Episode 5100/10000 | Mean reward=  55.4718 | Loss=  0.00776 | Epsilon=0.0500
+Episode 5150/10000 | Mean reward=  55.9451 | Loss=  0.00634 | Epsilon=0.0500
+Episode 5200/10000 | Mean reward=  55.2263 | Loss=  0.00647 | Epsilon=0.0500
+Episode 5250/10000 | Mean reward=  55.2000 | Loss=  0.00521 | Epsilon=0.0500
+Episode 5300/10000 | Mean reward=  55.3963 | Loss=  0.00348 | Epsilon=0.0500
+Episode 5350/10000 | Mean reward=  55.5741 | Loss=  0.00364 | Epsilon=0.0500
+Episode 5400/10000 | Mean reward=  55.0736 | Loss=  0.00387 | Epsilon=0.0500
+Episode 5450/10000 | Mean reward=  55.6356 | Loss=  0.00591 | Epsilon=0.0500
+Episode 5500/10000 | Mean reward=  55.8011 | Loss=  0.00891 | Epsilon=0.0500
+Episode 5550/10000 | Mean reward=  55.3958 | Loss=  0.00534 | Epsilon=0.0500
+Episode 5600/10000 | Mean reward=  55.6543 | Loss=  0.00513 | Epsilon=0.0500
+Episode 5650/10000 | Mean reward=  54.5673 | Loss=  0.00685 | Epsilon=0.0500
+Episode 5700/10000 | Mean reward=  55.8049 | Loss=  0.00850 | Epsilon=0.0500
+Episode 5750/10000 | Mean reward=  55.9668 | Loss=  0.00764 | Epsilon=0.0500
+Episode 5800/10000 | Mean reward=  56.5559 | Loss=  0.00770 | Epsilon=0.0500
+Episode 5850/10000 | Mean reward=  56.9047 | Loss=  0.00452 | Epsilon=0.0500
+Episode 5900/10000 | Mean reward=  55.7538 | Loss=  0.00342 | Epsilon=0.0500
+Episode 5950/10000 | Mean reward=  56.3874 | Loss=  0.00479 | Epsilon=0.0500
+Episode 6000/10000 | Mean reward=  56.1041 | Loss=  0.00354 | Epsilon=0.0500
+Episode 6050/10000 | Mean reward=  55.2944 | Loss=  0.00380 | Epsilon=0.0500
+Episode 6100/10000 | Mean reward=  55.5365 | Loss=  0.00298 | Epsilon=0.0500
+Episode 6150/10000 | Mean reward=  55.3360 | Loss=  0.00226 | Epsilon=0.0500
+Episode 6200/10000 | Mean reward=  55.4906 | Loss=  0.00400 | Epsilon=0.0500
+Episode 6250/10000 | Mean reward=  55.7559 | Loss=  0.00286 | Epsilon=0.0500
+Episode 6300/10000 | Mean reward=  55.8865 | Loss=  0.00285 | Epsilon=0.0500
+Episode 6350/10000 | Mean reward=  56.2849 | Loss=  0.00377 | Epsilon=0.0500
+Episode 6400/10000 | Mean reward=  55.3627 | Loss=  0.00320 | Epsilon=0.0500
+Episode 6450/10000 | Mean reward=  55.9810 | Loss=  0.00444 | Epsilon=0.0500
+Episode 6500/10000 | Mean reward=  56.1795 | Loss=  0.00420 | Epsilon=0.0500
+Episode 6550/10000 | Mean reward=  56.3642 | Loss=  0.00566 | Epsilon=0.0500
+Episode 6600/10000 | Mean reward=  55.9403 | Loss=  0.00375 | Epsilon=0.0500
+Episode 6650/10000 | Mean reward=  55.8877 | Loss=  0.00423 | Epsilon=0.0500
+Episode 6700/10000 | Mean reward=  56.1600 | Loss=  0.00462 | Epsilon=0.0500
+Episode 6750/10000 | Mean reward=  56.0537 | Loss=  0.00350 | Epsilon=0.0500
+Episode 6800/10000 | Mean reward=  56.2418 | Loss=  0.00483 | Epsilon=0.0500
+Episode 6850/10000 | Mean reward=  56.3123 | Loss=  0.00323 | Epsilon=0.0500
+Episode 6900/10000 | Mean reward=  56.1980 | Loss=  0.00600 | Epsilon=0.0500
+Episode 6950/10000 | Mean reward=  55.9839 | Loss=  0.00529 | Epsilon=0.0500
+Episode 7000/10000 | Mean reward=  56.3997 | Loss=  0.00434 | Epsilon=0.0500
+Episode 7050/10000 | Mean reward=  56.5422 | Loss=  0.00454 | Epsilon=0.0500
+Episode 7100/10000 | Mean reward=  55.9836 | Loss=  0.00474 | Epsilon=0.0500
+Episode 7150/10000 | Mean reward=  56.8637 | Loss=  0.00391 | Epsilon=0.0500
+Episode 7200/10000 | Mean reward=  56.3904 | Loss=  0.00382 | Epsilon=0.0500
+Episode 7250/10000 | Mean reward=  56.8052 | Loss=  0.00369 | Epsilon=0.0500
+Episode 7300/10000 | Mean reward=  56.7871 | Loss=  0.00388 | Epsilon=0.0500
+Episode 7350/10000 | Mean reward=  56.3183 | Loss=  0.00319 | Epsilon=0.0500
+Episode 7400/10000 | Mean reward=  56.3988 | Loss=  0.00375 | Epsilon=0.0500
+Episode 7450/10000 | Mean reward=  55.7992 | Loss=  0.00330 | Epsilon=0.0500
+Episode 7500/10000 | Mean reward=  55.9652 | Loss=  0.00411 | Epsilon=0.0500
+Episode 7550/10000 | Mean reward=  56.6374 | Loss=  0.00412 | Epsilon=0.0500
+Episode 7600/10000 | Mean reward=  56.2188 | Loss=  0.00217 | Epsilon=0.0500
+Episode 7650/10000 | Mean reward=  56.2716 | Loss=  0.00341 | Epsilon=0.0500
+Episode 7700/10000 | Mean reward=  56.0970 | Loss=  0.00285 | Epsilon=0.0500
+Episode 7750/10000 | Mean reward=  56.6779 | Loss=  0.00260 | Epsilon=0.0500
+Episode 7800/10000 | Mean reward=  56.0735 | Loss=  0.00329 | Epsilon=0.0500
+Episode 7850/10000 | Mean reward=  56.2958 | Loss=  0.00240 | Epsilon=0.0500
+Episode 7900/10000 | Mean reward=  56.6885 | Loss=  0.00340 | Epsilon=0.0500
+Episode 7950/10000 | Mean reward=  57.0237 | Loss=  0.00333 | Epsilon=0.0500
+Episode 8000/10000 | Mean reward=  56.4681 | Loss=  0.00293 | Epsilon=0.0500
+Episode 8050/10000 | Mean reward=  56.4140 | Loss=  0.00425 | Epsilon=0.0500
+Episode 8100/10000 | Mean reward=  56.3882 | Loss=  0.00437 | Epsilon=0.0500
+Episode 8150/10000 | Mean reward=  57.1134 | Loss=  0.00475 | Epsilon=0.0500
+Episode 8200/10000 | Mean reward=  56.1140 | Loss=  0.00564 | Epsilon=0.0500
+Episode 8250/10000 | Mean reward=  56.1495 | Loss=  0.00629 | Epsilon=0.0500
+Episode 8300/10000 | Mean reward=  56.1245 | Loss=  0.00614 | Epsilon=0.0500
+Episode 8350/10000 | Mean reward=  56.6120 | Loss=  0.00520 | Epsilon=0.0500
+Episode 8400/10000 | Mean reward=  56.4394 | Loss=  0.00652 | Epsilon=0.0500
+Episode 8450/10000 | Mean reward=  56.2252 | Loss=  0.00463 | Epsilon=0.0500
+Episode 8500/10000 | Mean reward=  56.1915 | Loss=  0.00484 | Epsilon=0.0500
+Episode 8550/10000 | Mean reward=  56.6237 | Loss=  0.00468 | Epsilon=0.0500
+Episode 8600/10000 | Mean reward=  56.2898 | Loss=  0.00417 | Epsilon=0.0500
+Episode 8650/10000 | Mean reward=  56.4008 | Loss=  0.00427 | Epsilon=0.0500
+Episode 8700/10000 | Mean reward=  56.1492 | Loss=  0.00443 | Epsilon=0.0500
+Episode 8750/10000 | Mean reward=  56.3617 | Loss=  0.00363 | Epsilon=0.0500
+Episode 8800/10000 | Mean reward=  56.6707 | Loss=  0.00287 | Epsilon=0.0500
+Episode 8850/10000 | Mean reward=  56.4898 | Loss=  0.00350 | Epsilon=0.0500
+Episode 8900/10000 | Mean reward=  56.6592 | Loss=  0.00413 | Epsilon=0.0500
+Episode 8950/10000 | Mean reward=  56.6838 | Loss=  0.00247 | Epsilon=0.0500
+Episode 9000/10000 | Mean reward=  56.5444 | Loss=  0.00250 | Epsilon=0.0500
+Episode 9050/10000 | Mean reward=  56.6014 | Loss=  0.00276 | Epsilon=0.0500
+Episode 9100/10000 | Mean reward=  56.2512 | Loss=  0.00346 | Epsilon=0.0500
+Episode 9150/10000 | Mean reward=  56.4225 | Loss=  0.00273 | Epsilon=0.0500
+Episode 9200/10000 | Mean reward=  55.7764 | Loss=  0.00270 | Epsilon=0.0500
+Episode 9250/10000 | Mean reward=  56.2631 | Loss=  0.00361 | Epsilon=0.0500
+Episode 9300/10000 | Mean reward=  55.8321 | Loss=  0.00266 | Epsilon=0.0500
+Episode 9350/10000 | Mean reward=  56.1431 | Loss=  0.00362 | Epsilon=0.0500
+Episode 9400/10000 | Mean reward=  56.4337 | Loss=  0.00387 | Epsilon=0.0500
+Episode 9450/10000 | Mean reward=  56.1687 | Loss=  0.00287 | Epsilon=0.0500
+Episode 9500/10000 | Mean reward=  56.3394 | Loss=  0.00388 | Epsilon=0.0500
+Episode 9550/10000 | Mean reward=  56.6888 | Loss=  0.00433 | Epsilon=0.0500
+Episode 9600/10000 | Mean reward=  57.0439 | Loss=  0.00416 | Epsilon=0.0500
+Episode 9650/10000 | Mean reward=  56.9067 | Loss=  0.00400 | Epsilon=0.0500
+Episode 9700/10000 | Mean reward=  56.8138 | Loss=  0.00441 | Epsilon=0.0500
+Episode 9750/10000 | Mean reward=  56.4919 | Loss=  0.00444 | Epsilon=0.0500
+Episode 9800/10000 | Mean reward=  56.7966 | Loss=  0.00409 | Epsilon=0.0500
+Episode 9850/10000 | Mean reward=  56.6872 | Loss=  0.00640 | Epsilon=0.0500
+Episode 9900/10000 | Mean reward=  56.4009 | Loss=  0.00367 | Epsilon=0.0500
+Episode 9950/10000 | Mean reward=  56.3975 | Loss=  0.00320 | Epsilon=0.0500
+Episode 10000/10000 | Mean reward=  56.5009 | Loss=  0.00252 | Epsilon=0.0500
+Completed GGN-DDQN at 100 users | Elapsed=294.93 min | Model saved: GGN_DDQN_users_100.pt
+
+Algorithm: GCN-DDQN | Users: 100
+Episode    1/10000 | Mean reward=  47.9433 | Loss=      nan | Epsilon=0.9953
+Episode   50/10000 | Mean reward=  48.7694 | Loss=  0.02529 | Epsilon=0.7899
+Episode  100/10000 | Mean reward=  50.0838 | Loss=  0.04398 | Epsilon=0.6262
+Episode  150/10000 | Mean reward=  49.2615 | Loss=  0.08748 | Epsilon=0.4987
+Episode  200/10000 | Mean reward=  49.1242 | Loss=  0.10499 | Epsilon=0.3995
+Episode  250/10000 | Mean reward=  47.6265 | Loss=  0.11144 | Epsilon=0.3222
+Episode  300/10000 | Mean reward=  48.4228 | Loss=  0.20227 | Epsilon=0.2620
+Episode  350/10000 | Mean reward=  46.7675 | Loss=  0.15186 | Epsilon=0.2151
+Episode  400/10000 | Mean reward=  46.8486 | Loss=  0.13474 | Epsilon=0.1786
+Episode  450/10000 | Mean reward=  45.3565 | Loss=  0.22927 | Epsilon=0.1501
+Episode  500/10000 | Mean reward=  45.6287 | Loss=  0.23546 | Epsilon=0.1280
+Episode  550/10000 | Mean reward=  44.3883 | Loss=  0.19071 | Epsilon=0.1107
+Episode  600/10000 | Mean reward=  45.7298 | Loss=  0.21925 | Epsilon=0.0973
+Episode  650/10000 | Mean reward=  46.5761 | Loss=  0.33692 | Epsilon=0.0868
+Episode  700/10000 | Mean reward=  47.4570 | Loss=  0.25291 | Epsilon=0.0787
+Episode  750/10000 | Mean reward=  46.1536 | Loss=  0.30287 | Epsilon=0.0723
+Episode  800/10000 | Mean reward=  47.0238 | Loss=  0.27479 | Epsilon=0.0674
+Episode  850/10000 | Mean reward=  45.4486 | Loss=  0.25364 | Epsilon=0.0636
+Episode  900/10000 | Mean reward=  45.5666 | Loss=  0.33675 | Epsilon=0.0606
+Episode  950/10000 | Mean reward=  45.9973 | Loss=  0.30306 | Epsilon=0.0582
+Episode 1000/10000 | Mean reward=  44.5687 | Loss=  0.36762 | Epsilon=0.0564
+Episode 1050/10000 | Mean reward=  43.5629 | Loss=  0.31828 | Epsilon=0.0550
+Episode 1100/10000 | Mean reward=  44.9301 | Loss=  0.34901 | Epsilon=0.0539
+Episode 1150/10000 | Mean reward=  44.5923 | Loss=  0.24668 | Epsilon=0.0530
+Episode 1200/10000 | Mean reward=  46.1728 | Loss=  0.36270 | Epsilon=0.0524
+Episode 1250/10000 | Mean reward=  43.5145 | Loss=  0.31501 | Epsilon=0.0518
+Episode 1300/10000 | Mean reward=  44.2422 | Loss=  0.33161 | Epsilon=0.0514
+Episode 1350/10000 | Mean reward=  45.2016 | Loss=  0.49717 | Epsilon=0.0511
+Episode 1400/10000 | Mean reward=  45.6204 | Loss=  0.47678 | Epsilon=0.0509
+Episode 1450/10000 | Mean reward=  44.9303 | Loss=  0.40148 | Epsilon=0.0507
+Episode 1500/10000 | Mean reward=  47.0864 | Loss=  0.49565 | Epsilon=0.0505
+Episode 1550/10000 | Mean reward=  46.4776 | Loss=  0.51364 | Epsilon=0.0504
+Episode 1600/10000 | Mean reward=  46.7684 | Loss=  0.38864 | Epsilon=0.0503
+Episode 1650/10000 | Mean reward=  46.2997 | Loss=  0.33123 | Epsilon=0.0502
+Episode 1700/10000 | Mean reward=  45.2808 | Loss=  0.46694 | Epsilon=0.0502
+Episode 1750/10000 | Mean reward=  46.5878 | Loss=  0.36359 | Epsilon=0.0502
+Episode 1800/10000 | Mean reward=  45.4822 | Loss=  0.33698 | Epsilon=0.0501
+Episode 1850/10000 | Mean reward=  45.1298 | Loss=  0.39003 | Epsilon=0.0501
+Episode 1900/10000 | Mean reward=  45.4308 | Loss=  0.61684 | Epsilon=0.0501
+Episode 1950/10000 | Mean reward=  45.0049 | Loss=  0.36478 | Epsilon=0.0501
+Episode 2000/10000 | Mean reward=  43.9832 | Loss=  0.31872 | Epsilon=0.0500
+Episode 2050/10000 | Mean reward=  44.2931 | Loss=  0.40889 | Epsilon=0.0500
+Episode 2100/10000 | Mean reward=  44.4785 | Loss=  0.38470 | Epsilon=0.0500
+Episode 2150/10000 | Mean reward=  43.2711 | Loss=  0.49476 | Epsilon=0.0500
+Episode 2200/10000 | Mean reward=  44.8319 | Loss=  0.41372 | Epsilon=0.0500
+Episode 2250/10000 | Mean reward=  43.9276 | Loss=  0.50622 | Epsilon=0.0500
+Episode 2300/10000 | Mean reward=  45.0623 | Loss=  0.43882 | Epsilon=0.0500
+Episode 2350/10000 | Mean reward=  44.4580 | Loss=  0.58194 | Epsilon=0.0500
+Episode 2400/10000 | Mean reward=  45.5897 | Loss=  0.41678 | Epsilon=0.0500
+Episode 2450/10000 | Mean reward=  45.9780 | Loss=  0.42944 | Epsilon=0.0500
+Episode 2500/10000 | Mean reward=  45.1726 | Loss=  0.68922 | Epsilon=0.0500
+Episode 2550/10000 | Mean reward=  45.6495 | Loss=  0.42810 | Epsilon=0.0500
+Episode 2600/10000 | Mean reward=  44.8217 | Loss=  0.45436 | Epsilon=0.0500
+Episode 2650/10000 | Mean reward=  44.8818 | Loss=  0.38866 | Epsilon=0.0500
+Episode 2700/10000 | Mean reward=  45.5713 | Loss=  0.30566 | Epsilon=0.0500
+Episode 2750/10000 | Mean reward=  44.6763 | Loss=  0.29165 | Epsilon=0.0500
+Episode 2800/10000 | Mean reward=  44.9730 | Loss=  0.39058 | Epsilon=0.0500
+Episode 2850/10000 | Mean reward=  44.7163 | Loss=  0.45177 | Epsilon=0.0500
+Episode 2900/10000 | Mean reward=  45.0349 | Loss=  0.42115 | Epsilon=0.0500
+Episode 2950/10000 | Mean reward=  44.7353 | Loss=  0.40684 | Epsilon=0.0500
+Episode 3000/10000 | Mean reward=  44.9595 | Loss=  0.44470 | Epsilon=0.0500
+Episode 3050/10000 | Mean reward=  44.9843 | Loss=  0.39396 | Epsilon=0.0500
+Episode 3100/10000 | Mean reward=  44.4876 | Loss=  0.44977 | Epsilon=0.0500
+Episode 3150/10000 | Mean reward=  47.4500 | Loss=  0.31817 | Epsilon=0.0500
+Episode 3200/10000 | Mean reward=  46.5583 | Loss=  0.35640 | Epsilon=0.0500
+Episode 3250/10000 | Mean reward=  43.8572 | Loss=  0.45371 | Epsilon=0.0500
+Episode 3300/10000 | Mean reward=  43.8413 | Loss=  0.53856 | Epsilon=0.0500
+Episode 3350/10000 | Mean reward=  43.8637 | Loss=  0.43097 | Epsilon=0.0500
+Episode 3400/10000 | Mean reward=  44.1633 | Loss=  0.44688 | Epsilon=0.0500
+Episode 3450/10000 | Mean reward=  44.6804 | Loss=  0.45976 | Epsilon=0.0500
+Episode 3500/10000 | Mean reward=  44.6500 | Loss=  0.30858 | Epsilon=0.0500
+Episode 3550/10000 | Mean reward=  42.4916 | Loss=  0.29668 | Epsilon=0.0500
+Episode 3600/10000 | Mean reward=  44.0487 | Loss=  0.50487 | Epsilon=0.0500
+Episode 3650/10000 | Mean reward=  45.4633 | Loss=  0.37113 | Epsilon=0.0500
+Episode 3700/10000 | Mean reward=  44.0269 | Loss=  0.54525 | Epsilon=0.0500
+Episode 3750/10000 | Mean reward=  45.4806 | Loss=  0.45902 | Epsilon=0.0500
+Episode 3800/10000 | Mean reward=  44.7591 | Loss=  0.34081 | Epsilon=0.0500
+Episode 3850/10000 | Mean reward=  46.8268 | Loss=  0.33108 | Epsilon=0.0500
+Episode 3900/10000 | Mean reward=  44.8286 | Loss=  0.43157 | Epsilon=0.0500
+Episode 3950/10000 | Mean reward=  44.4460 | Loss=  0.40797 | Epsilon=0.0500
+Episode 4000/10000 | Mean reward=  44.1634 | Loss=  0.43545 | Epsilon=0.0500
+Episode 4050/10000 | Mean reward=  44.2217 | Loss=  0.44299 | Epsilon=0.0500
+Episode 4100/10000 | Mean reward=  43.3021 | Loss=  0.55082 | Epsilon=0.0500
+Episode 4150/10000 | Mean reward=  43.6354 | Loss=  0.35716 | Epsilon=0.0500
+Episode 4200/10000 | Mean reward=  44.9270 | Loss=  0.49761 | Epsilon=0.0500
+Episode 4250/10000 | Mean reward=  44.6871 | Loss=  0.51328 | Epsilon=0.0500
+Episode 4300/10000 | Mean reward=  45.6517 | Loss=  0.54992 | Epsilon=0.0500
+Episode 4350/10000 | Mean reward=  45.7305 | Loss=  0.56494 | Epsilon=0.0500
+Episode 4400/10000 | Mean reward=  45.2962 | Loss=  0.38893 | Epsilon=0.0500
+Episode 4450/10000 | Mean reward=  44.5974 | Loss=  0.42398 | Epsilon=0.0500
+Episode 4500/10000 | Mean reward=  45.6865 | Loss=  0.53521 | Epsilon=0.0500
+Episode 4550/10000 | Mean reward=  46.5496 | Loss=  0.55769 | Epsilon=0.0500
+Episode 4600/10000 | Mean reward=  45.4287 | Loss=  0.58755 | Epsilon=0.0500
+Episode 4650/10000 | Mean reward=  45.9104 | Loss=  0.57801 | Epsilon=0.0500
+Episode 4700/10000 | Mean reward=  45.3055 | Loss=  0.46894 | Epsilon=0.0500
+Episode 4750/10000 | Mean reward=  44.3112 | Loss=  0.57439 | Epsilon=0.0500
+Episode 4800/10000 | Mean reward=  45.1230 | Loss=  0.47777 | Epsilon=0.0500
+Episode 4850/10000 | Mean reward=  44.2427 | Loss=  0.51059 | Epsilon=0.0500
+Episode 4900/10000 | Mean reward=  45.1751 | Loss=  0.51146 | Epsilon=0.0500
+Episode 4950/10000 | Mean reward=  44.5681 | Loss=  0.58084 | Epsilon=0.0500
+Episode 5000/10000 | Mean reward=  46.1964 | Loss=  0.50136 | Epsilon=0.0500
+Episode 5050/10000 | Mean reward=  45.9408 | Loss=  0.58180 | Epsilon=0.0500
+Episode 5100/10000 | Mean reward=  46.3054 | Loss=  0.65139 | Epsilon=0.0500
+Episode 5150/10000 | Mean reward=  44.5966 | Loss=  0.66963 | Epsilon=0.0500
+Episode 5200/10000 | Mean reward=  45.1822 | Loss=  0.63511 | Epsilon=0.0500
+Episode 5250/10000 | Mean reward=  45.1444 | Loss=  0.51455 | Epsilon=0.0500
+Episode 5300/10000 | Mean reward=  46.0603 | Loss=  0.44842 | Epsilon=0.0500
+Episode 5350/10000 | Mean reward=  45.6124 | Loss=  0.63801 | Epsilon=0.0500
+Episode 5400/10000 | Mean reward=  45.2114 | Loss=  0.39906 | Epsilon=0.0500
+Episode 5450/10000 | Mean reward=  45.8480 | Loss=  0.54261 | Epsilon=0.0500
+Episode 5500/10000 | Mean reward=  44.5656 | Loss=  0.45326 | Epsilon=0.0500
+Episode 5550/10000 | Mean reward=  45.1594 | Loss=  0.54924 | Epsilon=0.0500
+Episode 5600/10000 | Mean reward=  45.3833 | Loss=  0.49481 | Epsilon=0.0500
+Episode 5650/10000 | Mean reward=  44.0126 | Loss=  0.33983 | Epsilon=0.0500
+Episode 5700/10000 | Mean reward=  45.0063 | Loss=  0.60954 | Epsilon=0.0500
+Episode 5750/10000 | Mean reward=  43.9375 | Loss=  0.54545 | Epsilon=0.0500
+Episode 5800/10000 | Mean reward=  45.1492 | Loss=  0.55658 | Epsilon=0.0500
+Episode 5850/10000 | Mean reward=  44.7157 | Loss=  0.56285 | Epsilon=0.0500
+Episode 5900/10000 | Mean reward=  45.3677 | Loss=  0.57352 | Epsilon=0.0500
+Episode 5950/10000 | Mean reward=  45.2955 | Loss=  0.48261 | Epsilon=0.0500
+Episode 6000/10000 | Mean reward=  45.5498 | Loss=  0.54917 | Epsilon=0.0500
+Episode 6050/10000 | Mean reward=  45.7304 | Loss=  0.64781 | Epsilon=0.0500
+Episode 6100/10000 | Mean reward=  45.6127 | Loss=  0.47050 | Epsilon=0.0500
+Episode 6150/10000 | Mean reward=  44.4528 | Loss=  0.37815 | Epsilon=0.0500
+Episode 6200/10000 | Mean reward=  46.3967 | Loss=  0.51989 | Epsilon=0.0500
+Episode 6250/10000 | Mean reward=  46.4879 | Loss=  0.46702 | Epsilon=0.0500
+Episode 6300/10000 | Mean reward=  45.8362 | Loss=  0.54401 | Epsilon=0.0500
+Episode 6350/10000 | Mean reward=  44.5183 | Loss=  0.54187 | Epsilon=0.0500
+Episode 6400/10000 | Mean reward=  44.2992 | Loss=  0.37180 | Epsilon=0.0500
+Episode 6450/10000 | Mean reward=  45.1624 | Loss=  0.36121 | Epsilon=0.0500
+Episode 6500/10000 | Mean reward=  44.3827 | Loss=  0.55475 | Epsilon=0.0500
+Episode 6550/10000 | Mean reward=  44.3198 | Loss=  0.46109 | Epsilon=0.0500
+Episode 6600/10000 | Mean reward=  44.9096 | Loss=  0.44004 | Epsilon=0.0500
+Episode 6650/10000 | Mean reward=  44.1771 | Loss=  0.45150 | Epsilon=0.0500
+Episode 6700/10000 | Mean reward=  45.6509 | Loss=  0.63539 | Epsilon=0.0500
+Episode 6750/10000 | Mean reward=  45.1666 | Loss=  0.55076 | Epsilon=0.0500
+Episode 6800/10000 | Mean reward=  45.7196 | Loss=  0.43043 | Epsilon=0.0500
+Episode 6850/10000 | Mean reward=  45.8011 | Loss=  0.40291 | Epsilon=0.0500
+Episode 6900/10000 | Mean reward=  45.0339 | Loss=  0.54512 | Epsilon=0.0500
+Episode 6950/10000 | Mean reward=  44.8833 | Loss=  0.42787 | Epsilon=0.0500
+Episode 7000/10000 | Mean reward=  45.9130 | Loss=  0.55438 | Epsilon=0.0500
+Episode 7050/10000 | Mean reward=  46.0186 | Loss=  0.42769 | Epsilon=0.0500
+Episode 7100/10000 | Mean reward=  44.9712 | Loss=  0.40674 | Epsilon=0.0500
+Episode 7150/10000 | Mean reward=  43.6103 | Loss=  0.49237 | Epsilon=0.0500
+Episode 7200/10000 | Mean reward=  44.9993 | Loss=  0.46450 | Epsilon=0.0500
+Episode 7250/10000 | Mean reward=  45.9375 | Loss=  0.40015 | Epsilon=0.0500
+Episode 7300/10000 | Mean reward=  46.2274 | Loss=  0.45631 | Epsilon=0.0500
+Episode 7350/10000 | Mean reward=  46.7548 | Loss=  0.30889 | Epsilon=0.0500
+Episode 7400/10000 | Mean reward=  45.4831 | Loss=  0.49094 | Epsilon=0.0500
+Episode 7450/10000 | Mean reward=  46.7394 | Loss=  0.47119 | Epsilon=0.0500
+Episode 7500/10000 | Mean reward=  47.1493 | Loss=  0.57783 | Epsilon=0.0500
+Episode 7550/10000 | Mean reward=  45.9183 | Loss=  0.60232 | Epsilon=0.0500
+Episode 7600/10000 | Mean reward=  47.5914 | Loss=  0.37197 | Epsilon=0.0500
+Episode 7650/10000 | Mean reward=  46.7873 | Loss=  0.45561 | Epsilon=0.0500
+Episode 7700/10000 | Mean reward=  46.3388 | Loss=  0.40166 | Epsilon=0.0500
+Episode 7750/10000 | Mean reward=  47.7406 | Loss=  0.45898 | Epsilon=0.0500
+Episode 7800/10000 | Mean reward=  46.5557 | Loss=  0.51042 | Epsilon=0.0500
+Episode 7850/10000 | Mean reward=  46.1255 | Loss=  0.47712 | Epsilon=0.0500
+Episode 7900/10000 | Mean reward=  47.2850 | Loss=  0.50208 | Epsilon=0.0500
+Episode 7950/10000 | Mean reward=  47.2902 | Loss=  0.44145 | Epsilon=0.0500
+Episode 8000/10000 | Mean reward=  45.7988 | Loss=  0.64568 | Epsilon=0.0500
+Episode 8050/10000 | Mean reward=  46.7602 | Loss=  0.48786 | Epsilon=0.0500
+Episode 8100/10000 | Mean reward=  46.9332 | Loss=  0.53536 | Epsilon=0.0500
+Episode 8150/10000 | Mean reward=  47.4639 | Loss=  0.54419 | Epsilon=0.0500
+Episode 8200/10000 | Mean reward=  46.8951 | Loss=  0.58639 | Epsilon=0.0500
+Episode 8250/10000 | Mean reward=  46.5424 | Loss=  0.67283 | Epsilon=0.0500
+Episode 8300/10000 | Mean reward=  46.9723 | Loss=  0.35178 | Epsilon=0.0500
+Episode 8350/10000 | Mean reward=  46.8820 | Loss=  0.57185 | Epsilon=0.0500
+Episode 8400/10000 | Mean reward=  46.5858 | Loss=  0.54242 | Epsilon=0.0500
+Episode 8450/10000 | Mean reward=  47.5501 | Loss=  0.59201 | Epsilon=0.0500
+Episode 8500/10000 | Mean reward=  47.6271 | Loss=  0.58418 | Epsilon=0.0500
+Episode 8550/10000 | Mean reward=  49.3888 | Loss=  0.37427 | Epsilon=0.0500
+Episode 8600/10000 | Mean reward=  48.2438 | Loss=  0.39043 | Epsilon=0.0500
+Episode 8650/10000 | Mean reward=  48.2930 | Loss=  0.45978 | Epsilon=0.0500
+Episode 8700/10000 | Mean reward=  48.5825 | Loss=  0.48843 | Epsilon=0.0500
+Episode 8750/10000 | Mean reward=  49.0292 | Loss=  0.45762 | Epsilon=0.0500
+Episode 8800/10000 | Mean reward=  49.3263 | Loss=  0.49086 | Epsilon=0.0500
+Episode 8850/10000 | Mean reward=  48.8752 | Loss=  0.49400 | Epsilon=0.0500
+Episode 8900/10000 | Mean reward=  48.9939 | Loss=  0.58196 | Epsilon=0.0500
+Episode 8950/10000 | Mean reward=  49.0200 | Loss=  0.51652 | Epsilon=0.0500
+Episode 9000/10000 | Mean reward=  48.9285 | Loss=  0.43326 | Epsilon=0.0500
+Episode 9050/10000 | Mean reward=  49.7882 | Loss=  0.41282 | Epsilon=0.0500
+Episode 9100/10000 | Mean reward=  49.6943 | Loss=  0.54016 | Epsilon=0.0500
+Episode 9150/10000 | Mean reward=  48.4192 | Loss=  0.44697 | Epsilon=0.0500
+Episode 9200/10000 | Mean reward=  49.9712 | Loss=  0.37830 | Epsilon=0.0500
+Episode 9250/10000 | Mean reward=  49.4264 | Loss=  0.50510 | Epsilon=0.0500
+Episode 9300/10000 | Mean reward=  48.8676 | Loss=  0.34786 | Epsilon=0.0500
+Episode 9350/10000 | Mean reward=  49.0182 | Loss=  0.35364 | Epsilon=0.0500
+Episode 9400/10000 | Mean reward=  48.2363 | Loss=  0.31624 | Epsilon=0.0500
+Episode 9450/10000 | Mean reward=  48.8642 | Loss=  0.32750 | Epsilon=0.0500
+Episode 9500/10000 | Mean reward=  48.2839 | Loss=  0.46270 | Epsilon=0.0500
+Episode 9550/10000 | Mean reward=  49.0947 | Loss=  0.34443 | Epsilon=0.0500
+Episode 9600/10000 | Mean reward=  47.0428 | Loss=  0.51450 | Epsilon=0.0500
+Episode 9650/10000 | Mean reward=  48.9270 | Loss=  0.37182 | Epsilon=0.0500
+Episode 9700/10000 | Mean reward=  49.8068 | Loss=  0.28371 | Epsilon=0.0500
+Episode 9750/10000 | Mean reward=  49.7884 | Loss=  0.37210 | Epsilon=0.0500
+Episode 9800/10000 | Mean reward=  49.9155 | Loss=  0.38294 | Epsilon=0.0500
+Episode 9850/10000 | Mean reward=  49.8833 | Loss=  0.37558 | Epsilon=0.0500
+Episode 9900/10000 | Mean reward=  48.7670 | Loss=  0.32786 | Epsilon=0.0500
+Episode 9950/10000 | Mean reward=  48.7223 | Loss=  0.24074 | Epsilon=0.0500
+Episode 10000/10000 | Mean reward=  47.1978 | Loss=  0.37059 | Epsilon=0.0500
+Completed GCN-DDQN at 100 users | Elapsed=87.41 min | Model saved: GCN_DDQN_users_100.pt
+
+Algorithm: DDQN | Users: 100
+Episode    1/10000 | Mean reward=  46.6810 | Loss=      nan | Epsilon=0.9953
+Episode   50/10000 | Mean reward=  48.9729 | Loss=  0.02310 | Epsilon=0.7899
+Episode  100/10000 | Mean reward=  50.5770 | Loss=  0.03980 | Epsilon=0.6262
+Episode  150/10000 | Mean reward=  51.8020 | Loss=  0.07663 | Epsilon=0.4987
+Episode  200/10000 | Mean reward=  53.9402 | Loss=  0.09213 | Epsilon=0.3995
+Episode  250/10000 | Mean reward=  55.1070 | Loss=  0.09400 | Epsilon=0.3222
+Episode  300/10000 | Mean reward=  55.8448 | Loss=  0.16453 | Epsilon=0.2620
+Episode  350/10000 | Mean reward=  55.8824 | Loss=  0.11417 | Epsilon=0.2151
+Episode  400/10000 | Mean reward=  55.9000 | Loss=  0.09714 | Epsilon=0.1786
+Episode  450/10000 | Mean reward=  55.5400 | Loss=  0.15658 | Epsilon=0.1501
+Episode  500/10000 | Mean reward=  55.6845 | Loss=  0.15894 | Epsilon=0.1280
+Episode  550/10000 | Mean reward=  55.8708 | Loss=  0.11724 | Epsilon=0.1107
+Episode  600/10000 | Mean reward=  55.7874 | Loss=  0.12790 | Epsilon=0.0973
+Episode  650/10000 | Mean reward=  56.0857 | Loss=  0.19195 | Epsilon=0.0868
+Episode  700/10000 | Mean reward=  55.5777 | Loss=  0.12981 | Epsilon=0.0787
+Episode  750/10000 | Mean reward=  55.4643 | Loss=  0.14975 | Epsilon=0.0723
+Episode  800/10000 | Mean reward=  55.3340 | Loss=  0.12280 | Epsilon=0.0674
+Episode  850/10000 | Mean reward=  54.7977 | Loss=  0.10125 | Epsilon=0.0636
+Episode  900/10000 | Mean reward=  55.0694 | Loss=  0.11678 | Epsilon=0.0606
+Episode  950/10000 | Mean reward=  54.3463 | Loss=  0.09142 | Epsilon=0.0582
+Episode 1000/10000 | Mean reward=  54.3951 | Loss=  0.09182 | Epsilon=0.0564
+Episode 1050/10000 | Mean reward=  55.2313 | Loss=  0.06341 | Epsilon=0.0550
+Episode 1100/10000 | Mean reward=  54.3147 | Loss=  0.05928 | Epsilon=0.0539
+Episode 1150/10000 | Mean reward=  55.5126 | Loss=  0.03352 | Epsilon=0.0530
+Episode 1200/10000 | Mean reward=  55.0132 | Loss=  0.02958 | Epsilon=0.0524
+Episode 1250/10000 | Mean reward=  54.4243 | Loss=  0.01342 | Epsilon=0.0518
+Episode 1300/10000 | Mean reward=  54.1967 | Loss=  0.00992 | Epsilon=0.0514
+Episode 1350/10000 | Mean reward=  54.2637 | Loss=  0.01057 | Epsilon=0.0511
+Episode 1400/10000 | Mean reward=  54.4178 | Loss=  0.00700 | Epsilon=0.0509
+Episode 1450/10000 | Mean reward=  54.4074 | Loss=  0.00455 | Epsilon=0.0507
+Episode 1500/10000 | Mean reward=  55.0262 | Loss=  0.00652 | Epsilon=0.0505
+Episode 1550/10000 | Mean reward=  55.7746 | Loss=  0.00733 | Epsilon=0.0504
+Episode 1600/10000 | Mean reward=  55.1345 | Loss=  0.00757 | Epsilon=0.0503
+Episode 1650/10000 | Mean reward=  55.4723 | Loss=  0.00971 | Epsilon=0.0502
+Episode 1700/10000 | Mean reward=  55.9553 | Loss=  0.01155 | Epsilon=0.0502
+Episode 1750/10000 | Mean reward=  55.5643 | Loss=  0.01307 | Epsilon=0.0502
+Episode 1800/10000 | Mean reward=  54.6676 | Loss=  0.01627 | Epsilon=0.0501
+Episode 1850/10000 | Mean reward=  56.2258 | Loss=  0.02087 | Epsilon=0.0501
+Episode 1900/10000 | Mean reward=  56.3587 | Loss=  0.03912 | Epsilon=0.0501
+Episode 1950/10000 | Mean reward=  55.8138 | Loss=  0.02863 | Epsilon=0.0501
+Episode 2000/10000 | Mean reward=  56.4508 | Loss=  0.02451 | Epsilon=0.0500
+Episode 2050/10000 | Mean reward=  55.8796 | Loss=  0.03075 | Epsilon=0.0500
+Episode 2100/10000 | Mean reward=  56.4007 | Loss=  0.03268 | Epsilon=0.0500
+Episode 2150/10000 | Mean reward=  55.8954 | Loss=  0.04025 | Epsilon=0.0500
+Episode 2200/10000 | Mean reward=  55.4789 | Loss=  0.03264 | Epsilon=0.0500
+Episode 2250/10000 | Mean reward=  55.2554 | Loss=  0.03808 | Epsilon=0.0500
+Episode 2300/10000 | Mean reward=  56.3892 | Loss=  0.03108 | Epsilon=0.0500
+Episode 2350/10000 | Mean reward=  56.3491 | Loss=  0.03673 | Epsilon=0.0500
+Episode 2400/10000 | Mean reward=  55.6060 | Loss=  0.02670 | Epsilon=0.0500
+Episode 2450/10000 | Mean reward=  56.4370 | Loss=  0.02459 | Epsilon=0.0500
+Episode 2500/10000 | Mean reward=  55.7552 | Loss=  0.02589 | Epsilon=0.0500
+Episode 2550/10000 | Mean reward=  56.1767 | Loss=  0.01491 | Epsilon=0.0500
+Episode 2600/10000 | Mean reward=  56.5681 | Loss=  0.01405 | Epsilon=0.0500
+Episode 2650/10000 | Mean reward=  56.2429 | Loss=  0.01279 | Epsilon=0.0500
+Episode 2700/10000 | Mean reward=  55.8062 | Loss=  0.00832 | Epsilon=0.0500
+Episode 2750/10000 | Mean reward=  55.2949 | Loss=  0.00548 | Epsilon=0.0500
+Episode 2800/10000 | Mean reward=  54.8238 | Loss=  0.01182 | Epsilon=0.0500
+Episode 2850/10000 | Mean reward=  55.6602 | Loss=  0.01103 | Epsilon=0.0500
+Episode 2900/10000 | Mean reward=  55.4390 | Loss=  0.01449 | Epsilon=0.0500
+Episode 2950/10000 | Mean reward=  55.1697 | Loss=  0.01657 | Epsilon=0.0500
+Episode 3000/10000 | Mean reward=  54.7685 | Loss=  0.01895 | Epsilon=0.0500
+Episode 3050/10000 | Mean reward=  55.9910 | Loss=  0.01315 | Epsilon=0.0500
+Episode 3100/10000 | Mean reward=  55.3872 | Loss=  0.01772 | Epsilon=0.0500
+Episode 3150/10000 | Mean reward=  55.2622 | Loss=  0.01083 | Epsilon=0.0500
+Episode 3200/10000 | Mean reward=  55.2913 | Loss=  0.01039 | Epsilon=0.0500
+Episode 3250/10000 | Mean reward=  54.7301 | Loss=  0.01365 | Epsilon=0.0500
+Episode 3300/10000 | Mean reward=  54.8899 | Loss=  0.01428 | Epsilon=0.0500
+Episode 3350/10000 | Mean reward=  55.1711 | Loss=  0.00925 | Epsilon=0.0500
+Episode 3400/10000 | Mean reward=  55.2000 | Loss=  0.01552 | Epsilon=0.0500
+Episode 3450/10000 | Mean reward=  55.8170 | Loss=  0.02100 | Epsilon=0.0500
+Episode 3500/10000 | Mean reward=  53.1459 | Loss=  0.01668 | Epsilon=0.0500
+Episode 3550/10000 | Mean reward=  54.5364 | Loss=  0.01862 | Epsilon=0.0500
+Episode 3600/10000 | Mean reward=  54.7332 | Loss=  0.04212 | Epsilon=0.0500
+Episode 3650/10000 | Mean reward=  54.0102 | Loss=  0.03920 | Epsilon=0.0500
+Episode 3700/10000 | Mean reward=  54.1240 | Loss=  0.05139 | Epsilon=0.0500
+Episode 3750/10000 | Mean reward=  55.0547 | Loss=  0.04986 | Epsilon=0.0500
+Episode 3800/10000 | Mean reward=  55.4416 | Loss=  0.04407 | Epsilon=0.0500
+Episode 3850/10000 | Mean reward=  55.0786 | Loss=  0.04893 | Epsilon=0.0500
+Episode 3900/10000 | Mean reward=  54.8502 | Loss=  0.06832 | Epsilon=0.0500
+Episode 3950/10000 | Mean reward=  54.6659 | Loss=  0.07552 | Epsilon=0.0500
+Episode 4000/10000 | Mean reward=  55.6950 | Loss=  0.08735 | Epsilon=0.0500
+Episode 4050/10000 | Mean reward=  55.1337 | Loss=  0.09666 | Epsilon=0.0500
+Episode 4100/10000 | Mean reward=  54.3073 | Loss=  0.12508 | Epsilon=0.0500
+Episode 4150/10000 | Mean reward=  53.7779 | Loss=  0.09005 | Epsilon=0.0500
+Episode 4200/10000 | Mean reward=  53.7252 | Loss=  0.12894 | Epsilon=0.0500
+Episode 4250/10000 | Mean reward=  53.3618 | Loss=  0.14684 | Epsilon=0.0500
+Episode 4300/10000 | Mean reward=  53.6111 | Loss=  0.16383 | Epsilon=0.0500
+Episode 4350/10000 | Mean reward=  53.7626 | Loss=  0.17854 | Epsilon=0.0500
+Episode 4400/10000 | Mean reward=  53.7179 | Loss=  0.12628 | Epsilon=0.0500
+Episode 4450/10000 | Mean reward=  53.6362 | Loss=  0.15115 | Epsilon=0.0500
+Episode 4500/10000 | Mean reward=  53.9246 | Loss=  0.20995 | Epsilon=0.0500
+Episode 4550/10000 | Mean reward=  54.3748 | Loss=  0.22500 | Epsilon=0.0500
+Episode 4600/10000 | Mean reward=  54.3404 | Loss=  0.25743 | Epsilon=0.0500
+Episode 4650/10000 | Mean reward=  54.3409 | Loss=  0.25451 | Epsilon=0.0500
+Episode 4700/10000 | Mean reward=  54.5373 | Loss=  0.20579 | Epsilon=0.0500
+Episode 4750/10000 | Mean reward=  53.5470 | Loss=  0.26830 | Epsilon=0.0500
+Episode 4800/10000 | Mean reward=  53.2463 | Loss=  0.22782 | Epsilon=0.0500
+Episode 4850/10000 | Mean reward=  54.0022 | Loss=  0.25356 | Epsilon=0.0500
+Episode 4900/10000 | Mean reward=  53.8096 | Loss=  0.25688 | Epsilon=0.0500
+Episode 4950/10000 | Mean reward=  53.9949 | Loss=  0.30208 | Epsilon=0.0500
+Episode 5000/10000 | Mean reward=  54.6999 | Loss=  0.27352 | Epsilon=0.0500
+Episode 5050/10000 | Mean reward=  54.5129 | Loss=  0.32925 | Epsilon=0.0500
+Episode 5100/10000 | Mean reward=  53.5899 | Loss=  0.37699 | Epsilon=0.0500
+Episode 5150/10000 | Mean reward=  53.9450 | Loss=  0.40561 | Epsilon=0.0500
+Episode 5200/10000 | Mean reward=  54.4449 | Loss=  0.39270 | Epsilon=0.0500
+Episode 5250/10000 | Mean reward=  53.6482 | Loss=  0.33200 | Epsilon=0.0500
+Episode 5300/10000 | Mean reward=  54.3668 | Loss=  0.30025 | Epsilon=0.0500
+Episode 5350/10000 | Mean reward=  54.9188 | Loss=  0.45122 | Epsilon=0.0500
+Episode 5400/10000 | Mean reward=  54.6228 | Loss=  0.28949 | Epsilon=0.0500
+Episode 5450/10000 | Mean reward=  55.1712 | Loss=  0.40807 | Epsilon=0.0500
+Episode 5500/10000 | Mean reward=  54.6780 | Loss=  0.35551 | Epsilon=0.0500
+Episode 5550/10000 | Mean reward=  54.4980 | Loss=  0.44669 | Epsilon=0.0500
+Episode 5600/10000 | Mean reward=  54.0110 | Loss=  0.41806 | Epsilon=0.0500
+Episode 5650/10000 | Mean reward=  53.9732 | Loss=  0.29292 | Epsilon=0.0500
+Episode 5700/10000 | Mean reward=  53.3996 | Loss=  0.56188 | Epsilon=0.0500
+Episode 5750/10000 | Mean reward=  53.7084 | Loss=  0.51912 | Epsilon=0.0500
+Episode 5800/10000 | Mean reward=  53.4598 | Loss=  0.54891 | Epsilon=0.0500
+Episode 5850/10000 | Mean reward=  51.9046 | Loss=  0.55964 | Epsilon=0.0500
+Episode 5900/10000 | Mean reward=  51.9272 | Loss=  0.60713 | Epsilon=0.0500
+Episode 5950/10000 | Mean reward=  52.4905 | Loss=  0.52373 | Epsilon=0.0500
+Episode 6000/10000 | Mean reward=  53.5528 | Loss=  0.61522 | Epsilon=0.0500
+Episode 6050/10000 | Mean reward=  54.4409 | Loss=  0.77592 | Epsilon=0.0500
+Episode 6100/10000 | Mean reward=  54.6595 | Loss=  0.57867 | Epsilon=0.0500
+Episode 6150/10000 | Mean reward=  54.0052 | Loss=  0.46745 | Epsilon=0.0500
+Episode 6200/10000 | Mean reward=  54.8958 | Loss=  0.67501 | Epsilon=0.0500
+Episode 6250/10000 | Mean reward=  53.5896 | Loss=  0.60969 | Epsilon=0.0500
+Episode 6300/10000 | Mean reward=  54.1269 | Loss=  0.73193 | Epsilon=0.0500
+Episode 6350/10000 | Mean reward=  54.6545 | Loss=  0.74543 | Epsilon=0.0500
+Episode 6400/10000 | Mean reward=  54.2128 | Loss=  0.50687 | Epsilon=0.0500
+Episode 6450/10000 | Mean reward=  54.4270 | Loss=  0.49944 | Epsilon=0.0500
+Episode 6500/10000 | Mean reward=  55.1933 | Loss=  0.80671 | Epsilon=0.0500
+Episode 6550/10000 | Mean reward=  55.3623 | Loss=  0.67497 | Epsilon=0.0500
+Episode 6600/10000 | Mean reward=  54.5554 | Loss=  0.64205 | Epsilon=0.0500
+Episode 6650/10000 | Mean reward=  54.7486 | Loss=  0.67117 | Epsilon=0.0500
+Episode 6700/10000 | Mean reward=  54.1295 | Loss=  0.95597 | Epsilon=0.0500
+Episode 6750/10000 | Mean reward=  54.0226 | Loss=  0.80995 | Epsilon=0.0500
+Episode 6800/10000 | Mean reward=  54.8756 | Loss=  0.65358 | Epsilon=0.0500
+Episode 6850/10000 | Mean reward=  54.3438 | Loss=  0.60414 | Epsilon=0.0500
+Episode 6900/10000 | Mean reward=  53.7544 | Loss=  0.82313 | Epsilon=0.0500
+Episode 6950/10000 | Mean reward=  54.4953 | Loss=  0.61103 | Epsilon=0.0500
+Episode 7000/10000 | Mean reward=  53.6649 | Loss=  0.82404 | Epsilon=0.0500
+Episode 7050/10000 | Mean reward=  54.8465 | Loss=  0.62843 | Epsilon=0.0500
+Episode 7100/10000 | Mean reward=  54.4079 | Loss=  0.58971 | Epsilon=0.0500
+Episode 7150/10000 | Mean reward=  54.8596 | Loss=  0.72288 | Epsilon=0.0500
+Episode 7200/10000 | Mean reward=  55.8979 | Loss=  0.67149 | Epsilon=0.0500
+Episode 7250/10000 | Mean reward=  55.1857 | Loss=  0.56497 | Epsilon=0.0500
+Episode 7300/10000 | Mean reward=  55.3399 | Loss=  0.62585 | Epsilon=0.0500
+Episode 7350/10000 | Mean reward=  55.2279 | Loss=  0.41116 | Epsilon=0.0500
+Episode 7400/10000 | Mean reward=  55.6905 | Loss=  0.67096 | Epsilon=0.0500
+Episode 7450/10000 | Mean reward=  55.3288 | Loss=  0.63905 | Epsilon=0.0500
+Episode 7500/10000 | Mean reward=  55.5563 | Loss=  0.75995 | Epsilon=0.0500
+Episode 7550/10000 | Mean reward=  55.0145 | Loss=  0.80665 | Epsilon=0.0500
+Episode 7600/10000 | Mean reward=  55.7320 | Loss=  0.48608 | Epsilon=0.0500
+Episode 7650/10000 | Mean reward=  55.1382 | Loss=  0.60049 | Epsilon=0.0500
+Episode 7700/10000 | Mean reward=  54.7934 | Loss=  0.51634 | Epsilon=0.0500
+Episode 7750/10000 | Mean reward=  55.1016 | Loss=  0.59107 | Epsilon=0.0500
+Episode 7800/10000 | Mean reward=  55.1723 | Loss=  0.65560 | Epsilon=0.0500
+Episode 7850/10000 | Mean reward=  54.9970 | Loss=  0.60854 | Epsilon=0.0500
+Episode 7900/10000 | Mean reward=  55.7475 | Loss=  0.65404 | Epsilon=0.0500
+Episode 7950/10000 | Mean reward=  55.1668 | Loss=  0.57396 | Epsilon=0.0500
+Episode 8000/10000 | Mean reward=  55.3046 | Loss=  0.82920 | Epsilon=0.0500
+Episode 8050/10000 | Mean reward=  55.5863 | Loss=  0.61159 | Epsilon=0.0500
+Episode 8100/10000 | Mean reward=  55.0740 | Loss=  0.67467 | Epsilon=0.0500
+Episode 8150/10000 | Mean reward=  55.1993 | Loss=  0.68494 | Epsilon=0.0500
+Episode 8200/10000 | Mean reward=  55.1237 | Loss=  0.74418 | Epsilon=0.0500
+Episode 8250/10000 | Mean reward=  54.6272 | Loss=  0.84829 | Epsilon=0.0500
+Episode 8300/10000 | Mean reward=  53.7369 | Loss=  0.44791 | Epsilon=0.0500
+Episode 8350/10000 | Mean reward=  54.3780 | Loss=  0.73233 | Epsilon=0.0500
+Episode 8400/10000 | Mean reward=  52.7097 | Loss=  0.70735 | Epsilon=0.0500
+Episode 8450/10000 | Mean reward=  51.7006 | Loss=  0.78163 | Epsilon=0.0500
+Episode 8500/10000 | Mean reward=  51.0895 | Loss=  0.78662 | Epsilon=0.0500
+Episode 8550/10000 | Mean reward=  52.3219 | Loss=  0.48026 | Epsilon=0.0500
+Episode 8600/10000 | Mean reward=  53.5606 | Loss=  0.50180 | Epsilon=0.0500
+Episode 8650/10000 | Mean reward=  54.1074 | Loss=  0.63746 | Epsilon=0.0500
+Episode 8700/10000 | Mean reward=  53.0153 | Loss=  0.66336 | Epsilon=0.0500
+Episode 8750/10000 | Mean reward=  53.7373 | Loss=  0.67509 | Epsilon=0.0500
+Episode 8800/10000 | Mean reward=  53.9036 | Loss=  0.71776 | Epsilon=0.0500
+Episode 8850/10000 | Mean reward=  54.0366 | Loss=  0.71554 | Epsilon=0.0500
+Episode 8900/10000 | Mean reward=  53.9510 | Loss=  0.89204 | Epsilon=0.0500
+Episode 8950/10000 | Mean reward=  54.0107 | Loss=  0.79583 | Epsilon=0.0500
+Episode 9000/10000 | Mean reward=  54.2373 | Loss=  0.67233 | Epsilon=0.0500
+Episode 9050/10000 | Mean reward=  54.5307 | Loss=  0.65167 | Epsilon=0.0500
+Episode 9100/10000 | Mean reward=  54.4099 | Loss=  0.86901 | Epsilon=0.0500
+Episode 9150/10000 | Mean reward=  54.5118 | Loss=  0.74259 | Epsilon=0.0500
+Episode 9200/10000 | Mean reward=  54.5327 | Loss=  0.64939 | Epsilon=0.0500
+Episode 9250/10000 | Mean reward=  55.3278 | Loss=  0.89539 | Epsilon=0.0500
+Episode 9300/10000 | Mean reward=  55.3498 | Loss=  0.60582 | Epsilon=0.0500
+Episode 9350/10000 | Mean reward=  54.2924 | Loss=  0.63889 | Epsilon=0.0500
+Episode 9400/10000 | Mean reward=  54.3649 | Loss=  0.57436 | Epsilon=0.0500
+Episode 9450/10000 | Mean reward=  53.8563 | Loss=  0.59874 | Epsilon=0.0500
+Episode 9500/10000 | Mean reward=  53.0721 | Loss=  0.90424 | Epsilon=0.0500
+Episode 9550/10000 | Mean reward=  52.4136 | Loss=  0.67451 | Epsilon=0.0500
+Episode 9600/10000 | Mean reward=  52.4544 | Loss=  1.05613 | Epsilon=0.0500
+Episode 9650/10000 | Mean reward=  53.0013 | Loss=  0.75414 | Epsilon=0.0500
+Episode 9700/10000 | Mean reward=  53.0827 | Loss=  0.60114 | Epsilon=0.0500
+Episode 9750/10000 | Mean reward=  53.5240 | Loss=  0.81990 | Epsilon=0.0500
+Episode 9800/10000 | Mean reward=  53.6389 | Loss=  0.81101 | Epsilon=0.0500
+Episode 9850/10000 | Mean reward=  55.0182 | Loss=  0.83964 | Epsilon=0.0500
+Episode 9900/10000 | Mean reward=  54.9699 | Loss=  0.76521 | Epsilon=0.0500
+Episode 9950/10000 | Mean reward=  54.8640 | Loss=  0.56645 | Epsilon=0.0500
+Episode 10000/10000 | Mean reward=  54.9258 | Loss=  0.86414 | Epsilon=0.0500
+Completed DDQN at 100 users | Elapsed=45.51 min | Model saved: DDQN_users_100.pt
+
+########################################################################
+TRAINING FOR USER LOAD: 200
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 200
+Episode    1/10000 | Mean reward=  38.2491 | Loss=      nan | Epsilon=0.9953
+Episode   50/10000 | Mean reward=  38.0539 | Loss=  0.01090 | Epsilon=0.7899
+Episode  100/10000 | Mean reward=  37.7539 | Loss=  0.02165 | Epsilon=0.6262
+Episode  150/10000 | Mean reward=  37.8910 | Loss=  0.04119 | Epsilon=0.4987
+Episode  200/10000 | Mean reward=  38.0765 | Loss=  0.04928 | Epsilon=0.3995
+Episode  250/10000 | Mean reward=  37.8115 | Loss=  0.04799 | Epsilon=0.3222
+Episode  300/10000 | Mean reward=  37.7635 | Loss=  0.07940 | Epsilon=0.2620
+Episode  350/10000 | Mean reward=  37.8608 | Loss=  0.05418 | Epsilon=0.2151
+Episode  400/10000 | Mean reward=  37.7223 | Loss=  0.04326 | Epsilon=0.1786
+Episode  450/10000 | Mean reward=  37.8428 | Loss=  0.06347 | Epsilon=0.1501
+Episode  500/10000 | Mean reward=  37.7272 | Loss=  0.05661 | Epsilon=0.1280
+Episode  550/10000 | Mean reward=  37.8643 | Loss=  0.03745 | Epsilon=0.1107
+Episode  600/10000 | Mean reward=  37.9627 | Loss=  0.03575 | Epsilon=0.0973
+Episode  650/10000 | Mean reward=  37.7128 | Loss=  0.04340 | Epsilon=0.0868
+Episode  700/10000 | Mean reward=  37.6782 | Loss=  0.02586 | Epsilon=0.0787
+Episode  750/10000 | Mean reward=  37.5450 | Loss=  0.02465 | Epsilon=0.0723
+Episode  800/10000 | Mean reward=  37.8361 | Loss=  0.01600 | Epsilon=0.0674
+Episode  850/10000 | Mean reward=  37.7131 | Loss=  0.01031 | Epsilon=0.0636
+Episode  900/10000 | Mean reward=  37.5605 | Loss=  0.00832 | Epsilon=0.0606
+Episode  950/10000 | Mean reward=  37.8125 | Loss=  0.00482 | Epsilon=0.0582
+Episode 1000/10000 | Mean reward=  37.7546 | Loss=  0.00286 | Epsilon=0.0564
+Episode 1050/10000 | Mean reward=  37.7092 | Loss=  0.00303 | Epsilon=0.0550
+Episode 1100/10000 | Mean reward=  37.7652 | Loss=  0.00288 | Epsilon=0.0539
+Episode 1150/10000 | Mean reward=  37.8336 | Loss=  0.00270 | Epsilon=0.0530
+Episode 1200/10000 | Mean reward=  37.7476 | Loss=  0.00356 | Epsilon=0.0524
+Episode 1250/10000 | Mean reward=  37.6430 | Loss=  0.00332 | Epsilon=0.0518
+Episode 1300/10000 | Mean reward=  37.6384 | Loss=  0.00443 | Epsilon=0.0514
+Episode 1350/10000 | Mean reward=  37.6632 | Loss=  0.00390 | Epsilon=0.0511
+Episode 1400/10000 | Mean reward=  37.7301 | Loss=  0.00367 | Epsilon=0.0509
+Episode 1450/10000 | Mean reward=  37.6994 | Loss=  0.00333 | Epsilon=0.0507
+Episode 1500/10000 | Mean reward=  37.6881 | Loss=  0.00543 | Epsilon=0.0505
+Episode 1550/10000 | Mean reward=  37.6064 | Loss=  0.00492 | Epsilon=0.0504
+Episode 1600/10000 | Mean reward=  37.6695 | Loss=  0.00300 | Epsilon=0.0503
+Episode 1650/10000 | Mean reward=  37.7445 | Loss=  0.00294 | Epsilon=0.0502
+Episode 1700/10000 | Mean reward=  37.7186 | Loss=  0.00278 | Epsilon=0.0502
+Episode 1750/10000 | Mean reward=  37.6661 | Loss=  0.00196 | Epsilon=0.0502
+Episode 1800/10000 | Mean reward=  37.8243 | Loss=  0.00222 | Epsilon=0.0501
+Episode 1850/10000 | Mean reward=  37.8818 | Loss=  0.00182 | Epsilon=0.0501
+Episode 1900/10000 | Mean reward=  37.8033 | Loss=  0.00345 | Epsilon=0.0501
+Episode 1950/10000 | Mean reward=  37.8644 | Loss=  0.00278 | Epsilon=0.0501
+Episode 2000/10000 | Mean reward=  37.9916 | Loss=  0.00299 | Epsilon=0.0500
+Episode 2050/10000 | Mean reward=  38.0502 | Loss=  0.00359 | Epsilon=0.0500
+Episode 2100/10000 | Mean reward=  37.8900 | Loss=  0.00231 | Epsilon=0.0500
+Episode 2150/10000 | Mean reward=  37.8340 | Loss=  0.00304 | Epsilon=0.0500
+Episode 2200/10000 | Mean reward=  37.6676 | Loss=  0.00317 | Epsilon=0.0500
+Episode 2250/10000 | Mean reward=  37.7939 | Loss=  0.00375 | Epsilon=0.0500
+Episode 2300/10000 | Mean reward=  37.9259 | Loss=  0.00276 | Epsilon=0.0500
+Episode 2350/10000 | Mean reward=  38.2500 | Loss=  0.00330 | Epsilon=0.0500
+Episode 2400/10000 | Mean reward=  38.1393 | Loss=  0.00316 | Epsilon=0.0500
+Episode 2450/10000 | Mean reward=  38.1523 | Loss=  0.00331 | Epsilon=0.0500
+Episode 2500/10000 | Mean reward=  38.2407 | Loss=  0.00381 | Epsilon=0.0500
+Episode 2550/10000 | Mean reward=  38.1669 | Loss=  0.00317 | Epsilon=0.0500
