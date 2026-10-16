@@ -1,0 +1,2033 @@
+
+# ============================================================
+# BLOCK 1: PROJECT CONFIGURATION
+# ============================================================
+
+import os
+import sys
+import copy
+import random
+from pathlib import Path
+from collections import deque
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+BASE_DIR = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3"
+)
+PY5CHESIM_DIR = BASE_DIR / "py5chesim"
+MODEL_DIR = BASE_DIR / "models"
+
+DATA_DIR = Path(
+    r"E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data"
+)
+
+RESULT_DIR = BASE_DIR / "results" / "RBF_DDQN_Comparison"
+FIG_DIR = RESULT_DIR / "figures"
+CSV_DIR = RESULT_DIR / "csv"
+CHECKPOINT_DIR = RESULT_DIR / "models"
+
+for folder in (
+    MODEL_DIR, RESULT_DIR, FIG_DIR, CSV_DIR, CHECKPOINT_DIR
+):
+    folder.mkdir(parents=True, exist_ok=True)
+
+SEED = 42
+
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(SEED)
+
+DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+
+# ------------------------------------------------------------
+# Radio configuration
+# ------------------------------------------------------------
+TOTAL_RBS = 100
+TOTAL_BANDWIDTH_MHZ = 20.0
+TOTAL_POWER_BUDGET = 40.0  # Normalized power units
+SLOT_SECONDS = 0.001
+
+# ------------------------------------------------------------
+# Models and experiment settings
+# ------------------------------------------------------------
+MODEL_NAMES = [
+    "RBF-DDQN",
+    "DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN",
+]
+
+USER_LOADS_TRAIN = [50, 100, 150, 200]
+FIXED_EVAL_USERS = 200
+EVAL_REPEATS = 5
+
+LATENCY_LEVELS_MS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+BANDWIDTH_LEVELS_MHZ = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+RB_LEVELS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
+
+# Short initial run; increase for final experiments.
+NUM_EPISODES = 3
+BATCH_SIZE = 128
+REPLAY_CAPACITY = 30_000
+GAMMA = 0.99
+LEARNING_RATE = 1e-3
+TARGET_UPDATE_STEPS = 250
+EPSILON_START = 1.0
+EPSILON_END = 0.05
+EPSILON_DECAY = 0.985
+
+# Synthetic traffic proportions.
+SLICE_MIX = {
+    "IoT": 0.25,
+    "M2M": 0.25,
+    "Vehicular": 0.20,
+    "eMBB": 0.30,
+}
+
+SLICE_CONFIG = {
+    "IoT": {"min_rate_mbps": 0.05, "priority": 1},
+    "M2M": {"min_rate_mbps": 0.10, "priority": 2},
+    "Vehicular": {"min_rate_mbps": 2.0, "priority": 4},
+    "eMBB": {"min_rate_mbps": 5.0, "priority": 3},
+}
+
+print("=" * 70)
+print("RBF-DDQN / DDQN / GGN-DDQN / GCN-DDQN")
+print("=" * 70)
+print("Python:", sys.executable)
+print("PyTorch:", torch.__version__)
+print("Device:", DEVICE)
+print("Project:", BASE_DIR)
+print("Dataset directory exists:", DATA_DIR.exists())
+print("Py5cheSim exists:", PY5CHESIM_DIR.exists())
+print("Results:", RESULT_DIR)
+print("=" * 70)
+
+# ============================================================
+# BLOCK 2: USERS, O-RU, O-DU, AND STATE
+# ============================================================
+
+SLICE_NAMES = list(SLICE_MIX.keys())
+
+def generate_users(num_users, seed):
+    rng = np.random.default_rng(seed)
+
+    slice_names = rng.choice(
+        SLICE_NAMES,
+        size=num_users,
+        p=list(SLICE_MIX.values()),
+    )
+
+    users = []
+
+    for uid, name in enumerate(slice_names):
+        if name == "IoT":
+            demand = rng.uniform(0.02, 0.15)
+            latency = rng.uniform(5, 100)
+        elif name == "M2M":
+            demand = rng.uniform(0.05, 0.30)
+            latency = rng.uniform(5, 50)
+        elif name == "Vehicular":
+            demand = rng.uniform(1.0, 8.0)
+            latency = rng.uniform(2, 30)
+        else:
+            demand = rng.uniform(3.0, 20.0)
+            latency = rng.uniform(5, 60)
+
+        users.append({
+            "user_id": int(uid),
+            "slice": str(name),
+            "demand_mbps": float(demand),
+            "latency_ms": float(latency),
+            "channel": float(rng.beta(2.5, 2.0)),
+        })
+
+    return users
+
+# ============================================================
+# DIAGNOSTIC: CHECK USER LATENCY INPUTS
+# ============================================================
+
+test_users = generate_users(5, seed=SEED)
+
+print("\nUser dictionary keys:")
+print(list(test_users[0].keys()))
+
+print("\nFirst generated user:")
+print(test_users[0])
+
+print(
+    "\nContains data_volume_mbits:",
+    "data_volume_mbits" in test_users[0],
+)
+class ORU:
+    """Synthetic O-RU radio-side interface."""
+
+    def __init__(self, seed=SEED):
+        self.seed = seed
+
+    def connect_users(self, num_users):
+        return generate_users(num_users, self.seed)
+
+
+
+# ============================================================
+# O-DU: SHARED RESOURCE-BUDGET CONTROLLER
+# Supports data rate, throughput, latency, and energy metrics
+# ============================================================
+
+class ODU:
+    """O-DU shared resource-budget controller."""
+
+    def __init__(
+        self,
+        total_rbs=TOTAL_RBS,
+        total_bandwidth_mhz=TOTAL_BANDWIDTH_MHZ,
+        power_budget=TOTAL_POWER_BUDGET,
+    ):
+        self.total_rbs = max(0, int(total_rbs))
+        self.total_bandwidth_mhz = max(
+            0.0, float(total_bandwidth_mhz)
+        )
+        self.power_budget = max(0.0, float(power_budget))
+        self.reset()
+
+    def reset(self):
+        """Reset the available resources for a scheduling interval."""
+        self.remaining_rbs = self.total_rbs
+        self.remaining_power = self.power_budget
+
+        self.total_allocated_rbs = 0
+        self.total_allocated_bandwidth_mhz = 0.0
+        self.total_allocated_power = 0.0
+        self.total_throughput_mbps = 0.0
+        self.total_energy_proxy = 0.0
+        self.users_served = 0
+        self.user_latencies_ms = []
+
+    @property
+    def bandwidth_per_rb(self):
+        """Available bandwidth per RB under the configured model."""
+        return (
+            self.total_bandwidth_mhz / self.total_rbs
+            if self.total_rbs > 0
+            else 0.0
+        )
+
+    def allocate(self, user, requested_rbs, requested_power):
+        """Allocate available RBs and power to one user."""
+
+        # Enforce the remaining O-DU resource budgets.
+        rbs = min(
+            max(0, int(requested_rbs)),
+            self.remaining_rbs,
+        )
+
+        power = min(
+            max(0.0, float(requested_power)),
+            self.remaining_power,
+        )
+
+        if rbs == 0:
+            power = 0.0
+
+        bandwidth = rbs * self.bandwidth_per_rb
+
+        # Illustrative link model, not a calibrated 5G PHY model.
+        channel = float(np.clip(user["channel"], 0.0, 1.0))
+        spectral_efficiency = 0.5 + 4.5 * channel
+
+        power_factor = (
+            min(np.sqrt(power / 4.0), 2.0)
+            if power > 0.0
+            else 0.0
+        )
+
+        # Mbps, assuming MHz * bits/s/Hz.
+        data_rate_mbps = (
+            bandwidth * spectral_efficiency * power_factor
+        )
+
+        # Under this model, instantaneous allocated data rate
+        # and per-user throughput are the same quantity.
+        throughput_mbps = data_rate_mbps
+
+        # Simplified transmission-time estimate:
+        # latency = transmitted data volume / achieved data rate.
+        # If the user has no positive data volume or rate, latency
+        # is undefined and is returned as NaN.
+        data_volume_mbits = float(
+            user.get("data_volume_mbits", np.nan)
+        )
+
+        if (
+            np.isfinite(data_volume_mbits)
+            and data_volume_mbits >= 0.0
+            and data_rate_mbps > 0.0
+        ):
+            latency_ms = (
+                data_volume_mbits / data_rate_mbps
+            ) * 1000.0
+        else:
+            latency_ms = np.nan
+
+        # Energy proxy in joules, assuming power is in watts
+        # and SLOT_SECONDS is measured in seconds.
+        energy_proxy = power * SLOT_SECONDS
+
+        # Update the O-DU resource budgets.
+        self.remaining_rbs -= rbs
+        self.remaining_power -= power
+
+        # Accumulate scheduling-interval statistics.
+        self.total_allocated_rbs += rbs
+        self.total_allocated_bandwidth_mhz += bandwidth
+        self.total_allocated_power += power
+        self.total_throughput_mbps += throughput_mbps
+        self.total_energy_proxy += energy_proxy
+
+        if rbs > 0 and throughput_mbps > 0.0:
+            self.users_served += 1
+
+        if np.isfinite(latency_ms):
+            self.user_latencies_ms.append(latency_ms)
+
+        return {
+            "allocated_rbs": rbs,
+            "bandwidth_mhz": float(bandwidth),
+            "power": float(power),
+            "data_rate_mbps": float(data_rate_mbps),
+            "throughput_mbps": float(throughput_mbps),
+            "latency_ms": float(latency_ms),
+            "energy_proxy": float(energy_proxy),
+        }
+
+    def get_summary(self):
+        """Return aggregate metrics for the scheduling interval."""
+
+        mean_latency_ms = (
+            float(np.mean(self.user_latencies_ms))
+            if self.user_latencies_ms
+            else np.nan
+        )
+
+        return {
+            "allocated_rbs": self.total_allocated_rbs,
+            "allocated_bandwidth_mhz": (
+                self.total_allocated_bandwidth_mhz
+            ),
+            "total_power": self.total_allocated_power,
+            "throughput_mbps": self.total_throughput_mbps,
+            "data_rate_mbps": self.total_throughput_mbps,
+            "latency_ms": mean_latency_ms,
+            "energy_proxy": self.total_energy_proxy,
+            "users_served": self.users_served,
+        }
+
+
+
+# State dimensions:
+# 4 slice indicators + channel + demand + observed latency +
+# latency constraint + remaining RB fraction + remaining power
+# fraction + current total RB scale + current bandwidth scale.
+STATE_DIM = 12
+
+def make_state(user, odu, latency_limit_ms):
+    slice_one_hot = [
+        float(user["slice"] == name)
+        for name in SLICE_NAMES
+    ]
+
+    return np.asarray(
+        slice_one_hot + [
+            user["channel"],
+            np.clip(user["demand_mbps"] / 20.0, 0.0, 1.0),
+            np.clip(user["latency_ms"] / 100.0, 0.0, 1.0),
+            np.clip(latency_limit_ms / 100.0, 0.0, 1.0),
+            odu.remaining_rbs / max(odu.total_rbs, 1),
+            odu.remaining_power / max(odu.power_budget, 1e-8),
+            min(odu.total_rbs / 200.0, 1.0),
+            min(odu.total_bandwidth_mhz / 40.0, 1.0),
+        ],
+        dtype=np.float32,
+    )
+
+print("State dimension:", STATE_DIM)
+print("Action space will be shared by all four models.")
+
+# ============================================================
+# BLOCK 3: ACTION SPACE AND MODEL ARCHITECTURES
+# ============================================================
+
+RB_ACTIONS = [1, 2, 4, 8, 16]
+POWER_ACTIONS = [1.0, 2.0, 4.0, 8.0]
+
+ACTIONS = [
+    (rbs, power)
+    for rbs in RB_ACTIONS
+    for power in POWER_ACTIONS
+]
+
+NUM_ACTIONS = len(ACTIONS)
+RBF_CENTERS = 128
+HIDDEN_DIM = 64
+
+
+class RBFQNetwork(nn.Module):
+    """Radial-basis state representation followed by a Q head."""
+
+    def __init__(self):
+        super().__init__()
+
+        centers = torch.rand(RBF_CENTERS, STATE_DIM)
+        self.register_buffer("centers", centers)
+
+        self.gamma_rbf = 4.0
+
+        self.head = nn.Sequential(
+            nn.Linear(RBF_CENTERS, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, NUM_ACTIONS),
+        )
+
+    def forward(self, x):
+        distance = (
+            x.unsqueeze(1) - self.centers.unsqueeze(0)
+        ).pow(2).sum(dim=2)
+
+        features = torch.exp(-self.gamma_rbf * distance)
+        return self.head(features)
+
+
+class DDQNQNetwork(nn.Module):
+    """Conventional fully connected Q-network."""
+
+    def __init__(self):
+        super().__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(STATE_DIM, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, NUM_ACTIONS),
+        )
+
+    def forward(self, x):
+        return self.network(x)
+
+
+def make_feature_adjacency(n_features):
+    """
+    Build a fixed feature graph.
+
+    Each state feature is a node. Adjacent feature indices
+    are connected, with self-loops.
+    """
+    adjacency = torch.eye(n_features)
+
+    for i in range(n_features - 1):
+        adjacency[i, i + 1] = 1.0
+        adjacency[i + 1, i] = 1.0
+
+    degree = adjacency.sum(dim=1).clamp(min=1.0)
+
+    # Symmetric degree normalization.
+    inv_sqrt = torch.diag(degree.pow(-0.5))
+    normalized = inv_sqrt @ adjacency @ inv_sqrt
+
+    return normalized
+
+
+class GGNQNetwork(nn.Module):
+    """
+    Graph-neighborhood aggregation Q-network.
+
+    Each state feature becomes a node embedding. Neighbor
+    aggregation is combined with the original embedding.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.register_buffer(
+            "adjacency",
+            make_feature_adjacency(STATE_DIM),
+        )
+
+        self.node_encoder = nn.Linear(1, HIDDEN_DIM)
+
+        self.neighbor_update = nn.Sequential(
+            nn.Linear(HIDDEN_DIM * 2, HIDDEN_DIM),
+            nn.ReLU(),
+            nn.Linear(HIDDEN_DIM, HIDDEN_DIM),
+            nn.ReLU(),
+        )
+
+        self.q_head = nn.Sequential(
+            nn.Linear(HIDDEN_DIM, 128),
+            nn.ReLU(),
+            nn.Linear(128, NUM_ACTIONS),
+        )
+
+    def forward(self, x):
+        # x: [batch, features]
+        node_values = x.unsqueeze(-1)
+        node_embeddings = torch.relu(
+            self.node_encoder(node_values)
+        )
+
+        neighbors = torch.einsum(
+            "ij,bjh->bih",
+            self.adjacency,
+            node_embeddings,
+        )
+
+        combined = torch.cat(
+            [node_embeddings, neighbors],
+            dim=-1,
+        )
+
+        updated = self.neighbor_update(combined)
+        graph_embedding = updated.mean(dim=1)
+
+        return self.q_head(graph_embedding)
+
+
+class GCNQNetwork(nn.Module):
+    """
+    Graph convolutional Q-network over the same feature graph.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.register_buffer(
+            "adjacency",
+            make_feature_adjacency(STATE_DIM),
+        )
+
+        self.input_projection = nn.Linear(1, HIDDEN_DIM)
+        self.graph_conv1 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
+        self.graph_conv2 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
+
+        self.q_head = nn.Sequential(
+            nn.Linear(HIDDEN_DIM, 128),
+            nn.ReLU(),
+            nn.Linear(128, NUM_ACTIONS),
+        )
+
+    def forward(self, x):
+        h = torch.relu(
+            self.input_projection(x.unsqueeze(-1))
+        )
+
+        h = torch.einsum(
+            "ij,bjh->bih",
+            self.adjacency,
+            h,
+        )
+        h = torch.relu(self.graph_conv1(h))
+
+        h = torch.einsum(
+            "ij,bjh->bih",
+            self.adjacency,
+            h,
+        )
+        h = torch.relu(self.graph_conv2(h))
+
+        graph_embedding = h.mean(dim=1)
+        return self.q_head(graph_embedding)
+
+
+NETWORK_FACTORIES = {
+    "RBF-DDQN": RBFQNetwork,
+    "DDQN": DDQNQNetwork,
+    "GGN-DDQN": GGNQNetwork,
+    "GCN-DDQN": GCNQNetwork,
+}
+
+print("Available actions:", NUM_ACTIONS)
+for name in NETWORK_FACTORIES:
+    print(f"{name}: {NETWORK_FACTORIES[name]().__class__.__name__}")
+
+# ============================================================
+# BLOCK 4: REPLAY BUFFER AND DDQN AGENT
+# ============================================================
+
+class ReplayBuffer:
+    def __init__(self, capacity):
+        self.memory = deque(maxlen=capacity)
+
+    def add(self, state, action, reward, next_state, done):
+        self.memory.append((
+            np.asarray(state, dtype=np.float32),
+            int(action),
+            float(reward),
+            np.asarray(next_state, dtype=np.float32),
+            float(done),
+        ))
+
+    def sample(self, batch_size):
+        batch = random.sample(self.memory, batch_size)
+
+        states, actions, rewards, next_states, dones = zip(*batch)
+
+        return (
+            np.asarray(states, dtype=np.float32),
+            np.asarray(actions, dtype=np.int64),
+            np.asarray(rewards, dtype=np.float32),
+            np.asarray(next_states, dtype=np.float32),
+            np.asarray(dones, dtype=np.float32),
+        )
+
+    def __len__(self):
+        return len(self.memory)
+
+
+class DDQNAgent:
+    def __init__(self, model_name):
+        self.model_name = model_name
+
+        self.online = NETWORK_FACTORIES[model_name]().to(DEVICE)
+        self.target = NETWORK_FACTORIES[model_name]().to(DEVICE)
+
+        self.target.load_state_dict(self.online.state_dict())
+        self.target.eval()
+
+        self.optimizer = optim.Adam(
+            self.online.parameters(),
+            lr=LEARNING_RATE,
+        )
+
+        self.loss_fn = nn.SmoothL1Loss()
+        self.memory = ReplayBuffer(REPLAY_CAPACITY)
+
+        self.epsilon = EPSILON_START
+        self.steps = 0
+
+    def select_action(self, state, explore=True):
+        if explore and random.random() < self.epsilon:
+            return random.randrange(NUM_ACTIONS)
+
+        state_tensor = torch.as_tensor(
+            state,
+            dtype=torch.float32,
+            device=DEVICE,
+        ).unsqueeze(0)
+
+        with torch.no_grad():
+            q_values = self.online(state_tensor)
+
+        return int(q_values.argmax(dim=1).item())
+
+    def learn(self):
+        if len(self.memory) < BATCH_SIZE:
+            return None
+
+        states, actions, rewards, next_states, dones = (
+            self.memory.sample(BATCH_SIZE)
+        )
+
+        states = torch.as_tensor(states, device=DEVICE)
+        actions = torch.as_tensor(
+            actions, dtype=torch.long, device=DEVICE
+        ).unsqueeze(1)
+        rewards = torch.as_tensor(rewards, device=DEVICE)
+        next_states = torch.as_tensor(next_states, device=DEVICE)
+        dones = torch.as_tensor(dones, device=DEVICE)
+
+        current_q = self.online(states).gather(
+            1, actions
+        ).squeeze(1)
+
+        with torch.no_grad():
+            next_actions = self.online(next_states).argmax(
+                dim=1, keepdim=True
+            )
+
+            next_q = self.target(next_states).gather(
+                1, next_actions
+            ).squeeze(1)
+
+            target_q = (
+                rewards
+                + GAMMA * (1.0 - dones) * next_q
+            )
+
+        loss = self.loss_fn(current_q, target_q)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+
+        nn.utils.clip_grad_norm_(
+            self.online.parameters(), max_norm=1.0
+        )
+
+        self.optimizer.step()
+        self.steps += 1
+
+        if self.steps % TARGET_UPDATE_STEPS == 0:
+            self.target.load_state_dict(
+                self.online.state_dict()
+            )
+
+        return float(loss.item())
+
+    def decay_epsilon(self):
+        self.epsilon = max(
+            EPSILON_END,
+            self.epsilon * EPSILON_DECAY,
+        )
+
+
+agents = {
+    name: DDQNAgent(name)
+    for name in MODEL_NAMES
+}
+
+print("Initialized agents:", list(agents.keys()))
+print("Training device:", DEVICE)
+
+
+# ============================================================
+# BLOCK 5: TRAIN ALL FOUR MODELS
+# ============================================================
+
+def calculate_reward(user, allocation, latency_limit_ms):
+    """Calculate the reward for a user's resource allocation."""
+
+    demand = max(float(user["demand_mbps"]), 1e-6)
+
+    rate_satisfaction = min(
+        float(allocation["throughput_mbps"]) / demand,
+        1.0,
+    )
+
+    # Use measured allocation latency when available.
+    # Fall back to the user's latency requirement only if the
+    # allocation result does not contain a valid latency value.
+    experienced_latency = allocation.get("latency_ms", np.nan)
+
+    if not np.isfinite(experienced_latency):
+        experienced_latency = float(user["latency_ms"])
+
+    latency_violation = float(
+        experienced_latency > latency_limit_ms
+    )
+
+    rb_cost = (
+        allocation["allocated_rbs"] / max(TOTAL_RBS, 1)
+    )
+
+    power_cost = (
+        allocation["power"] / max(TOTAL_POWER_BUDGET, 1e-8)
+    )
+
+    return float(
+        2.0 * rate_satisfaction
+        - 0.25 * rb_cost
+        - 0.20 * power_cost
+        - 0.50 * latency_violation
+    )
+
+
+def run_training_episode(
+    model_agent,
+    users,
+    latency_limit_ms=20.0,
+):
+    """Train one agent for one scheduling episode."""
+
+    odu = ODU()
+    odu.reset()
+
+    users = list(users)
+    random.shuffle(users)
+
+    episode_rewards = []
+    episode_losses = []
+    user_data_rates = []
+    user_latencies = []
+
+    for i, user in enumerate(users):
+
+        state = make_state(
+            user,
+            odu,
+            latency_limit_ms,
+        )
+
+        action_index = model_agent.select_action(
+            state,
+            explore=True,
+        )
+
+        requested_rbs, requested_power = ACTIONS[action_index]
+
+        allocation = odu.allocate(
+            user,
+            requested_rbs,
+            requested_power,
+        )
+
+        reward = calculate_reward(
+            user,
+            allocation,
+            latency_limit_ms,
+        )
+
+        # Collect per-user performance metrics.
+        user_data_rates.append(
+            float(allocation["data_rate_mbps"])
+        )
+
+        allocation_latency = allocation.get(
+            "latency_ms", np.nan
+        )
+
+        if np.isfinite(allocation_latency):
+            user_latencies.append(float(allocation_latency))
+
+        done = i == len(users) - 1
+
+        if done:
+            next_state = np.zeros(
+                STATE_DIM,
+                dtype=np.float32,
+            )
+        else:
+            next_state = make_state(
+                users[i + 1],
+                odu,
+                latency_limit_ms,
+            )
+
+        model_agent.memory.add(
+            state,
+            action_index,
+            reward,
+            next_state,
+            done,
+        )
+
+        # Learn every four user decisions.
+        if i % 4 == 0:
+            loss = model_agent.learn()
+
+            if loss is not None:
+                episode_losses.append(loss)
+
+        episode_rewards.append(reward)
+
+    model_agent.decay_epsilon()
+
+    # Aggregate the metrics from this episode.
+    summary = odu.get_summary()
+
+    mean_data_rate = (
+        float(np.mean(user_data_rates))
+        if user_data_rates
+        else 0.0
+    )
+
+    mean_latency = (
+        float(np.mean(user_latencies))
+        if user_latencies
+        else np.nan
+    )
+
+    return {
+        "mean_reward": float(np.mean(episode_rewards)),
+        "total_reward": float(np.sum(episode_rewards)),
+        "mean_loss": (
+            float(np.mean(episode_losses))
+            if episode_losses
+            else np.nan
+        ),
+
+        "allocated_rbs": summary["allocated_rbs"],
+        "allocated_power": summary["total_power"],
+        "allocated_bandwidth_mhz": (
+            summary["allocated_bandwidth_mhz"]
+        ),
+
+        # Aggregate throughput is the sum of user throughputs.
+        "throughput_mbps": summary["throughput_mbps"],
+
+        # Mean per-user data rate is kept distinct from aggregate
+        # throughput for the user-load plots.
+        "data_rate_mbps": mean_data_rate,
+
+        "latency_ms": mean_latency,
+        "energy_proxy": summary["energy_proxy"],
+        "users_served": summary["users_served"],
+
+        "rb_utilization": (
+            summary["allocated_rbs"] / max(TOTAL_RBS, 1)
+        ),
+        "power_utilization": (
+            summary["total_power"]
+            / max(TOTAL_POWER_BUDGET, 1e-8)
+        ),
+    }
+
+
+# ------------------------------------------------------------
+# Train all four models
+# ------------------------------------------------------------
+training_rows = []
+
+for episode in range(1, NUM_EPISODES + 1):
+
+    num_users = random.choice(USER_LOADS_TRAIN)
+
+    # Generate the same initial user scenario for all models.
+    shared_users = generate_users(
+        num_users,
+        seed=SEED + episode,
+    )
+
+    for model_name in MODEL_NAMES:
+
+        episode_users = copy.deepcopy(shared_users)
+
+        metrics = run_training_episode(
+            model_agent=agents[model_name],
+            users=episode_users,
+            latency_limit_ms=20.0,
+        )
+
+        training_rows.append({
+            "episode": episode,
+            "num_users": num_users,
+            "model": model_name,
+
+            "mean_reward": metrics["mean_reward"],
+            "total_reward": metrics["total_reward"],
+            "mean_loss": metrics["mean_loss"],
+
+            "allocated_rbs": metrics["allocated_rbs"],
+            "allocated_power": metrics["allocated_power"],
+            "allocated_bandwidth_mhz": (
+                metrics["allocated_bandwidth_mhz"]
+            ),
+
+            "data_rate_mbps": metrics["data_rate_mbps"],
+            "throughput_mbps": metrics["throughput_mbps"],
+            "latency_ms": metrics["latency_ms"],
+            "energy_proxy": metrics["energy_proxy"],
+            "users_served": metrics["users_served"],
+
+            "rb_utilization": metrics["rb_utilization"],
+            "power_utilization": metrics["power_utilization"],
+            "epsilon": agents[model_name].epsilon,
+        })
+
+    if episode == 1 or episode % 10 == 0:
+
+        latest = [
+            row
+            for row in training_rows
+            if row["episode"] == episode
+        ]
+
+        print(f"\nEpisode {episode}/{NUM_EPISODES}")
+
+        for row in latest:
+            print(
+                f"{row['model']:10s} | "
+                f"users={row['num_users']:3d} | "
+                f"reward={row['mean_reward']:.4f} | "
+                f"loss={row['mean_loss']:.5f} | "
+                f"rate={row['data_rate_mbps']:.3f} Mbps | "
+                f"throughput={row['throughput_mbps']:.3f} Mbps | "
+                f"latency={row['latency_ms']:.3f} ms"
+            )
+
+
+# ------------------------------------------------------------
+# Save training history
+# ------------------------------------------------------------
+training_df = pd.DataFrame(training_rows)
+
+training_path = (
+    CSV_DIR / "four_model_training_history.csv"
+)
+
+training_df.to_csv(
+    training_path,
+    index=False,
+)
+
+print("\nTraining history saved:", training_path)
+
+
+# ------------------------------------------------------------
+# Save model checkpoints
+# ------------------------------------------------------------
+for model_name, model_agent in agents.items():
+
+    checkpoint_path = (
+        CHECKPOINT_DIR
+        / f"{model_name.replace('-', '_')}.pt"
+    )
+
+    torch.save(
+        {
+            "model_name": model_name,
+            "online_state_dict": (
+                model_agent.online.state_dict()
+            ),
+            "target_state_dict": (
+                model_agent.target.state_dict()
+            ),
+            "optimizer_state_dict": (
+                model_agent.optimizer.state_dict()
+            ),
+            "epsilon": model_agent.epsilon,
+            "state_dim": STATE_DIM,
+            "num_actions": NUM_ACTIONS,
+            "rb_actions": RB_ACTIONS,
+            "power_actions": POWER_ACTIONS,
+        },
+        checkpoint_path,
+    )
+
+    print("Saved:", checkpoint_path)
+
+
+print("\n" + "=" * 70)
+print("FOUR-MODEL TRAINING COMPLETE")
+print("=" * 70)
+print("Training CSV:", training_path)
+print("Checkpoints:", CHECKPOINT_DIR)
+print("=" * 70)
+
+# ============================================================
+# BLOCK 6: COMMON EVALUATION FUNCTION
+# ============================================================
+
+def evaluate_model(
+    model_agent,
+    users,
+    total_rbs,
+    bandwidth_mhz,
+    power_budget,
+    latency_limit_ms,
+):
+    """
+    Evaluate one trained model under a shared resource budget.
+
+    Returns:
+        Aggregate throughput, mean per-user data rate,
+        mean experienced latency, energy, resource utilization,
+        users served, and per-user allocation details.
+    """
+
+    odu = ODU(
+        total_rbs=total_rbs,
+        total_bandwidth_mhz=bandwidth_mhz,
+        power_budget=power_budget,
+    )
+
+    odu.reset()
+    records = []
+
+    for user in users:
+
+        # Construct the current observation.
+        state = make_state(
+            user,
+            odu,
+            latency_limit_ms,
+        )
+
+        # Deterministic evaluation: disable exploration.
+        action_index = model_agent.select_action(
+            state,
+            explore=False,
+        )
+
+        requested_rbs, requested_power = ACTIONS[
+            action_index
+        ]
+
+        # Allocate resources subject to the remaining budget.
+        allocation = odu.allocate(
+            user,
+            requested_rbs,
+            requested_power,
+        )
+
+        records.append({
+            "user_id": user["user_id"],
+            "slice": user["slice"],
+            "demand_mbps": user["demand_mbps"],
+            "latency_requirement_ms": user["latency_ms"],
+            **allocation,
+        })
+
+    details = pd.DataFrame(records)
+
+    # --------------------------------------------------------
+    # Handle empty evaluation sets safely.
+    # --------------------------------------------------------
+    if details.empty:
+        return {
+            "throughput_mbps": 0.0,
+            "data_rate_mbps": np.nan,
+            "latency_ms": np.nan,
+            "energy_proxy": 0.0,
+            "total_power": 0.0,
+            "allocated_rbs": 0,
+            "allocated_bandwidth_mhz": 0.0,
+            "users_served": 0,
+            "rb_utilization": 0.0,
+            "bandwidth_utilization": 0.0,
+            "power_utilization": 0.0,
+            "details": details,
+        }
+
+    # --------------------------------------------------------
+    # Aggregate performance metrics.
+    # --------------------------------------------------------
+    total_throughput = float(
+        details["throughput_mbps"].sum()
+    )
+
+    allocated_rbs = int(
+        details["allocated_rbs"].sum()
+    )
+
+    allocated_bandwidth = float(
+        details["bandwidth_mhz"].sum()
+    )
+
+    total_power = float(
+        details["power"].sum()
+    )
+
+    total_energy = float(
+        details["energy_proxy"].sum()
+    )
+
+    users_served = int(
+        (details["allocated_rbs"] > 0).sum()
+    )
+
+    # Mean data rate among users receiving RBs.
+    served_mask = details["allocated_rbs"] > 0
+
+    if (
+        served_mask.any()
+        and "data_rate_mbps" in details.columns
+    ):
+        valid_rates = details.loc[
+            served_mask, "data_rate_mbps"
+        ]
+
+        valid_rates = valid_rates[
+            np.isfinite(valid_rates)
+        ]
+
+        mean_data_rate = (
+            float(valid_rates.mean())
+            if not valid_rates.empty
+            else np.nan
+        )
+    else:
+        mean_data_rate = np.nan
+
+    # Mean experienced latency for users with valid measurements.
+    if "latency_ms" in details.columns:
+        valid_latencies = details["latency_ms"]
+
+        valid_latencies = valid_latencies[
+            np.isfinite(valid_latencies)
+        ]
+
+        mean_latency = (
+            float(valid_latencies.mean())
+            if not valid_latencies.empty
+            else np.nan
+        )
+    else:
+        mean_latency = np.nan
+
+    # --------------------------------------------------------
+    # Resource utilization.
+    # --------------------------------------------------------
+    rb_utilization = (
+        allocated_rbs / max(int(total_rbs), 1)
+    )
+
+    bandwidth_utilization = (
+        allocated_bandwidth
+        / max(float(bandwidth_mhz), 1e-8)
+    )
+
+    power_utilization = (
+        total_power / max(float(power_budget), 1e-8)
+    )
+
+    # --------------------------------------------------------
+    # Verify that the resource budgets are respected.
+    # --------------------------------------------------------
+    assert allocated_rbs <= total_rbs, (
+        "Allocated RBs exceed the available RB budget."
+    )
+
+    assert allocated_bandwidth <= bandwidth_mhz + 1e-6, (
+        "Allocated bandwidth exceeds the available bandwidth."
+    )
+
+    assert total_power <= power_budget + 1e-6, (
+        "Allocated power exceeds the power budget."
+    )
+
+    return {
+        # Aggregate throughput across served users.
+        "throughput_mbps": total_throughput,
+
+        # Mean data rate per served user.
+        "data_rate_mbps": mean_data_rate,
+
+        # Mean measured latency; NaN if unavailable.
+        "latency_ms": mean_latency,
+
+        "energy_proxy": total_energy,
+        "total_power": total_power,
+        "allocated_rbs": allocated_rbs,
+        "allocated_bandwidth_mhz": allocated_bandwidth,
+        "users_served": users_served,
+        "rb_utilization": float(rb_utilization),
+        "bandwidth_utilization": float(
+            bandwidth_utilization
+        ),
+        "power_utilization": float(power_utilization),
+        "details": details,
+    }
+
+
+# ============================================================
+# BLOCK 7: GENERAL COMPARISON SWEEP
+# Supports fixed-user and variable-user experiments
+# ============================================================
+
+def run_comparison_sweep(
+    experiment_name,
+    sweep_values,
+    scenario_fn,
+    user_load=None,
+):
+    """
+    Evaluate all models over a scenario sweep.
+
+    If user_load is None, use FIXED_EVAL_USERS.
+    Otherwise, use the specified number of users.
+    """
+
+    rows = []
+
+    num_users = (
+        FIXED_EVAL_USERS
+        if user_load is None
+        else int(user_load)
+    )
+
+    if num_users <= 0:
+        raise ValueError(
+            "user_load must be a positive integer."
+        )
+
+    for value in sweep_values:
+
+        total_rbs, bandwidth_mhz, latency_limit_ms = (
+            scenario_fn(value)
+        )
+
+        for repeat in range(EVAL_REPEATS):
+
+            # Use the same generated users for every model
+            # within a given sweep value and repeat.
+            shared_users = generate_users(
+                num_users,
+                seed=(
+                    SEED
+                    + 100_000
+                    + repeat * 1000
+                    + int(value * 10)
+                ),
+            )
+
+            for model_name in MODEL_NAMES:
+
+                result = evaluate_model(
+                    model_agent=agents[model_name],
+                    users=copy.deepcopy(shared_users),
+                    total_rbs=total_rbs,
+                    bandwidth_mhz=bandwidth_mhz,
+                    power_budget=TOTAL_POWER_BUDGET,
+                    latency_limit_ms=latency_limit_ms,
+                )
+
+                rows.append({
+                    "experiment": experiment_name,
+                    "sweep_value": value,
+                    "num_users": num_users,
+                    "repeat": repeat,
+                    "model": model_name,
+
+                    # Performance metrics.
+                    "throughput_mbps": (
+                        result["throughput_mbps"]
+                    ),
+                    "data_rate_mbps": (
+                        result["data_rate_mbps"]
+                    ),
+                    "latency_ms": (
+                        result["latency_ms"]
+                    ),
+
+                    # Energy and power metrics.
+                    "energy_proxy": (
+                        result["energy_proxy"]
+                    ),
+                    "total_power": (
+                        result["total_power"]
+                    ),
+
+                    # Resource allocation metrics.
+                    "allocated_rbs": (
+                        result["allocated_rbs"]
+                    ),
+                    "allocated_bandwidth_mhz": (
+                        result["allocated_bandwidth_mhz"]
+                    ),
+                    "users_served": (
+                        result["users_served"]
+                    ),
+
+                    # Resource utilization metrics.
+                    "rb_utilization": (
+                        result["rb_utilization"]
+                    ),
+                    "bandwidth_utilization": (
+                        result["bandwidth_utilization"]
+                    ),
+                    "power_utilization": (
+                        result["power_utilization"]
+                    ),
+                })
+
+        print(
+            f"Completed {experiment_name}: "
+            f"value={value}, users={num_users}"
+        )
+
+    return pd.DataFrame(rows)
+
+# ============================================================
+# BLOCK 2: EVALUATION SWEEPS AND CSV EXPORTS
+# ============================================================
+
+# ------------------------------------------------------------
+# A. Energy consumption vs. latency constraint
+# ------------------------------------------------------------
+energy_latency_df = run_comparison_sweep(
+    experiment_name="energy_vs_latency",
+    sweep_values=LATENCY_LEVELS_MS,
+    scenario_fn=lambda latency: (
+        TOTAL_RBS,
+        TOTAL_BANDWIDTH_MHZ,
+        latency,
+    ),
+)
+
+# ------------------------------------------------------------
+# B. Throughput vs. available bandwidth
+# ------------------------------------------------------------
+throughput_bandwidth_df = run_comparison_sweep(
+    experiment_name="throughput_vs_bandwidth",
+    sweep_values=BANDWIDTH_LEVELS_MHZ,
+    scenario_fn=lambda bandwidth: (
+        int(round(bandwidth / 0.2)),
+        bandwidth,
+        20.0,
+    ),
+)
+
+# ------------------------------------------------------------
+# C. Throughput vs. available resource blocks
+# ------------------------------------------------------------
+throughput_rbs_df = run_comparison_sweep(
+    experiment_name="throughput_vs_rbs",
+    sweep_values=RB_LEVELS,
+    scenario_fn=lambda rbs: (
+        rbs,
+        rbs * 0.2,
+        20.0,
+    ),
+)
+
+# ------------------------------------------------------------
+# D. Performance vs. increasing number of users
+# ------------------------------------------------------------
+USER_LOADS = [100, 200, 400, 600, 800, 1000]
+
+user_load_df = run_comparison_sweep(
+    experiment_name="performance_vs_users",
+    sweep_values=USER_LOADS,
+    scenario_fn=lambda users: (
+        TOTAL_RBS,
+        TOTAL_BANDWIDTH_MHZ,
+        20.0,
+    ),
+    user_load=None,
+) if False else None
+
+# Evaluate each user count explicitly.
+# This ensures generate_users() receives the current user count.
+user_load_results = []
+
+for num_users in USER_LOADS:
+
+    load_df = run_comparison_sweep(
+        experiment_name="performance_vs_users",
+        sweep_values=[num_users],
+        scenario_fn=lambda users: (
+            TOTAL_RBS,
+            TOTAL_BANDWIDTH_MHZ,
+            20.0,
+        ),
+        user_load=num_users,
+    )
+
+    # For this experiment, the x-axis must represent user count.
+    load_df["sweep_value"] = num_users
+    load_df["num_users"] = num_users
+
+    user_load_results.append(load_df)
+
+user_load_df = pd.concat(
+    user_load_results,
+    ignore_index=True,
+)
+
+# ------------------------------------------------------------
+# Save all evaluation tables
+# ------------------------------------------------------------
+energy_latency_df.to_csv(
+    CSV_DIR / "energy_vs_latency.csv",
+    index=False,
+)
+
+throughput_bandwidth_df.to_csv(
+    CSV_DIR / "throughput_vs_bandwidth.csv",
+    index=False,
+)
+
+throughput_rbs_df.to_csv(
+    CSV_DIR / "throughput_vs_rbs.csv",
+    index=False,
+)
+
+user_load_df.to_csv(
+    CSV_DIR / "performance_vs_users.csv",
+    index=False,
+)
+
+print("\nAll evaluation tables saved.")
+print("Energy sweep:", CSV_DIR / "energy_vs_latency.csv")
+print("Bandwidth sweep:", CSV_DIR / "throughput_vs_bandwidth.csv")
+print("RB sweep:", CSV_DIR / "throughput_vs_rbs.csv")
+print("User-load sweep:", CSV_DIR / "performance_vs_users.csv")
+
+
+# ============================================================
+# BLOCK 3: PLOTTING CONFIGURATION AND FUNCTIONS
+# ============================================================
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 25,
+    "axes.labelsize": 25,
+    "xtick.labelsize": 25,
+    "ytick.labelsize": 25,
+    "legend.fontsize": 25,
+    "lines.linewidth": 2.5,
+})
+
+# ------------------------------------------------------------
+# Model plotting styles
+# ------------------------------------------------------------
+MODEL_STYLES = {
+    "RBF-DDQN": ("o", "-"),
+    "DDQN": ("s", "--"),
+    "GGN-DDQN": ("^", "-."),
+    "GCN-DDQN": ("D", ":"),
+}
+
+MODEL_DISPLAY_NAMES = {
+    "RBF-DDQN": "Ours",
+    "DDQN": "DDQN",
+    "GGN-DDQN": "GGN-DDQN",
+    "GCN-DDQN": "GCN-DDQN",
+}
+
+
+# ------------------------------------------------------------
+# General plotting function for existing experiments
+# ------------------------------------------------------------
+def plot_model_comparison(
+    df,
+    x_label,
+    y_column,
+    y_label,
+    filename,
+):
+    if y_column not in df.columns:
+        raise ValueError(
+            f"Metric '{y_column}' is missing from the DataFrame."
+        )
+
+    if df[y_column].notna().sum() == 0:
+        raise ValueError(
+            f"Metric '{y_column}' contains no valid observations."
+        )
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    for model_name in MODEL_NAMES:
+        subset = df[df["model"] == model_name].copy()
+
+        if subset.empty:
+            continue
+
+        summary = (
+            subset.groupby("sweep_value")[y_column]
+            .agg(["mean", "std"])
+            .reset_index()
+            .sort_values("sweep_value")
+        )
+
+        # Remove sweep points where the metric is unavailable.
+        summary = summary.dropna(subset=["mean"])
+
+        if summary.empty:
+            continue
+
+        marker, linestyle = MODEL_STYLES[model_name]
+
+        ax.errorbar(
+            summary["sweep_value"],
+            summary["mean"],
+            yerr=summary["std"].fillna(0.0),
+            label=MODEL_DISPLAY_NAMES[model_name],
+            marker=marker,
+            linestyle=linestyle,
+            markersize=7,
+            capsize=4,
+        )
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_xlim(left=0)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.legend(loc="best", ncol=2)
+
+    fig.tight_layout()
+
+    fig.savefig(
+        FIG_DIR / f"{filename}.png",
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    fig.savefig(
+        FIG_DIR / f"{filename}.eps",
+        format="eps",
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    plt.show()
+    plt.close(fig)
+
+    print(f"Saved: {FIG_DIR / (filename + '.png')}")
+    print(f"Saved: {FIG_DIR / (filename + '.eps')}")
+
+
+# ------------------------------------------------------------
+# Plotting function for performance vs. number of users
+# ------------------------------------------------------------
+def plot_user_load_comparison(
+    df,
+    y_column,
+    y_label,
+    filename,
+):
+    required_columns = {"model", "sweep_value", y_column}
+    missing = required_columns.difference(df.columns)
+
+    if missing:
+        raise ValueError(
+            f"Cannot plot {filename}. Missing columns: "
+            f"{sorted(missing)}"
+        )
+
+    metric_values = pd.to_numeric(
+        df[y_column], errors="coerce"
+    )
+
+    if metric_values.notna().sum() == 0:
+        raise ValueError(
+            f"Cannot plot {filename}: '{y_column}' has no valid "
+            "observations. Check evaluate_model() first."
+        )
+
+    plot_df = df.copy()
+    plot_df[y_column] = metric_values
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    for model_name in MODEL_NAMES:
+        subset = plot_df[
+            plot_df["model"] == model_name
+        ].copy()
+
+        if subset.empty:
+            continue
+
+        summary = (
+            subset.groupby("sweep_value")[y_column]
+            .agg(["mean", "std"])
+            .reset_index()
+            .sort_values("sweep_value")
+        )
+
+        summary = summary.dropna(subset=["mean"])
+
+        if summary.empty:
+            continue
+
+        marker, linestyle = MODEL_STYLES[model_name]
+
+        ax.errorbar(
+            summary["sweep_value"],
+            summary["mean"],
+            yerr=summary["std"].fillna(0.0),
+            label=MODEL_DISPLAY_NAMES[model_name],
+            marker=marker,
+            linestyle=linestyle,
+            markersize=7,
+            capsize=4,
+        )
+
+    ax.set_xlabel("Number of users")
+    ax.set_ylabel(y_label)
+    ax.set_xticks(USER_LOADS)
+    ax.set_xlim(left=0)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.legend(loc="best", ncol=2)
+
+    fig.tight_layout()
+
+    fig.savefig(
+        FIG_DIR / f"{filename}.png",
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    fig.savefig(
+        FIG_DIR / f"{filename}.eps",
+        format="eps",
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    plt.show()
+    plt.close(fig)
+
+    print(f"Saved: {FIG_DIR / (filename + '.png')}")
+    print(f"Saved: {FIG_DIR / (filename + '.eps')}")
+
+# ------------------------------------------------------------
+# Shared axis formatting
+# ------------------------------------------------------------
+def format_x_axis(ax, x_values, x_label, user_load_axis=False):
+    """
+    Start the x-axis at zero and use sensible tick positions.
+    Does not fabricate a data point at x=0.
+    """
+    x_values = pd.to_numeric(
+        pd.Series(x_values), errors="coerce"
+    ).dropna()
+
+    if x_values.empty:
+        ax.set_xlim(left=0)
+        ax.set_xlabel(x_label)
+        return
+
+    max_x = float(x_values.max())
+
+    # Ensure the left boundary is exactly zero.
+    # Use the largest observed x-value as the right boundary,
+    # with a small margin so markers/error bars are not clipped.
+    if max_x > 0:
+        ax.set_xlim(left=0, right=max_x * 1.04)
+    else:
+        ax.set_xlim(left=0, right=1)
+
+    # Prefer the actual experimental x-values as ticks.
+    unique_x = sorted(x_values.unique())
+
+    if user_load_axis:
+        ax.set_xticks(unique_x)
+    elif len(unique_x) <= 12:
+        ax.set_xticks(unique_x)
+
+    ax.set_xlabel(x_label)
+
+
+# ------------------------------------------------------------
+# General plotting function for existing experiments
+# ------------------------------------------------------------
+def plot_model_comparison(
+    df,
+    x_label,
+    y_column,
+    y_label,
+    filename,
+):
+    required_columns = {
+        "model", "sweep_value", y_column
+    }
+    missing = required_columns.difference(df.columns)
+
+    if missing:
+        raise ValueError(
+            f"Cannot plot {filename}. Missing columns: "
+            f"{sorted(missing)}"
+        )
+
+    plot_df = df.copy()
+    plot_df[y_column] = pd.to_numeric(
+        plot_df[y_column], errors="coerce"
+    )
+
+    if not np.isfinite(plot_df[y_column]).any():
+        raise ValueError(
+            f"Cannot plot {filename}: '{y_column}' "
+            "has no valid observations."
+        )
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    for model_name in MODEL_NAMES:
+        subset = plot_df[
+            plot_df["model"] == model_name
+        ].copy()
+
+        if subset.empty:
+            continue
+
+        summary = (
+            subset.groupby("sweep_value")[y_column]
+            .agg(["mean", "std"])
+            .reset_index()
+            .sort_values("sweep_value")
+        )
+
+        summary = summary[
+            np.isfinite(summary["mean"])
+        ]
+
+        if summary.empty:
+            continue
+
+        marker, linestyle = MODEL_STYLES[model_name]
+
+        ax.errorbar(
+            summary["sweep_value"],
+            summary["mean"],
+            yerr=summary["std"].fillna(0.0),
+            label=MODEL_DISPLAY_NAMES[model_name],
+            marker=marker,
+            linestyle=linestyle,
+            markersize=7,
+            capsize=4,
+            linewidth=2.5,
+            clip_on=True,
+        )
+
+    # ------------------------------------------------------------
+    # Force the x-axis to begin at the leftmost zero
+    # ------------------------------------------------------------
+    valid_x = pd.to_numeric(
+        plot_df["sweep_value"],
+        errors="coerce",
+    ).dropna()
+
+    max_x = valid_x.max()
+
+    ax.set_xlim(left=0, right=max_x * 1.02)
+
+    # Show the origin and all actual user-load values.
+    user_ticks = sorted(valid_x.unique())
+    ax.set_xticks([0] + [x for x in user_ticks if x != 0])
+
+    ax.set_xlabel("Number of users")
+    ax.set_ylabel(y_label)
+
+    # Remove horizontal padding added by Matplotlib.
+    ax.margins(x=0, y=0.08)
+
+    ax.set_ylabel(y_label)
+    ax.margins(x=0, y=0.08)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.legend(loc="best", ncol=2)
+
+    fig.tight_layout()
+
+    png_path = FIG_DIR / f"{filename}.png"
+    eps_path = FIG_DIR / f"{filename}.eps"
+
+    fig.savefig(
+        png_path,
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    fig.savefig(
+        eps_path,
+        format="eps",
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    plt.show()
+    plt.close(fig)
+
+    print(f"Saved: {png_path}")
+    print(f"Saved: {eps_path}")
+
+
+# ------------------------------------------------------------
+# Plotting function for performance vs. number of users
+# ------------------------------------------------------------
+def plot_user_load_comparison(
+    df,
+    y_column,
+    y_label,
+    filename,
+):
+    required_columns = {
+        "model", "sweep_value", y_column
+    }
+    missing = required_columns.difference(df.columns)
+
+    if missing:
+        raise ValueError(
+            f"Cannot plot {filename}. Missing columns: "
+            f"{sorted(missing)}"
+        )
+
+    plot_df = df.copy()
+    plot_df[y_column] = pd.to_numeric(
+        plot_df[y_column], errors="coerce"
+    )
+
+    if not np.isfinite(plot_df[y_column]).any():
+        raise ValueError(
+            f"Cannot plot {filename}: '{y_column}' "
+            "has no valid observations. Check the metric "
+            "calculation before plotting."
+        )
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    for model_name in MODEL_NAMES:
+        subset = plot_df[
+            plot_df["model"] == model_name
+        ].copy()
+
+        if subset.empty:
+            continue
+
+        summary = (
+            subset.groupby("sweep_value")[y_column]
+            .agg(["mean", "std"])
+            .reset_index()
+            .sort_values("sweep_value")
+        )
+
+        summary = summary[
+            np.isfinite(summary["mean"])
+        ]
+
+        if summary.empty:
+            continue
+
+        marker, linestyle = MODEL_STYLES[model_name]
+
+        ax.errorbar(
+            summary["sweep_value"],
+            summary["mean"],
+            yerr=summary["std"].fillna(0.0),
+            label=MODEL_DISPLAY_NAMES[model_name],
+            marker=marker,
+            linestyle=linestyle,
+            markersize=7,
+            capsize=4,
+            linewidth=2.5,
+            clip_on=True,
+        )
+
+    # ------------------------------------------------------------
+    # Force the x-axis to begin at the leftmost zero
+    # ------------------------------------------------------------
+    valid_x = pd.to_numeric(
+        plot_df["sweep_value"],
+        errors="coerce",
+    ).dropna()
+
+    max_x = valid_x.max()
+
+    ax.set_xlim(left=0, right=max_x * 1.02)
+
+    # Show the origin and all actual user-load values.
+    user_ticks = sorted(valid_x.unique())
+    ax.set_xticks([0] + [x for x in user_ticks if x != 0])
+
+    ax.set_xlabel("Number of users")
+    ax.set_ylabel(y_label)
+
+    # Remove horizontal padding added by Matplotlib.
+    ax.margins(x=0, y=0.08)
+
+    ax.set_ylabel(y_label)
+    ax.margins(x=0, y=0.08)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.legend(loc="best", ncol=2)
+
+    fig.tight_layout()
+
+    png_path = FIG_DIR / f"{filename}.png"
+    eps_path = FIG_DIR / f"{filename}.eps"
+
+    fig.savefig(
+        png_path,
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    fig.savefig(
+        eps_path,
+        format="eps",
+        dpi=600,
+        bbox_inches="tight",
+    )
+
+    plt.show()
+    plt.close(fig)
+
+    print(f"Saved: {png_path}")
+    print(f"Saved: {eps_path}")
+
+# ============================================================
+# BLOCK 4: GENERATE AND SAVE ALL PERFORMANCE FIGURES
+# ============================================================
+
+# ------------------------------------------------------------
+# Figure 1: Energy consumption vs. latency constraint
+# ------------------------------------------------------------
+plot_model_comparison(
+    df=energy_latency_df,
+    x_label="Maximum permitted latency (ms)",
+    y_column="energy_proxy",
+    y_label="Energy proxy per scheduling interval",
+    filename="Energy_vs_Latency",
+)
+
+# ------------------------------------------------------------
+# Figure 2: Data rate vs. available bandwidth
+# ------------------------------------------------------------
+plot_model_comparison(
+    df=throughput_bandwidth_df,
+    x_label="Available bandwidth (MHz)",
+    y_column="throughput_mbps",
+    y_label="Data Rate (Mbps)",
+    filename="Data_Rate_vs_Bandwidth",
+)
+
+# ------------------------------------------------------------
+# Figure 3: Aggregate throughput vs. available RBs
+# ------------------------------------------------------------
+plot_model_comparison(
+    df=throughput_rbs_df,
+    x_label="Available resource blocks (RBs)",
+    y_column="throughput_mbps",
+    y_label="Aggregate Throughput (Mbps)",
+    filename="Throughput_vs_RBs",
+)
+
+# ------------------------------------------------------------
+# Figure 4: Data rate vs. number of users
+# ------------------------------------------------------------
+plot_user_load_comparison(
+    df=user_load_df,
+    y_column="data_rate_mbps",
+    y_label="Data Rate (Mbps)",
+    filename="Data_Rate_vs_Users",
+)
+
+# ------------------------------------------------------------
+# Figure 5: Aggregate throughput vs. number of users
+# ------------------------------------------------------------
+plot_user_load_comparison(
+    df=user_load_df,
+    y_column="throughput_mbps",
+    y_label="Aggregate Throughput (Mbps)",
+    filename="Throughput_vs_Users",
+)
+
+# ------------------------------------------------------------
+# Figure 6: Latency vs. number of users
+# ------------------------------------------------------------
+plot_user_load_comparison(
+    df=user_load_df,
+    y_column="latency_ms",
+    y_label="Latency (ms)",
+    filename="Latency_vs_Users",
+)
+
+# ------------------------------------------------------------
+# Final experiment summary
+# ------------------------------------------------------------
+print("\n" + "=" * 70)
+print("FOUR-MODEL PERFORMANCE EVALUATION COMPLETE")
+print("=" * 70)
+print("Models:", ", ".join(MODEL_NAMES))
+print("User loads:", USER_LOADS)
+print("Figures:", FIG_DIR)
+print("CSV tables:", CSV_DIR)
+print("Checkpoints:", CHECKPOINT_DIR)
+print("=" * 70)
