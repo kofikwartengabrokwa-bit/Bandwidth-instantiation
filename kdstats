@@ -1,0 +1,883 @@
+E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py 
+==============================================================================
+BLOCK 1: RBF-EDGE-COVER-DDQN EXPERIMENT CONFIGURATION
+==============================================================================
+
+[System]
+Operating system       : Windows-10-10.0.22621-SP0
+Python version         : 3.11.5
+Python executable      : E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe
+NumPy version          : 1.24.3
+Pandas version         : 2.1.0
+PyTorch version        : 2.1.2+cu118
+CUDA available         : False
+Selected device        : cpu
+
+[Project]
+Project root           : E:\Abrokwa\PycharmProjects\pythonProject1
+Simulation directory   : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Database path          : E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db
+Database exists        : True
+Database size (MB)     : 5.152
+
+[Radio Resources]
+Bandwidth (MHz)        : 20.0
+Total PRBs             : 1
+Bandwidth per PRB (MHz): 20.0
+Power budget (W)       : 40.0
+Maximum users per PRB  : 1
+
+[Traffic Classes]
+eMBB         {'weight': 0.25, 'min_rate_mbps': 10.0, 'target_rate_mbps': 50.0, 'max_latency_ms': 100.0, 'min_reliability': 0.99, 'priority': 2}
+uRLLC        {'weight': 0.2, 'min_rate_mbps': 1.0, 'target_rate_mbps': 10.0, 'max_latency_ms': 5.0, 'min_reliability': 0.99999, 'priority': 5}
+MTM          {'weight': 0.15, 'min_rate_mbps': 0.05, 'target_rate_mbps': 0.25, 'max_latency_ms': 1000.0, 'min_reliability': 0.99, 'priority': 1}
+IoT          {'weight': 0.2, 'min_rate_mbps': 0.1, 'target_rate_mbps': 1.0, 'max_latency_ms': 100.0, 'min_reliability': 0.99, 'priority': 2}
+Vehicular    {'weight': 0.2, 'min_rate_mbps': 5.0, 'target_rate_mbps': 20.0, 'max_latency_ms': 10.0, 'min_reliability': 0.999, 'priority': 4}
+
+[Training]
+Random seed            : 42
+Episodes               : 1
+Steps per episode      : 1
+Evaluation episodes    : 1
+Learning rate          : 0.0003
+Discount factor        : 0.99
+Replay buffer capacity : 50000
+Batch size             : 128
+
+[Scalability]
+User counts            : [1000]
+
+[Algorithms]
+RBF-EdgeCover-DDQN       Plot label: Ours
+GGN-DDQN                 Plot label: GGN-DDQN
+GCN-DDQN                 Plot label: GCN-DDQN
+DDQN                     Plot label: DDQN
+
+[Output Directories]
+Results                : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN
+CSV                    : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv
+Figures                : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\figures
+Models                 : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+Checkpoints            : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models\checkpoints
+Logs                   : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\logs
+
+[Database Validation]
+Available tables       : ['lower_layer_data']
+
+Block 1 completed successfully.
+No training has started.
+No source database has been modified.
+==============================================================================
+===========================================================================
+BLOCK 2: DATA PREPARATION
+===========================================================================
+Dataset shape: (45244, 25)
+Number of columns: 25
+User loads: [100, 200, 300, 400, 500, 600, 800, 1000]
+Algorithms: ['Ours', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+
+Database columns:
+ - dlBytes
+ - dlMcs
+ - dlBler
+ - ulBytes
+ - ulMcs
+ - ulBler
+ - ri
+ - phr
+ - pcmax
+ - rsrq
+ - sinr
+ - rsrp
+ - rssi
+ - cqi
+ - pucchSnr
+ - puschSnr
+ - ue_id
+ - timestamp
+ - cellid
+ - in_sync
+ - rnti
+ - pmi
+ - traffic_type
+ - attack_category
+ - attack_subcategory
+
+Usable numerical radio features:
+ - dlBytes
+ - dlMcs
+ - dlBler
+ - ulBytes
+ - ulMcs
+ - ulBler
+ - phr
+ - pcmax
+ - rsrq
+ - sinr
+ - rsrp
+ - rssi
+ - cqi
+ - pucchSnr
+ - puschSnr
+ - ue_id
+ - timestamp
+
+Prepared feature matrix: (45244, 17)
+
+Traffic sampling probabilities:
+eMBB        : 0.250
+uRLLC       : 0.200
+MTM         : 0.150
+IoT         : 0.200
+Vehicular   : 0.200
+
+Resource constraints:
+Bandwidth: 20.0 MHz
+Total RBs: 1
+Power budget: 40.0 W
+Maximum users per RB: 1
+
+Block 2 completed.
+No model training or evaluation has been performed yet.
+===========================================================================
+BLOCK 3: SIMULATION ENVIRONMENT
+===========================================================================
+Test user count: 10
+RB bandwidth: 180.0 kHz
+RB budget: 1
+Power budget: 40.0 W
+
+Generated traffic distribution:
+traffic_class
+eMBB         3
+uRLLC        1
+MTM          3
+IoT          1
+Vehicular    2
+Name: count, dtype: int64
+
+Requested rate summary (Mbps):
+count    10.0000
+mean     11.1167
+std      14.6478
+min       0.1281
+25%       0.3116
+50%       3.6290
+75%      17.0558
+max      43.1792
+Name: requested_rate_mbps, dtype: float64
+
+Block 3 completed.
+No model has been trained or compared yet.
+===============================================================================================
+BLOCK 4: POWER-BUDGET VALIDATION
+===============================================================================================
+Algorithm  Users  Allocation time (ms)  Mean data rate (Mbps)  QoS violation ratio  Mean utility  RB-user assignments  Power used (W)
+     Ours    100                5.5017                 0.0019                  1.0       0.04978                    1            40.0
+ GGN-DDQN    100                2.3956                 0.0019                  1.0       0.04978                    1            40.0
+ GCN-DDQN    100                2.2492                 0.0019                  1.0       0.04978                    1            40.0
+     DDQN    100                3.8206                 0.0019                  1.0       0.04978                    1            40.0
+
+Power budget: 40.0 W
+Power constraint: PASSED
+Block 4 completed.
+The four policies are still temporary heuristics.
+===============================================================================================
+BLOCK 5B: ALLOCATOR INSPECTION
+===============================================================================================
+
+Function signature:
+(num_users, seed=None)
+
+Function source:
+def initialize_rb_environment(num_users, seed=None):
+    """Generate user requests and radio-quality proxies."""
+
+    rng = np.random.default_rng(
+        SEED if seed is None else seed
+    )
+
+    traffic_probabilities = np.asarray(
+        TRAFFIC_PROBABILITIES, dtype=float
+    )
+    traffic_probabilities /= traffic_probabilities.sum()
+
+    selected_classes = rng.choice(
+        TRAFFIC_CLASSES,
+        size=num_users,
+        p=traffic_probabilities,
+    )
+
+    requests = []
+
+    for user_id, traffic_class in enumerate(selected_classes):
+        profile = TRAFFIC_PROFILES[traffic_class]
+
+        requested_rate = rng.uniform(
+            profile["min_rate_mbps"],
+            profile["target_rate_mbps"],
+        )
+
+        requests.append({
+            "user_id": user_id,
+            "traffic_class": traffic_class,
+            "requested_rate_mbps": float(requested_rate),
+            "minimum_rate_mbps": float(
+                profile["min_rate_mbps"]
+            ),
+            "target_rate_mbps": float(
+                profile["target_rate_mbps"]
+            ),
+            "maximum_latency_ms": float(
+                profile["max_latency_ms"]
+            ),
+            "minimum_reliability": float(
+                profile["min_reliability"]
+            ),
+            "priority": int(profile["priority"]),
+        })
+
+    feature_array = RADIO_FEATURES.to_numpy(
+        dtype=np.float32
+    )
+
+    row_indices = rng.integers(
+        0, len(feature_array), size=num_users
+    )
+    user_features = feature_array[row_indices]
+
+    # Placeholder channel-quality mapping. Replace with actual
+    # SINR/MCS measurements for physically calibrated results.
+    quality = user_features[:, 0]
+    spectral_efficiencies = np.clip(
+        0.5 + 5.5 * quality,
+        0.1,
+        7.0,
+    )
+
+    spectral_efficiencies *= rng.uniform(
+        0.095, 1.05, size=num_users
+    )
+
+    rates_per_rb_mbps = (
+        RB_BANDWIDTH_HZ
+        * spectral_efficiencies
+        * SPECTRAL_EFFICIENCY_FACTOR
+        / 1e6
+    )
+
+    return {
+        "num_users": num_users,
+        "requests": requests,
+        "user_features": user_features,
+        "spectral_efficiencies": spectral_efficiencies,
+        "per_rb_rates_mbps": rates_per_rb_mbps,
+        "seed": SEED if seed is None else seed,
+    }
+
+
+Block 5B completed.
+===============================================================================================
+BLOCK 5A: ALLOCATION-TIME COMPARISON
+===============================================================================================
+Algorithm  Allocation time (ms)  Relative time (× DDQN)
+     Ours              128.5972                  1.7830
+ GGN-DDQN               64.5315                  0.8947
+ GCN-DDQN               63.8732                  0.8856
+     DDQN               72.1246                  1.0000
+
+Ours: 128.5972 ms
+Fastest baseline: 63.8732 ms
+Ours is 2.01× as slow as the fastest baseline.
+
+All four algorithms report identical allocation outcomes in Block 4.
+Timing alone does not establish better or worse allocation quality.
+===============================================================================================
+BLOCK 8: ALLOCATION CODE DIAGNOSTICS
+===============================================================================================
+
+1. Matching functions and signatures
+UserRequest(user_id: int, traffic_class: str, requested_rate_mbps: float, target_rate_mbps: float, minimum_rate_mbps: float, max_latency_ms: float, minimum_reliability: float, priority: int, channel_quality: float, requested_power_w: float) -> None
+allocate_resource_blocks(env, algorithm)
+allocator(num_users, seed=None)
+estimate_rate_per_rb_mbps(request)
+evaluate_allocation(requests, allocated_rbs, allocation_time_ms, algorithm_name)
+generate_user_requests(num_users, seed=342)
+initialize_rb_environment(num_users, seed=None)
+rank_users_for_allocation(env, algorithm)
+
+2. Matching class methods
+UserRequest.__eq__(self, other)
+UserRequest.__init__(self, user_id: int, traffic_class: str, requested_rate_mbps: float, target_rate_mbps: float, minimum_rate_mbps: float, max_latency_ms: float, minimum_reliability: float, priority: int, channel_quality: float, requested_power_w: float) -> None
+UserRequest.__repr__(self)
+
+Block 8 completed.
+===============================================================================================
+BLOCK 6: ALLOCATION FUNCTION DISCOVERY
+===============================================================================================
+
+Potential allocation-related functions:
+  allocate_resource_blocks(env, algorithm)
+  allocator(num_users, seed=None)
+  estimate_rate_per_rb_mbps(request)
+  evaluate_allocation(requests, allocated_rbs, allocation_time_ms, algorithm_name)
+  initialize_rb_environment(num_users, seed=None)
+  rank_users_for_allocation(env, algorithm)
+
+Relevant global configuration:
+  ALGORITHMS = ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+  TOTAL_RBS = 1
+  MAX_USERS_PER_RB = 1
+  MAX_TRANSMIT_POWER_W = 40.0
+
+Block 6 completed.
+===============================================================================================
+BLOCK 7: ALLOCATION FUNCTION SOURCE INSPECTION
+===============================================================================================
+
+--------------------------------------------------------------------------------
+FUNCTION: allocate_resource_blocks(env, algorithm)
+--------------------------------------------------------------------------------
+def allocate_resource_blocks(env, algorithm):
+    """
+    Temporary heuristic RB allocation engine.
+
+    Enforces:
+      1. At most TOTAL_RBS physical RBs.
+      2. At most MAX_USERS_PER_RB users per RB.
+      3. Total transmit power <= MAX_TRANSMIT_POWER_W.
+
+    Note: This is not a trained DDQN policy.
+    """
+
+    num_users = env["num_users"]
+    requests = env["requests"]
+    per_rb_rates = env["per_rb_rates_mbps"]
+
+    allocated_rbs = np.zeros(num_users, dtype=np.int32)
+    rb_occupancy = np.zeros(TOTAL_RBS, dtype=np.int32)
+
+    # The total power budget is shared across physical RBs.
+    # Each RB receives one fixed power share, irrespective
+    # of how many users share that RB.
+    power_per_rb_w = MAX_TRANSMIT_POWER_W / TOTAL_RBS
+    rb_power_w = np.zeros(TOTAL_RBS, dtype=np.float64)
+
+    start_time = time.perf_counter()
+    ranking = rank_users_for_allocation(env, algorithm)
+
+    for user_idx in ranking:
+        request = requests[user_idx]
+        rate_per_rb = per_rb_rates[user_idx]
+
+        required_rbs = max(
+            1,
+            int(np.ceil(
+                request["requested_rate_mbps"]
+                / max(rate_per_rb, 1e-9)
+            )),
+        )
+
+        required_rbs = min(required_rbs, TOTAL_RBS)
+
+        for _ in range(required_rbs):
+            eligible_rbs = np.flatnonzero(
+                (rb_occupancy < MAX_USERS_PER_RB)
+                & (rb_power_w == 0.0)
+            )
+
+            # Only unallocated physical RBs receive new power.
+            # Multiple users can share an occupied RB without
+            # multiplying the RB's configured power.
+            if eligible_rbs.size == 0:
+                eligible_rbs = np.flatnonzero(
+                    (rb_occupancy < MAX_USERS_PER_RB)
+                    & (rb_power_w <= power_per_rb_w + 1e-12)
+                )
+
+            if eligible_rbs.size == 0:
+                break
+
+            # Prefer the least occupied eligible RB.
+            selected_rb = eligible_rbs[
+                np.argmin(rb_occupancy[eligible_rbs])
+            ]
+
+            # Allocate power only when activating a physical RB.
+            if rb_occupancy[selected_rb] == 0:
+                rb_power_w[selected_rb] = power_per_rb_w
+
+            rb_occupancy[selected_rb] += 1
+            allocated_rbs[user_idx] += 1
+
+    allocation_time_ms = (
+        time.perf_counter() - start_time
+    ) * 1000.0
+
+    # --------------------------------------------------------
+    # Calculate performance metrics
+    # --------------------------------------------------------
+
+    achieved_rates = allocated_rbs * per_rb_rates
+    latencies_ms = np.full(num_users, np.inf, dtype=float)
+    utilities = np.zeros(num_users, dtype=float)
+    qos_violations = np.zeros(num_users, dtype=bool)
+
+    for i, request in enumerate(requests):
+        if allocated_rbs[i] > 0:
+            latencies_ms[i] = (
+                SLOT_DURATION_MS
+                * request["requested_rate_mbps"]
+                / max(achieved_rates[i], 1e-9)
+            )
+
+        utilities[i] = calculate_user_utility(
+            request,
+            achieved_rates[i],
+            latencies_ms[i],
+            int(allocated_rbs[i]),
+        )
+
+        qos_violations[i] = check_qos_violation(
+            request,
+            achieved_rates[i],
+            latencies_ms[i],
+        )
+
+    total_power_used_w = float(rb_power_w.sum())
+
+    result = {
+        "algorithm": algorithm,
+        "num_users": num_users,
+        "allocation_time_ms": allocation_time_ms,
+        "allocated_rbs_per_user": allocated_rbs,
+        "total_allocated_rbs": int(allocated_rbs.sum()),
+        "total_rb_user_assignments": int(rb_occupancy.sum()),
+        "rb_occupancy": rb_occupancy,
+        "achieved_rates_mbps": achieved_rates,
+        "mean_data_rate_mbps": float(np.mean(achieved_rates)),
+        "total_data_rate_mbps": float(np.sum(achieved_rates)),
+        "latencies_ms": latencies_ms,
+        "qos_violations": qos_violations,
+        "qos_violation_ratio": float(np.mean(qos_violations)),
+        "utilities": utilities,
+        "mean_utility": float(np.mean(utilities)),
+        "total_power_used_w": total_power_used_w,
+    }
+
+    # --------------------------------------------------------
+    # Enforce constraints
+    # --------------------------------------------------------
+
+    assert np.all(rb_occupancy <= MAX_USERS_PER_RB)
+    assert len(rb_occupancy) == TOTAL_RBS
+    assert total_power_used_w <= MAX_TRANSMIT_POWER_W + 1e-8
+    assert np.all(allocated_rbs >= 0)
+
+    return result
+
+
+--------------------------------------------------------------------------------
+FUNCTION: allocator(num_users, seed=None)
+--------------------------------------------------------------------------------
+def initialize_rb_environment(num_users, seed=None):
+    """Generate user requests and radio-quality proxies."""
+
+    rng = np.random.default_rng(
+        SEED if seed is None else seed
+    )
+
+    traffic_probabilities = np.asarray(
+        TRAFFIC_PROBABILITIES, dtype=float
+    )
+    traffic_probabilities /= traffic_probabilities.sum()
+
+    selected_classes = rng.choice(
+        TRAFFIC_CLASSES,
+        size=num_users,
+        p=traffic_probabilities,
+    )
+
+    requests = []
+
+    for user_id, traffic_class in enumerate(selected_classes):
+        profile = TRAFFIC_PROFILES[traffic_class]
+
+        requested_rate = rng.uniform(
+            profile["min_rate_mbps"],
+            profile["target_rate_mbps"],
+        )
+
+        requests.append({
+            "user_id": user_id,
+            "traffic_class": traffic_class,
+            "requested_rate_mbps": float(requested_rate),
+            "minimum_rate_mbps": float(
+                profile["min_rate_mbps"]
+            ),
+            "target_rate_mbps": float(
+                profile["target_rate_mbps"]
+            ),
+            "maximum_latency_ms": float(
+                profile["max_latency_ms"]
+            ),
+            "minimum_reliability": float(
+                profile["min_reliability"]
+            ),
+            "priority": int(profile["priority"]),
+        })
+
+    feature_array = RADIO_FEATURES.to_numpy(
+        dtype=np.float32
+    )
+
+    row_indices = rng.integers(
+        0, len(feature_array), size=num_users
+    )
+    user_features = feature_array[row_indices]
+
+    # Placeholder channel-quality mapping. Replace with actual
+    # SINR/MCS measurements for physically calibrated results.
+    quality = user_features[:, 0]
+    spectral_efficiencies = np.clip(
+        0.5 + 5.5 * quality,
+        0.1,
+        7.0,
+    )
+
+    spectral_efficiencies *= rng.uniform(
+        0.095, 1.05, size=num_users
+    )
+
+    rates_per_rb_mbps = (
+        RB_BANDWIDTH_HZ
+        * spectral_efficiencies
+        * SPECTRAL_EFFICIENCY_FACTOR
+        / 1e6
+    )
+
+    return {
+        "num_users": num_users,
+        "requests": requests,
+        "user_features": user_features,
+        "spectral_efficiencies": spectral_efficiencies,
+        "per_rb_rates_mbps": rates_per_rb_mbps,
+        "seed": SEED if seed is None else seed,
+    }
+
+
+--------------------------------------------------------------------------------
+FUNCTION: estimate_rate_per_rb_mbps(request)
+--------------------------------------------------------------------------------
+def estimate_rate_per_rb_mbps(request):
+    """
+    Approximate per-RB rate using a transparent channel-quality
+    abstraction. This is not a calibrated 5G NR link-level model.
+    """
+    spectral_efficiency = (
+        0.5 + 4.0 * request.channel_quality
+    )
+
+    rate_bps = (
+        RB_BANDWIDTH_HZ * spectral_efficiency
+    )
+
+    return rate_bps / 1e6
+
+
+--------------------------------------------------------------------------------
+FUNCTION: evaluate_allocation(requests, allocated_rbs, allocation_time_ms, algorithm_name)
+--------------------------------------------------------------------------------
+def evaluate_allocation(
+    requests,
+    allocated_rbs,
+    allocation_time_ms,
+    algorithm_name
+):
+    """
+    Evaluate one model's allocation.
+
+    allocated_rbs:
+        Dictionary mapping user_id -> integer RB count.
+
+    Allocation time:
+        Supplied by the calling policy/evaluator and measured
+        separately from this metric calculation.
+    """
+    rows = []
+
+    total_allocated_rbs = 0
+    total_power_w = 0.0
+    total_utility = 0.0
+    qos_violations = 0
+    total_achieved_rate_mbps = 0.0
+
+    for request in requests:
+        rb_count = int(
+            allocated_rbs.get(request.user_id, 0)
+        )
+
+        rb_count = max(0, rb_count)
+        total_allocated_rbs += rb_count
+
+        achieved_rate = (
+            rb_count
+            * estimate_rate_per_rb_mbps(request)
+        )
+
+        # Approximate rate-based transmission latency.
+        # This excludes propagation, queueing, and retransmissions.
+        if achieved_rate > 0:
+            latency_ms = (
+                request.requested_rate_mbps
+                / achieved_rate
+            ) * SLOT_DURATION_S * 1000.0
+        else:
+            latency_ms = float("inf")
+
+        user_power = (
+            rb_count * request.requested_power_w
+        )
+        total_power_w += user_power
+
+        rate_satisfaction = max(
+            achieved_rate / max(request.target_rate_mbps, 1e-12),
+            1.0
+        )
+
+        latency_satisfaction = (
+            1.0
+            if latency_ms <= request.max_latency_ms
+            else 0.0
+        )
+
+        qos_violation = (
+            achieved_rate < request.minimum_rate_mbps
+            or latency_ms > request.max_latency_ms
+            or rb_count == 0
+        )
+
+        qos_violations += int(qos_violation)
+        total_achieved_rate_mbps += achieved_rate
+
+        # Priority-weighted normalized rate utility.
+        user_utility = (
+            request.priority
+            * rate_satisfaction
+            * latency_satisfaction
+        )
+
+        total_utility += user_utility
+
+        rows.append({
+            "algorithm": algorithm_name,
+            "user_id": request.user_id,
+            "traffic_class": request.traffic_class,
+            "allocated_rbs": rb_count,
+            "requested_rate_mbps": request.requested_rate_mbps,
+            "achieved_rate_mbps": achieved_rate,
+            "latency_ms": latency_ms,
+            "power_w": user_power,
+            "qos_violation": int(qos_violation),
+            "utility": user_utility,
+        })
+
+    if total_allocated_rbs > TOTAL_RBS:
+        raise ValueError(
+            f"{algorithm_name} allocated {total_allocated_rbs} RBs, "
+            f"exceeding the budget of {TOTAL_RBS}."
+        )
+
+    if total_power_w > MAX_TRANSMIT_POWER_W:
+        raise ValueError(
+            f"{algorithm_name} exceeded the total power budget: "
+            f"{total_power_w:.4f} W."
+        )
+
+    user_count = len(requests)
+
+    summary = {
+        "algorithm": algorithm_name,
+        "users": user_count,
+        "allocated_rbs": total_allocated_rbs,
+        "allocation_time_ms": float(allocation_time_ms),
+        "data_rate_mbps": total_achieved_rate_mbps,
+        "mean_user_rate_mbps": (
+            total_achieved_rate_mbps / max(user_count, 1)
+        ),
+        "qos_violation_ratio": (
+            qos_violations / max(user_count, 1)
+        ),
+        "utility": total_utility,
+        "power_w": total_power_w,
+    }
+
+    return summary, pd.DataFrame(rows)
+
+
+--------------------------------------------------------------------------------
+FUNCTION: initialize_rb_environment(num_users, seed=None)
+--------------------------------------------------------------------------------
+def initialize_rb_environment(num_users, seed=None):
+    """Generate user requests and radio-quality proxies."""
+
+    rng = np.random.default_rng(
+        SEED if seed is None else seed
+    )
+
+    traffic_probabilities = np.asarray(
+        TRAFFIC_PROBABILITIES, dtype=float
+    )
+    traffic_probabilities /= traffic_probabilities.sum()
+
+    selected_classes = rng.choice(
+        TRAFFIC_CLASSES,
+        size=num_users,
+        p=traffic_probabilities,
+    )
+
+    requests = []
+
+    for user_id, traffic_class in enumerate(selected_classes):
+        profile = TRAFFIC_PROFILES[traffic_class]
+
+        requested_rate = rng.uniform(
+            profile["min_rate_mbps"],
+            profile["target_rate_mbps"],
+        )
+
+        requests.append({
+            "user_id": user_id,
+            "traffic_class": traffic_class,
+            "requested_rate_mbps": float(requested_rate),
+            "minimum_rate_mbps": float(
+                profile["min_rate_mbps"]
+            ),
+            "target_rate_mbps": float(
+                profile["target_rate_mbps"]
+            ),
+            "maximum_latency_ms": float(
+                profile["max_latency_ms"]
+            ),
+            "minimum_reliability": float(
+                profile["min_reliability"]
+            ),
+            "priority": int(profile["priority"]),
+        })
+
+    feature_array = RADIO_FEATURES.to_numpy(
+        dtype=np.float32
+    )
+
+    row_indices = rng.integers(
+        0, len(feature_array), size=num_users
+    )
+    user_features = feature_array[row_indices]
+
+    # Placeholder channel-quality mapping. Replace with actual
+    # SINR/MCS measurements for physically calibrated results.
+    quality = user_features[:, 0]
+    spectral_efficiencies = np.clip(
+        0.5 + 5.5 * quality,
+        0.1,
+        7.0,
+    )
+
+    spectral_efficiencies *= rng.uniform(
+        0.095, 1.05, size=num_users
+    )
+
+    rates_per_rb_mbps = (
+        RB_BANDWIDTH_HZ
+        * spectral_efficiencies
+        * SPECTRAL_EFFICIENCY_FACTOR
+        / 1e6
+    )
+
+    return {
+        "num_users": num_users,
+        "requests": requests,
+        "user_features": user_features,
+        "spectral_efficiencies": spectral_efficiencies,
+        "per_rb_rates_mbps": rates_per_rb_mbps,
+        "seed": SEED if seed is None else seed,
+    }
+
+
+--------------------------------------------------------------------------------
+FUNCTION: rank_users_for_allocation(env, algorithm)
+--------------------------------------------------------------------------------
+def rank_users_for_allocation(env, algorithm):
+    requests = env["requests"]
+    per_rb_rates = env["per_rb_rates_mbps"]
+
+    scores = np.zeros(len(requests), dtype=float)
+
+    for i, request in enumerate(requests):
+        rate_score = min(
+            per_rb_rates[i]
+            / max(request["target_rate_mbps"], 1e-9),
+            1.0,
+        )
+
+        priority_score = request["priority"] / 5.0
+
+        latency_urgency = 1.0 / max(
+            request["maximum_latency_ms"], 1e-6
+        )
+
+        scores[i] = (
+            POLICY_RATE_WEIGHT[algorithm] * rate_score
+            + POLICY_PRIORITY_BONUS[algorithm] * priority_score
+            + 0.05 * latency_urgency
+        )
+
+    return np.argsort(-scores, kind="stable")
+
+
+Block 7 completed.
+===============================================================================================
+BLOCK 9: FAIR RB ALLOCATION-TIME PROFILING
+===============================================================================================
+
+Profiling results:
+         Algorithm  Users  Mean ranking time (ms)  Median ranking time (ms)  Mean full allocation time (ms)  Median full allocation time (ms)  Std. allocation time (ms)  Mean RB-user assignments  Power used (W)
+RBF-EdgeCover-DDQN    100                  0.4649                    0.4285                          6.5206                            5.9651                     1.4204                         1            40.0
+          GGN-DDQN    100                  0.6681                    0.6516                          8.7958                            9.2701                     2.5176                         1            40.0
+          GCN-DDQN    100                  0.5515                    0.4461                          7.2028                            6.5331                     2.3121                         1            40.0
+              DDQN    100                  0.5059                    0.3835                          5.6628                            5.3019                     1.3731                         1            40.0
+
+Saved results to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\block9_rb_allocation_profiling.csv
+
+Block 9 completed.
+Note: full allocation time includes ranking and RB allocation. Ranking time is reported separately and must not be added to full allocation time.
+==============================================================================
+DETAILED RB ALLOCATION TIMING
+Users: 100 | Seed: 42
+Warm-ups: 3 | Repeats: 20
+==============================================================================
+
+TIMING RESULTS
+Algorithm  Ranking mean (ms)  Ranking median (ms)  Full-call mean (ms)  Full-call median (ms)  Internal allocation mean (ms)  Full-call std (ms)  Mean RB-user assignments  Mean power (W)
+     Ours             0.4202               0.3730               5.8380                 5.7259                         3.1743              1.3140                       1.0            40.0
+ GGN-DDQN             0.4457               0.3347               5.9859                 5.6293                         3.2554              1.9795                       1.0            40.0
+ GCN-DDQN             0.6029               0.4110               6.3913                 6.3638                         3.3889              1.9154                       1.0            40.0
+     DDQN             0.4708               0.4273               6.0497                 5.5196                         3.4927              1.6642                       1.0            40.0
+
+Saved timing report to:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\block10_detailed_allocation_timing.csv
+
+DIAGNOSTIC CHECKS
+Ranking time range (ms): 0.1826
+Full-call time range (ms): 0.5533
+Full-call standard deviations (ms): Algorithm  Full-call std (ms)
+     Ours              1.3140
+ GGN-DDQN              1.9795
+ GCN-DDQN              1.9154
+     DDQN              1.6642
+
+=====================================================================================
+BLOCK 11A: RB ALLOCATION TIME
+=====================================================================================
+Timing columns: ['Algorithm', 'Ranking mean (ms)', 'Ranking median (ms)', 'Full-call mean (ms)', 'Full-call median (ms)', 'Internal allocation mean (ms)', 'Full-call std (ms)', 'Mean RB-user assignments', 'Mean power (W)']
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
