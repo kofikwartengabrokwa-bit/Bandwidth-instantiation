@@ -1,0 +1,805 @@
+E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py 
+==============================================================================
+BLOCK 1: RBF-EDGE-COVER-DDQN EXPERIMENT CONFIGURATION
+==============================================================================
+
+[System]
+Operating system       : Windows-10-10.0.22621-SP0
+Python version         : 3.11.5
+Python executable      : E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe
+NumPy version          : 1.24.3
+Pandas version         : 2.1.0
+PyTorch version        : 2.1.2+cu118
+CUDA available         : False
+Selected device        : cpu
+
+[Project]
+Project root           : E:\Abrokwa\PycharmProjects\pythonProject1
+Simulation directory   : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Database path          : E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db
+Database exists        : True
+Database size (MB)     : 5.152
+
+[Radio Resources]
+Bandwidth (MHz)        : 20.0
+Total PRBs             : 100
+Bandwidth per PRB (MHz): 0.2
+Power budget (W)       : 40.0
+Maximum users per PRB  : 10
+
+[Traffic Classes]
+eMBB         {'weight': 0.25, 'min_rate_mbps': 10.0, 'target_rate_mbps': 50.0, 'max_latency_ms': 100.0, 'min_reliability': 0.99, 'priority': 2}
+uRLLC        {'weight': 0.2, 'min_rate_mbps': 1.0, 'target_rate_mbps': 10.0, 'max_latency_ms': 5.0, 'min_reliability': 0.99999, 'priority': 5}
+MTM          {'weight': 0.15, 'min_rate_mbps': 0.05, 'target_rate_mbps': 0.25, 'max_latency_ms': 1000.0, 'min_reliability': 0.99, 'priority': 1}
+IoT          {'weight': 0.2, 'min_rate_mbps': 0.1, 'target_rate_mbps': 1.0, 'max_latency_ms': 100.0, 'min_reliability': 0.99, 'priority': 2}
+Vehicular    {'weight': 0.2, 'min_rate_mbps': 5.0, 'target_rate_mbps': 20.0, 'max_latency_ms': 10.0, 'min_reliability': 0.999, 'priority': 4}
+
+[Training]
+Random seed            : 42
+Episodes               : 20
+Steps per episode      : 100
+Evaluation episodes    : 20
+Learning rate          : 0.0003
+Discount factor        : 0.99
+Replay buffer capacity : 50000
+Batch size             : 128
+
+[Scalability]
+User counts            : [1000]
+
+[Algorithms]
+RBF-EdgeCover-DDQN       Plot label: Ours
+GGN-DDQN                 Plot label: GGN-MADDQN
+GCN-DDQN                 Plot label: GCN-MADDQN
+DDQN                     Plot label: MADDQN
+
+[Output Directories]
+Results                : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN
+CSV                    : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv
+Figures                : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\figures
+Models                 : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+Checkpoints            : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models\checkpoints
+Logs                   : E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\logs
+
+[Database Validation]
+Available tables       : ['lower_layer_data']
+
+Block 1 completed successfully.
+No training has started.
+No source database has been modified.
+==============================================================================
+
+===========================================================================
+BLOCK 2: RADIO DATASET LOADING AND VALIDATION
+===========================================================================
+Project directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Database path: E:\Abrokwa\PycharmProjects\pythonProject1\Lower_Layer_Data.db
+Database exists: True
+Database tables: ['lower_layer_data']
+
+Dataset shape: (45244, 25)
+Rows: 45,244
+Columns: 25
+
+--- Dataset columns and data types ---
+            column   dtype  missing  unique_values
+           dlBytes   int64        0          44737
+             dlMcs   int64        0             23
+            dlBler float64        0          28623
+           ulBytes   int64        0          43888
+             ulMcs   int64        0             21
+            ulBler float64        0          30258
+                ri   int64        0              1
+               phr   int64        0             32
+             pcmax   int64        0              6
+              rsrq float64        0             22
+              sinr float64        0             61
+              rsrp   int64        0             31
+              rssi float64        0            157
+               cqi   int64        0              3
+          pucchSnr float64        0             35
+          puschSnr float64        0             87
+             ue_id float64        0              9
+         timestamp float64        0          31550
+            cellid float64        0              1
+           in_sync float64        0              1
+              rnti  object     1540             45
+               pmi  object        0              1
+      traffic_type   int64        0              2
+   attack_category  object        0              6
+attack_subcategory  object        0             19
+
+--- Column classification ---
+Identifier columns: ['ue_id', 'timestamp', 'rnti']
+Label/category columns: ['traffic_type', 'attack_category', 'attack_subcategory']
+Constant numerical columns: ['ri', 'cellid', 'in_sync']
+Candidate numerical features: 18
+Usable numerical features: 15
+Feature names: ['dlBytes', 'dlMcs', 'dlBler', 'ulBytes', 'ulMcs', 'ulBler', 'phr', 'pcmax', 'rsrq', 'sinr', 'rsrp', 'rssi', 'cqi', 'pucchSnr', 'puschSnr']
+
+--- Data quality checks ---
+Missing cells in original data: 1,540
+Duplicate rows: 0
+Rows with invalid radio features: 0
+Usable rows: 45,244
+
+--- Traffic-type distribution ---
+traffic_type
+1    34580
+0    10664
+
+--- Numerical feature statistics ---
+            count          mean           std    min           25%           50%           75%           max
+dlBytes   45244.0  5.281520e+08  1.009603e+09    0.0  2.298549e+07  5.430307e+07  3.123111e+08  4.066047e+09
+dlMcs     45244.0  1.320162e+01  5.339175e+00    0.0  9.000000e+00  1.200000e+01  1.800000e+01  2.700000e+01
+dlBler    45244.0  1.635500e-01  2.886642e-01    0.0  0.000000e+00  4.943350e-02  1.191222e-01  9.898450e-01
+ulBytes   45244.0  8.894351e+08  1.551875e+09    0.0  5.522737e+07  1.073774e+08  9.806346e+08  5.249338e+09
+ulMcs     45244.0  9.457630e+00  3.494340e+00    0.0  6.000000e+00  9.000000e+00  1.200000e+01  2.000000e+01
+ulBler    45244.0  2.011635e-01  3.340186e-01    0.0  1.259525e-02  6.457000e-02  1.380002e-01  1.000000e+00
+phr       45244.0  1.970310e+01  4.641555e+00   -2.0  1.700000e+01  1.900000e+01  2.300000e+01  3.800000e+01
+pcmax     45244.0  2.078123e+01  1.193089e+01  -29.0  2.300000e+01  2.400000e+01  2.400000e+01  2.500000e+01
+rsrq      45244.0 -1.090909e+01  6.145877e-01  -32.0 -1.100000e+01 -1.100000e+01 -1.050000e+01 -1.050000e+01
+sinr      45244.0  1.640526e+01  5.756581e+00  -10.5  1.250000e+01  1.650000e+01  2.150000e+01  2.350000e+01
+rsrp      45244.0 -9.965052e+01  4.472136e+00 -123.0 -1.030000e+02 -1.000000e+02 -9.600000e+01 -9.000000e+01
+rssi      45244.0 -6.872819e+01  6.501045e+00  -84.4 -7.240000e+01 -7.100000e+01 -6.890000e+01 -5.140000e+01
+cqi       45244.0  1.472509e+01  6.837328e-01   13.0  1.500000e+01  1.500000e+01  1.500000e+01  1.500000e+01
+pucchSnr  45244.0  1.717140e+01  6.381331e+00    1.0  1.800000e+01  1.900000e+01  2.000000e+01  4.400000e+01
+puschSnr  45244.0  1.736417e+01  7.906955e+00    0.5  1.600000e+01  1.850000e+01  2.050000e+01  4.350000e+01
+
+--- Block 2 summary ---
+Clean dataset shape: (45244, 25)
+Radio features: 15
+Traffic column: traffic_type
+Column report: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\dataset_column_report.csv
+Feature summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\radio_feature_summary.csv
+
+Block 2 completed successfully.
+No model training has started.
+The original SQLite database was not modified.
+
+===========================================================================
+BLOCK 3: SHARED RAN SLICING ENVIRONMENT
+===========================================================================
+Dataset rows used: 45,244
+Numerical radio features used: 15
+Resource pool: 100 RBs / 20.0 MHz
+Maximum transmit-power budget: 40.0 W
+
+--- Environment smoke-test results ---
+State dimension: 28
+Action dimension: 5
+Users per slice: [25, 20, 15, 20, 20]
+Episode steps: 100
+Total allocated RBs: 100
+Final RB allocation: [19, 15, 20, 25, 21]
+Episode reward: 45.3946
+Estimated rate (Mbps): [3.573, 2.4982, 4.8662, 4.7231, 3.416]
+Estimated latency (ms): [3.0526, 0.23, 26.0, 13.2, 0.6905]
+Power allocation (W): [7.6, 6.0, 8.0, 10.0, 8.4]
+Energy per 1-ms interval (J): [0.0076, 0.006, 0.008, 0.01, 0.0084]
+
+Block 3 completed successfully.
+The random-policy smoke test passed.
+No learning agent has been trained.
+
+===========================================================================
+BLOCK 4: REPLAY BUFFER AND DDQN NETWORK COMPONENTS
+===========================================================================
+Device: cpu
+State dimension: 28
+Action dimension: 5
+Replay capacity: 50,000
+Batch size: 128
+Discount factor: 0.99
+Learning rate: 0.0003
+
+--- Replay buffer test ---
+Stored transitions: 10
+Sample state batch shape: (4, 28)
+Sample action batch shape: (4,)
+
+--- Neural-network forward-pass tests ---
+DDQN                   | Q-value shape: (4, 5) | parameters: 20,869
+GCN-DDQN               | Q-value shape: (4, 5) | parameters: 34,821
+GGN-DDQN               | Q-value shape: (4, 5) | parameters: 150,149
+RBF-EdgeCover-DDQN     | Q-value shape: (4, 5) | parameters: 27,269
+
+Block 4 completed successfully.
+Replay buffer and four Q-network architectures passed smoke tests.
+No episode training has started.
+
+===========================================================================
+BLOCK 5: DDQN AGENT IMPLEMENTATION
+===========================================================================
+Device: cpu
+Algorithms: ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+Batch size: 128
+Replay capacity: 50,000
+Warm-up transitions: 500
+
+RBF initialization states: (256, 28)
+
+--- Agent initialization and learning smoke test ---
+[transformers] Disabling PyTorch because PyTorch >= 2.4 is required but found 2.1.2+cu118
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+RBF-EdgeCover-DDQN     | action=0 | buffer= 500 | loss=0.136437 | epsilon=0.9765
+GGN-DDQN               | action=4 | buffer= 500 | loss=0.167929 | epsilon=0.9765
+GCN-DDQN               | action=1 | buffer= 500 | loss=0.177848 | epsilon=0.9765
+DDQN                   | action=2 | buffer= 500 | loss=0.138056 | epsilon=0.9765
+
+Block 5 completed successfully.
+All four agents selected valid actions and completed a learning update.
+The test updates above are component checks, not full episode training.
+========================================================================
+BLOCK 6: FULL TRAINING AND EVALUATION
+========================================================================
+Device: cpu
+Episodes per algorithm/load: 20
+Evaluation episodes: 20
+User loads: [100, 200, 400, 600, 800, 1000]
+Algorithms: ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+Models saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+
+########################################################################
+TRAINING FOR USER LOAD: 100
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 100
+Episode    1/20 | Mean reward=  46.0772 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 100 users | Elapsed=0.25 min | Model saved: RBF_EdgeCover_DDQN_users_100.pt
+
+Algorithm: GGN-DDQN | Users: 100
+Episode    1/20 | Mean reward=  47.3030 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 100 users | Elapsed=0.45 min | Model saved: GGN_DDQN_users_100.pt
+
+Algorithm: GCN-DDQN | Users: 100
+Episode    1/20 | Mean reward=  47.3550 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 100 users | Elapsed=0.18 min | Model saved: GCN_DDQN_users_100.pt
+
+Algorithm: DDQN | Users: 100
+Episode    1/20 | Mean reward=  46.5372 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 100 users | Elapsed=0.13 min | Model saved: DDQN_users_100.pt
+
+########################################################################
+TRAINING FOR USER LOAD: 200
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 200
+Episode    1/20 | Mean reward=  37.1976 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 200 users | Elapsed=0.16 min | Model saved: RBF_EdgeCover_DDQN_users_200.pt
+
+Algorithm: GGN-DDQN | Users: 200
+Episode    1/20 | Mean reward=  41.2125 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 200 users | Elapsed=0.49 min | Model saved: GGN_DDQN_users_200.pt
+
+Algorithm: GCN-DDQN | Users: 200
+Episode    1/20 | Mean reward=  40.3218 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 200 users | Elapsed=0.22 min | Model saved: GCN_DDQN_users_200.pt
+
+Algorithm: DDQN | Users: 200
+Episode    1/20 | Mean reward=  41.6968 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 200 users | Elapsed=0.10 min | Model saved: DDQN_users_200.pt
+
+########################################################################
+TRAINING FOR USER LOAD: 400
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 400
+Episode    1/20 | Mean reward=  30.3673 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 400 users | Elapsed=0.16 min | Model saved: RBF_EdgeCover_DDQN_users_400.pt
+
+Algorithm: GGN-DDQN | Users: 400
+Episode    1/20 | Mean reward=  34.8406 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 400 users | Elapsed=0.58 min | Model saved: GGN_DDQN_users_400.pt
+
+Algorithm: GCN-DDQN | Users: 400
+Episode    1/20 | Mean reward=  34.4304 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 400 users | Elapsed=0.34 min | Model saved: GCN_DDQN_users_400.pt
+
+Algorithm: DDQN | Users: 400
+Episode    1/20 | Mean reward=  34.8552 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 400 users | Elapsed=0.12 min | Model saved: DDQN_users_400.pt
+
+########################################################################
+TRAINING FOR USER LOAD: 600
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 600
+Episode    1/20 | Mean reward=  27.9590 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 600 users | Elapsed=0.13 min | Model saved: RBF_EdgeCover_DDQN_users_600.pt
+
+Algorithm: GGN-DDQN | Users: 600
+Episode    1/20 | Mean reward=  29.9631 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 600 users | Elapsed=0.36 min | Model saved: GGN_DDQN_users_600.pt
+
+Algorithm: GCN-DDQN | Users: 600
+Episode    1/20 | Mean reward=  30.3407 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 600 users | Elapsed=0.16 min | Model saved: GCN_DDQN_users_600.pt
+
+Algorithm: DDQN | Users: 600
+Episode    1/20 | Mean reward=  30.2219 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 600 users | Elapsed=0.08 min | Model saved: DDQN_users_600.pt
+
+########################################################################
+TRAINING FOR USER LOAD: 800
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 800
+Episode    1/20 | Mean reward=  25.2580 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 800 users | Elapsed=0.22 min | Model saved: RBF_EdgeCover_DDQN_users_800.pt
+
+Algorithm: GGN-DDQN | Users: 800
+Episode    1/20 | Mean reward=  27.5018 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 800 users | Elapsed=0.61 min | Model saved: GGN_DDQN_users_800.pt
+
+Algorithm: GCN-DDQN | Users: 800
+Episode    1/20 | Mean reward=  26.9807 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 800 users | Elapsed=0.21 min | Model saved: GCN_DDQN_users_800.pt
+
+Algorithm: DDQN | Users: 800
+Episode    1/20 | Mean reward=  27.4362 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 800 users | Elapsed=0.10 min | Model saved: DDQN_users_800.pt
+
+########################################################################
+TRAINING FOR USER LOAD: 1000
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 1000
+Episode    1/20 | Mean reward=  22.7083 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 1000 users | Elapsed=0.19 min | Model saved: RBF_EdgeCover_DDQN_users_1000.pt
+
+Algorithm: GGN-DDQN | Users: 1000
+Episode    1/20 | Mean reward=  25.3534 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 1000 users | Elapsed=0.48 min | Model saved: GGN_DDQN_users_1000.pt
+
+Algorithm: GCN-DDQN | Users: 1000
+Episode    1/20 | Mean reward=  25.1028 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 1000 users | Elapsed=0.20 min | Model saved: GCN_DDQN_users_1000.pt
+
+Algorithm: DDQN | Users: 1000
+Episode    1/20 | Mean reward=  24.4171 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 1000 users | Elapsed=0.09 min | Model saved: DDQN_users_1000.pt
+
+========================================================================
+BLOCK 6 COMPLETED
+========================================================================
+Total elapsed time: 0.10 hours
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\training_history.csv
+Evaluation results: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\evaluation_results.csv
+Evaluation summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\evaluation_summary.csv
+Trained models: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+Checkpoints: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\checkpoints
+
+Training history preview:
+algorithm  user_count  episode  episode_reward  mean_loss                                                                               epsilon
+     DDQN        1000       11       25.511881   0.003975 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       12       24.641167   0.002877 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       13       24.634203   0.002959 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       14       25.500333   0.003913 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       15       25.270981   0.002955 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       16       25.162865   0.011953 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       17       24.393919   0.001777 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       18       23.844251   0.001224 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       19       25.973126   0.001105 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+     DDQN        1000       20       25.787820   0.001180 <bound method DDQNAgent.epsilon of <__main__.DDQNAgent object at 0x0000021A1220CDD0>>
+
+Evaluation summary preview:
+algorithm  user_count  episode_reward_mean  episode_reward_std  eMBB_rb_allocation_mean  eMBB_rb_allocation_std  uRLLC_rb_allocation_mean  uRLLC_rb_allocation_std  MTM_rb_allocation_mean  MTM_rb_allocation_std  IoT_rb_allocation_mean  IoT_rb_allocation_std  Vehicular_rb_allocation_mean  Vehicular_rb_allocation_std  remaining_rbs_mean  remaining_rbs_std
+     DDQN         100            14.896702            5.984725                     4.70               10.652897                     18.05                11.076172                   77.25              19.017651                    0.00               0.000000                          0.00                     0.000000                 0.0                0.0
+     DDQN         200            21.899076            4.463739                    24.20               18.625393                     10.65                 6.603627                   33.80              43.155289                    0.00               0.000000                         31.35                    25.721740                 0.0                0.0
+     DDQN         400            17.746280            1.930835                     3.80                8.121447                     18.45                15.191670                   38.15              33.548512                    0.00               0.000000                         39.60                    49.759844                 0.0                0.0
+     DDQN         600            14.001328            4.733087                     0.30                1.341641                     13.25                 8.996344                   68.05              40.180481                    2.10               9.391486                         16.30                    31.219259                 0.0                0.0
+     DDQN         800            16.816593            1.983737                     8.20               19.237026                     24.45                12.415928                   53.35              26.860801                    5.70              13.673255                          8.30                    16.319507                 0.0                0.0
+     DDQN        1000             9.280033            1.379738                     0.15                0.670820                     17.70                12.342055                   51.10              39.577905                    0.00               0.000000                         31.05                    30.994864                 0.0                0.0
+ GCN-DDQN         100            30.528252            1.958386                    49.45                1.234376                      0.00                 0.000000                   19.75               8.914063                   10.75               4.540751                         20.05                     3.284333                 0.0                0.0
+ GCN-DDQN         200            17.069081            2.459623                    44.30                2.430075                      0.00                 0.000000                   43.35               7.321741                    2.50               5.385165                          9.85                     0.366348                 0.0                0.0
+ GCN-DDQN         400            21.892669            5.594175                     0.00                0.000000                      2.35                 4.344082                   26.75              11.968709                   15.40              10.106798                         55.50                     2.665570                 0.0                0.0
+ GCN-DDQN         600             9.750401            0.309889                    17.35               11.699190                      0.00                 0.000000                   56.70               1.809333                    0.00               0.000000                         25.95                    10.070671                 0.0                0.0
+ GCN-DDQN         800             9.817237            0.133659                     0.00                0.000000                      0.00                 0.000000                   48.20               0.615587                    0.00               0.000000                         51.80                     0.615587                 0.0                0.0
+ GCN-DDQN        1000             9.416307            0.135901                     0.00                0.000000                      0.00                 0.000000                   51.40               1.273206                    0.00               0.000000                         48.60                     1.273206                 0.0                0.0
+========================================================================
+BLOCK 6: FULL TRAINING AND EVALUATION
+========================================================================
+Device: cpu
+Episodes per algorithm/load: 20
+Evaluation episodes: 20
+User loads: [100, 200, 400, 600, 800, 1000]
+Algorithms: ['RBF-EdgeCover-DDQN', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+Models saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+
+########################################################################
+TRAINING FOR USER LOAD: 100
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 100
+Episode    1/20 | Mean reward=  46.0772 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 100 users | Elapsed=0.23 min
+
+Algorithm: GGN-DDQN | Users: 100
+Episode    1/20 | Mean reward=  47.3030 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 100 users | Elapsed=0.59 min
+
+Algorithm: GCN-DDQN | Users: 100
+Episode    1/20 | Mean reward=  47.3550 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 100 users | Elapsed=0.20 min
+
+Algorithm: DDQN | Users: 100
+Episode    1/20 | Mean reward=  46.5372 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 100 users | Elapsed=0.09 min
+
+########################################################################
+TRAINING FOR USER LOAD: 200
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 200
+Episode    1/20 | Mean reward=  37.1976 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 200 users | Elapsed=0.13 min
+
+Algorithm: GGN-DDQN | Users: 200
+Episode    1/20 | Mean reward=  41.2125 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 200 users | Elapsed=0.51 min
+
+Algorithm: GCN-DDQN | Users: 200
+Episode    1/20 | Mean reward=  40.3218 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 200 users | Elapsed=0.18 min
+
+Algorithm: DDQN | Users: 200
+Episode    1/20 | Mean reward=  41.6968 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 200 users | Elapsed=0.14 min
+
+########################################################################
+TRAINING FOR USER LOAD: 400
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 400
+Episode    1/20 | Mean reward=  30.3673 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 400 users | Elapsed=0.27 min
+
+Algorithm: GGN-DDQN | Users: 400
+Episode    1/20 | Mean reward=  34.8406 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 400 users | Elapsed=0.40 min
+
+Algorithm: GCN-DDQN | Users: 400
+Episode    1/20 | Mean reward=  34.4304 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 400 users | Elapsed=0.16 min
+
+Algorithm: DDQN | Users: 400
+Episode    1/20 | Mean reward=  34.8552 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 400 users | Elapsed=0.07 min
+
+########################################################################
+TRAINING FOR USER LOAD: 600
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 600
+Episode    1/20 | Mean reward=  27.9590 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 600 users | Elapsed=0.14 min
+
+Algorithm: GGN-DDQN | Users: 600
+Episode    1/20 | Mean reward=  29.9631 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 600 users | Elapsed=0.44 min
+
+Algorithm: GCN-DDQN | Users: 600
+Episode    1/20 | Mean reward=  30.3407 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 600 users | Elapsed=0.18 min
+
+Algorithm: DDQN | Users: 600
+Episode    1/20 | Mean reward=  30.2219 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 600 users | Elapsed=0.09 min
+
+########################################################################
+TRAINING FOR USER LOAD: 800
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 800
+Episode    1/20 | Mean reward=  25.2580 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 800 users | Elapsed=0.15 min
+
+Algorithm: GGN-DDQN | Users: 800
+Episode    1/20 | Mean reward=  27.5018 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 800 users | Elapsed=0.39 min
+
+Algorithm: GCN-DDQN | Users: 800
+Episode    1/20 | Mean reward=  26.9807 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 800 users | Elapsed=0.19 min
+
+Algorithm: DDQN | Users: 800
+Episode    1/20 | Mean reward=  27.4362 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 800 users | Elapsed=0.09 min
+
+########################################################################
+TRAINING FOR USER LOAD: 1000
+########################################################################
+
+Algorithm: RBF-EdgeCover-DDQN | Users: 1000
+Episode    1/20 | Mean reward=  22.7083 | Loss=      nan | Epsilon=0.9953
+Completed RBF-EdgeCover-DDQN at 1000 users | Elapsed=0.12 min
+
+Algorithm: GGN-DDQN | Users: 1000
+Episode    1/20 | Mean reward=  25.3534 | Loss=      nan | Epsilon=0.9953
+Completed GGN-DDQN at 1000 users | Elapsed=0.41 min
+
+Algorithm: GCN-DDQN | Users: 1000
+Episode    1/20 | Mean reward=  25.1028 | Loss=      nan | Epsilon=0.9953
+Completed GCN-DDQN at 1000 users | Elapsed=0.13 min
+
+Algorithm: DDQN | Users: 1000
+Episode    1/20 | Mean reward=  24.4171 | Loss=      nan | Epsilon=0.9953
+Completed DDQN at 1000 users | Elapsed=0.10 min
+
+########################################################################
+ALL TRAINING AND EVALUATION RUNS COMPLETED
+########################################################################
+
+========================================================================
+BLOCK 6 COMPLETED
+========================================================================
+Total elapsed time: 0.09 hours
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\training_history.csv
+Evaluation results: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\evaluation_results.csv
+Evaluation summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\evaluation_summary.csv
+Trained models: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\models
+Checkpoints: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\checkpoints
+
+Training history preview:
+algorithm  user_count  episode  episode_reward  mean_loss  epsilon
+     DDQN        1000       11       25.511881   0.003975 0.949161
+     DDQN        1000       12       24.641167   0.002877 0.944676
+     DDQN        1000       13       24.634203   0.002959 0.940214
+     DDQN        1000       14       25.500333   0.003913 0.935774
+     DDQN        1000       15       25.270981   0.002955 0.931356
+     DDQN        1000       16       25.162865   0.011953 0.926961
+     DDQN        1000       17       24.393919   0.001777 0.922587
+     DDQN        1000       18       23.844251   0.001224 0.918235
+     DDQN        1000       19       25.973126   0.001105 0.913904
+     DDQN        1000       20       25.787820   0.001180 0.909596
+
+Evaluation summary preview:
+algorithm  user_count  episode_reward_mean  episode_reward_std  eMBB_rb_allocation_mean  eMBB_rb_allocation_std  uRLLC_rb_allocation_mean  uRLLC_rb_allocation_std  MTM_rb_allocation_mean  MTM_rb_allocation_std  IoT_rb_allocation_mean  IoT_rb_allocation_std  Vehicular_rb_allocation_mean  Vehicular_rb_allocation_std  remaining_rbs_mean  remaining_rbs_std
+     DDQN         100            14.896702            5.984725                     4.70               10.652897                     18.05                11.076172                   77.25              19.017651                    0.00               0.000000                          0.00                     0.000000                 0.0                0.0
+     DDQN         200            21.899076            4.463739                    24.20               18.625393                     10.65                 6.603627                   33.80              43.155289                    0.00               0.000000                         31.35                    25.721740                 0.0                0.0
+     DDQN         400            17.746280            1.930835                     3.80                8.121447                     18.45                15.191670                   38.15              33.548512                    0.00               0.000000                         39.60                    49.759844                 0.0                0.0
+     DDQN         600            14.001328            4.733087                     0.30                1.341641                     13.25                 8.996344                   68.05              40.180481                    2.10               9.391486                         16.30                    31.219259                 0.0                0.0
+     DDQN         800            16.816593            1.983737                     8.20               19.237026                     24.45                12.415928                   53.35              26.860801                    5.70              13.673255                          8.30                    16.319507                 0.0                0.0
+     DDQN        1000             9.280033            1.379738                     0.15                0.670820                     17.70                12.342055                   51.10              39.577905                    0.00               0.000000                         31.05                    30.994864                 0.0                0.0
+ GCN-DDQN         100            30.528252            1.958386                    49.45                1.234376                      0.00                 0.000000                   19.75               8.914063                   10.75               4.540751                         20.05                     3.284333                 0.0                0.0
+ GCN-DDQN         200            17.069081            2.459623                    44.30                2.430075                      0.00                 0.000000                   43.35               7.321741                    2.50               5.385165                          9.85                     0.366348                 0.0                0.0
+ GCN-DDQN         400            21.892669            5.594175                     0.00                0.000000                      2.35                 4.344082                   26.75              11.968709                   15.40              10.106798                         55.50                     2.665570                 0.0                0.0
+ GCN-DDQN         600             9.750401            0.309889                    17.35               11.699190                      0.00                 0.000000                   56.70               1.809333                    0.00               0.000000                         25.95                    10.070671                 0.0                0.0
+ GCN-DDQN         800             9.817237            0.133659                     0.00                0.000000                      0.00                 0.000000                   48.20               0.615587                    0.00               0.000000                         51.80                     0.615587                 0.0                0.0
+ GCN-DDQN        1000             9.416307            0.135901                     0.00                0.000000                      0.00                 0.000000                   51.40               1.273206                    0.00               0.000000                         48.60                     1.273206                 0.0                0.0
+========================================================================
+BLOCK 7: PLOT AND SAVE COMPARISON FIGURES
+========================================================================
+Loaded results: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\evaluation_results.csv
+Evaluation rows: 480
+
+Metrics available for plotting:
+  eMBB_rb_allocation
+  uRLLC_rb_allocation
+  episode_reward
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: embb_rb_allocation.png
+Saved: embb_rb_allocation.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: urllc_rb_allocation.png
+Saved: urllc_rb_allocation.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: episode_reward.png
+Saved: episode_reward.eps
+
+========================================================================
+BLOCK 7 COMPLETED
+========================================================================
+Figures saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\figures
+Aggregated summary saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\evaluation_summary_for_plots.csv
+Figures generated: 3 metrics
+========================================================================
+BLOCK 8: TRAINING CONVERGENCE AND LOSS COMPARISON
+========================================================================
+Loaded: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\training_history.csv
+Rows: 480
+
+Representative load for convergence plots: 100 users
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: convergence_reward_500_users.png
+Saved: convergence_reward_500_users.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: convergence_loss_500_users.png
+Saved: convergence_loss_500_users.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: convergence_reward_100_users.png
+Saved: convergence_reward_100_users.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: convergence_reward_200_users.png
+Saved: convergence_reward_200_users.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: convergence_reward_400_users.png
+Saved: convergence_reward_400_users.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: convergence_reward_600_users.png
+Saved: convergence_reward_600_users.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: convergence_reward_800_users.png
+Saved: convergence_reward_800_users.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: convergence_reward_1000_users.png
+Saved: convergence_reward_1000_users.eps
+
+========================================================================
+BLOCK 8 COMPLETED
+========================================================================
+Figures saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\figures
+Training summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\training_convergence_summary.csv
+
+Final training summary:
+         algorithm  user_count  episodes_completed  final_mean_reward  final_mean_loss
+              DDQN         100                  20          48.258258         0.024175
+              DDQN         200                  20          41.316238         0.017580
+              DDQN         400                  20          34.195440         0.012999
+              DDQN         600                  20          29.310449         0.010705
+              DDQN         800                  20          26.435874         0.008974
+              DDQN        1000                  20          24.633811         0.008226
+          GCN-DDQN         100                  20          48.199031         0.024083
+          GCN-DDQN         200                  20          41.230489         0.018334
+          GCN-DDQN         400                  20          33.975744         0.013588
+          GCN-DDQN         600                  20          29.177998         0.010529
+          GCN-DDQN         800                  20          26.675186         0.009296
+          GCN-DDQN        1000                  20          24.533822         0.008881
+          GGN-DDQN         100                  20          48.729054         0.024323
+          GGN-DDQN         200                  20          41.250561         0.018573
+          GGN-DDQN         400                  20          34.344464         0.014171
+          GGN-DDQN         600                  20          29.677928         0.011876
+          GGN-DDQN         800                  20          26.753713         0.010217
+          GGN-DDQN        1000                  20          24.342869         0.009693
+RBF-EdgeCover-DDQN         100                  20          46.178191         0.018389
+RBF-EdgeCover-DDQN         200                  20          38.082812         0.013849
+RBF-EdgeCover-DDQN         400                  20          31.393710         0.009709
+RBF-EdgeCover-DDQN         600                  20          27.955495         0.009312
+RBF-EdgeCover-DDQN         800                  20          25.076897         0.007570
+RBF-EdgeCover-DDQN        1000                  20          23.090401         0.007111
+========================================================================
+BLOCK 9: RESOURCE ALLOCATION AND SLICING ANALYSIS
+========================================================================
+Loaded 480 evaluation rows.
+Saved allocation summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\resource_allocation_summary.csv
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+Saved: resource_blocks_embb_urllc.png
+Saved: resource_blocks_embb_urllc.eps
+
+Mean RB allocation by algorithm and user load:
+         algorithm  user_count  eMBB_rb_allocation  uRLLC_rb_allocation  MTM_rb_allocation  IoT_rb_allocation  Vehicular_rb_allocation
+              DDQN         100                4.70                18.05              77.25               0.00                     0.00
+              DDQN         200               24.20                10.65              33.80               0.00                    31.35
+              DDQN         400                3.80                18.45              38.15               0.00                    39.60
+              DDQN         600                0.30                13.25              68.05               2.10                    16.30
+              DDQN         800                8.20                24.45              53.35               5.70                     8.30
+              DDQN        1000                0.15                17.70              51.10               0.00                    31.05
+          GCN-DDQN         100               49.45                 0.00              19.75              10.75                    20.05
+          GCN-DDQN         200               44.30                 0.00              43.35               2.50                     9.85
+          GCN-DDQN         400                0.00                 2.35              26.75              15.40                    55.50
+          GCN-DDQN         600               17.35                 0.00              56.70               0.00                    25.95
+          GCN-DDQN         800                0.00                 0.00              48.20               0.00                    51.80
+          GCN-DDQN        1000                0.00                 0.00              51.40               0.00                    48.60
+          GGN-DDQN         100                0.00                 1.00               0.00               0.00                    99.00
+          GGN-DDQN         200                0.00                 1.00               0.00               0.00                    99.00
+          GGN-DDQN         400                0.00                 1.00               0.00               0.00                    99.00
+          GGN-DDQN         600                0.00                 0.00               1.00               0.00                    99.00
+          GGN-DDQN         800                0.00                 0.00               0.00               1.00                    99.00
+          GGN-DDQN        1000                0.00                 1.00               0.00               0.00                    99.00
+RBF-EdgeCover-DDQN         100               59.25                 5.45               5.70               3.65                    25.95
+RBF-EdgeCover-DDQN         200               75.85                10.75               1.00               1.95                    10.45
+RBF-EdgeCover-DDQN         400               56.20                21.10               1.00               4.00                    17.70
+RBF-EdgeCover-DDQN         600               59.35                31.35               1.00               1.00                     7.30
+RBF-EdgeCover-DDQN         800               55.40                41.55               1.00               1.00                     1.05
+RBF-EdgeCover-DDQN        1000               46.75                48.35               1.30               1.40                     2.20
+
+========================================================================
+BLOCK 9 COMPLETED
+========================================================================
+Allocation summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\resource_allocation_summary.csv
+Figures saved to: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\figures
+========================================================================
+BLOCK 10: PERFORMANCE SUMMARY AND ALGORITHM RANKING
+========================================================================
+Evaluation rows: 480
+
+Mean performance by algorithm and user load:
+         algorithm  user_count  episode_reward_mean  eMBB_rb_allocation_mean  uRLLC_rb_allocation_mean
+              DDQN         100            14.896702                     4.70                     18.05
+          GCN-DDQN         100            30.528252                    49.45                      0.00
+          GGN-DDQN         100            26.537227                     0.00                      1.00
+RBF-EdgeCover-DDQN         100            47.749148                    59.25                      5.45
+              DDQN         200            21.899076                    24.20                     10.65
+          GCN-DDQN         200            17.069081                    44.30                      0.00
+          GGN-DDQN         200            20.336153                     0.00                      1.00
+RBF-EdgeCover-DDQN         200            36.367395                    75.85                     10.75
+              DDQN         400            17.746280                     3.80                     18.45
+          GCN-DDQN         400            21.892669                     0.00                      2.35
+          GGN-DDQN         400            15.770130                     0.00                      1.00
+RBF-EdgeCover-DDQN         400            32.249895                    56.20                     21.10
+              DDQN         600            14.001328                     0.30                     13.25
+          GCN-DDQN         600             9.750401                    17.35                      0.00
+          GGN-DDQN         600            11.614963                     0.00                      0.00
+RBF-EdgeCover-DDQN         600            23.939228                    59.35                     31.35
+              DDQN         800            16.816593                     8.20                     24.45
+          GCN-DDQN         800             9.817237                     0.00                      0.00
+          GGN-DDQN         800             7.988893                     0.00                      0.00
+RBF-EdgeCover-DDQN         800            18.815508                    55.40                     41.55
+              DDQN        1000             9.280033                     0.15                     17.70
+          GCN-DDQN        1000             9.416307                     0.00                      0.00
+          GGN-DDQN        1000             6.454768                     0.00                      1.00
+RBF-EdgeCover-DDQN        1000            16.736728                    46.75                     48.35
+
+Relative improvement of Ours over the best baseline:
+ user_count         metric best_baseline  relative_improvement_percent
+        100 episode_reward      GCN-DDQN                     56.409702
+        200 episode_reward          DDQN                     66.068173
+        400 episode_reward      GCN-DDQN                     47.309104
+        600 episode_reward          DDQN                     70.978260
+        800 episode_reward          DDQN                     11.886565
+       1000 episode_reward      GCN-DDQN                     77.741945
+
+========================================================================
+BLOCK 10 COMPLETED
+========================================================================
+Performance summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\performance_summary.csv
+Relative improvement summary: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\relative_improvement_summary.csv
+================================================================================
+FINAL RESULTS REPORT
+================================================================================
+Evaluation records: 480
+Algorithms: ['Ours', 'GGN-DDQN', 'GCN-DDQN', 'DDQN']
+User loads: [100, 200, 400, 600, 800, 1000]
+
+Saved per-load summary:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\final_results_by_load.csv
+
+================================================================================
+OVERALL PERFORMANCE
+================================================================================
+
+Metric: episode_reward
+algorithm    mean     std
+     Ours 29.3097 10.8626
+ GCN-DDQN 16.4123  8.2584
+     DDQN 15.7733  5.3751
+ GGN-DDQN 14.7837  7.0703
+
+Metric: eMBB_rb_allocation
+algorithm    mean     std
+     Ours 58.8000 14.2738
+ GCN-DDQN 18.5167 21.6492
+     DDQN  6.8917 14.5422
+ GGN-DDQN  0.0000  0.0000
+
+Metric: uRLLC_rb_allocation
+algorithm    mean     std
+     Ours 26.4250 16.2897
+     DDQN 17.0917 12.0140
+ GGN-DDQN  0.6667  0.4734
+ GCN-DDQN  0.3917  1.9459
+
+================================================================================
+RELATIVE IMPROVEMENT OF OURS OVER THE BEST BASELINE
+================================================================================
+ user_count         metric best_baseline  relative_improvement_percent
+        100 episode_reward      GCN-DDQN                         56.41
+        200 episode_reward          DDQN                         66.07
+        400 episode_reward      GCN-DDQN                         47.31
+        600 episode_reward          DDQN                         70.98
+        800 episode_reward          DDQN                         11.89
+       1000 episode_reward      GCN-DDQN                         77.74
+
+================================================================================
+FILES SAVED
+================================================================================
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\final_results_by_load.csv
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\best_algorithm_by_metric.csv
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\ours_relative_improvement_by_load.csv
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\overall_algorithm_summary.csv
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_EdgeCover_DDQN\csv\final_manuscript_results.xlsx
+
+Block 11 completed successfully.
+
+Process finished with exit code 0
