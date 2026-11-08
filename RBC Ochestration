@@ -1,0 +1,5673 @@
+# ============================================================
+# BLOCK 1: RBF-VERTEX-COVER-RBC SIMULATION
+# 1.1 IMPORT REQUIRED LIBRARIES
+# ============================================================
+
+import os
+import sys
+import random
+import sqlite3
+import platform
+import importlib.util
+
+from pathlib import Path
+from collections import Counter, defaultdict, deque
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+import networkx as nx
+
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Rectangle
+
+# ============================================================
+# 1.2 PROJECT DIRECTORIES
+# ============================================================
+
+PROJECT_ROOT = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1"
+)
+
+BASE_DIR = PROJECT_ROOT / "pythonProject3"
+
+DATASET_FILE = PROJECT_ROOT / "Lower_Layer_Data.db"
+
+RESULT_DIR = (
+    BASE_DIR / "results" / "RBF_VertexCover_RBC"
+)
+
+CSV_DIR = RESULT_DIR / "csv"
+
+FIGURE_DIR = RESULT_DIR / "figures"
+
+MODEL_DIR = RESULT_DIR / "models"
+
+CHECKPOINT_DIR = MODEL_DIR / "checkpoints"
+
+LOG_DIR = RESULT_DIR / "logs"
+
+# RBC-specific visualization directories
+
+RBC_DIR = RESULT_DIR / "RBC_Analysis"
+
+RBC_HEATMAP_DIR = RBC_DIR / "heatmaps"
+
+RBC_ROUTING_DIR = RBC_DIR / "routing_footprints"
+
+RBC_GRAPH_DIR = RBC_DIR / "graph_topology"
+
+RBC_LOG_DIR = RBC_DIR / "logs"
+
+
+# Create all directories
+
+for folder in (
+    CSV_DIR,
+    FIGURE_DIR,
+    MODEL_DIR,
+    CHECKPOINT_DIR,
+    LOG_DIR,
+    RBC_DIR,
+    RBC_HEATMAP_DIR,
+    RBC_ROUTING_DIR,
+    RBC_GRAPH_DIR,
+    RBC_LOG_DIR
+):
+
+    folder.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+# ============================================================
+# 1.3 REPRODUCIBILITY CONFIGURATION
+# ============================================================
+
+SEED = 1220
+
+
+def set_global_seed(seed=SEED):
+
+    random.seed(seed)
+
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+
+    if torch.cuda.is_available():
+
+        torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+
+    torch.backends.cudnn.benchmark = False
+
+
+set_global_seed(SEED)
+
+# ============================================================
+# 1.4 RBC ARCHITECTURE CONFIGURATION
+# ============================================================
+
+# Virtual machine configuration
+
+NUM_VIRTUAL_MACHINES = 1
+
+VM_ID = "VM_001"
+
+
+# Resource Block Controller
+
+RBC_ID = "RBC_001"
+
+
+# Slot configuration
+
+NUM_SLOTS = 2
+
+SUBSLOTS_PER_SLOT = 10
+
+TOTAL_SUBSLOTS = (
+    NUM_SLOTS * SUBSLOTS_PER_SLOT
+)
+
+
+# Generate slot identifiers
+
+SLOT_IDS = [
+    f"Slot_{i+1}"
+    for i in range(NUM_SLOTS)
+]
+
+
+# Generate subslot identifiers
+
+SUBSLOT_IDS = {
+
+    slot: [
+
+        f"S{i+1}"
+
+        for i in range(SUBSLOTS_PER_SLOT)
+
+    ]
+
+    for slot in SLOT_IDS
+
+}
+
+
+# Generate globally unique subslot identifiers
+
+GLOBAL_SUBSLOT_IDS = [
+
+    f"Slot_{slot+1}_S{subslot+1}"
+
+    for slot in range(NUM_SLOTS)
+
+    for subslot in range(SUBSLOTS_PER_SLOT)
+
+]
+
+
+# Validate architecture
+
+assert NUM_SLOTS == 2
+
+assert SUBSLOTS_PER_SLOT == 10
+
+assert TOTAL_SUBSLOTS == 20
+
+assert len(GLOBAL_SUBSLOT_IDS) == 20
+
+# ============================================================
+# 1.5 RADIO RESOURCE CONFIGURATION
+# ============================================================
+
+TOTAL_BANDWIDTH_MHZ = 20.0
+
+TOTAL_RBS = 100
+
+MAX_TRANSMIT_POWER_W = 40.0
+
+MAX_USERS_PER_RB = 10
+
+
+RB_BANDWIDTH_MHZ = (
+
+    TOTAL_BANDWIDTH_MHZ / TOTAL_RBS
+
+)
+
+
+# RB allocation configuration
+
+RB_ALLOCATION_MODE = "dynamic"
+
+RB_SHARING_ENABLED = True
+
+MAX_RBS_PER_SUBSLOT = TOTAL_RBS
+
+
+# Initial resource availability
+
+INITIAL_AVAILABLE_RBS = TOTAL_RBS
+
+INITIAL_ALLOCATED_RBS = 0
+
+
+assert TOTAL_RBS > 0
+
+assert MAX_RBS_PER_SUBSLOT > 0
+
+assert np.isclose(
+
+    RB_BANDWIDTH_MHZ * TOTAL_RBS,
+
+    TOTAL_BANDWIDTH_MHZ
+
+)
+
+# ============================================================
+# 1.6 RBF CONFIGURATION
+# ============================================================
+
+RBF_NUM_CENTERS = 64
+
+RBF_SIGMA = None
+
+RBF_EPS = 1e-8
+
+RBF_DISTANCE_METRIC = "euclidean"
+
+
+# RBF feature configuration
+
+RBF_FEATURE_DIM = 64
+
+RBF_NORMALIZATION = True
+
+RBF_ACTION_REDUCTION = True
+
+# ============================================================
+# 1.7 VERTEX COVER CONFIGURATION
+# ============================================================
+
+VERTEX_COVER_ENABLED = True
+
+VERTEX_COVER_MODE = "greedy_weighted"
+
+VERTEX_COVER_EXACT_CHECK = False
+
+
+# Candidate selection
+
+MAX_CANDIDATE_SUBSLOTS = TOTAL_SUBSLOTS
+
+MIN_CANDIDATE_SUBSLOTS = 1
+
+
+# Routing configuration
+
+RBC_ROUTING_ENABLED = True
+
+RBC_ROUTE_TRACKING = True
+
+RBC_LINK_SELECTION_ENABLED = True
+
+RBC_SUBSLOT_SELECTION_ENABLED = True
+
+
+# Prevent revisiting a subslot unnecessarily
+
+RBC_AVOID_REPEATED_VISITS = True
+
+# ============================================================
+# 1.8 INTER-SLOT CONNECTION CONFIGURATION
+# ============================================================
+
+INTER_SLOT_CONNECTIONS_ENABLED = True
+
+INTRA_SLOT_CONNECTIONS_ENABLED = False
+
+
+# Each subslot in Slot 1 can potentially connect
+# to multiple subslots in Slot 2.
+
+INTER_SLOT_LINK_MODE = "configurable"
+
+ALLOW_MULTIPLE_LINKS = True
+
+GRAPH_DIRECTED = False
+
+
+# Graph edge attributes
+
+TRACK_LINK_WEIGHT = True
+
+TRACK_LINK_CAPACITY = True
+
+TRACK_LINK_LATENCY = True
+
+TRACK_LINK_AVAILABILITY = True
+
+
+# ============================================================
+# 1.9 RBC VISUALIZATION CONFIGURATION
+# ============================================================
+
+# Heat map
+
+RBC_HEATMAP_ENABLED = True
+
+HEATMAP_SAVE_FORMAT = [
+
+    "png",
+
+    "eps"
+
+]
+
+HEATMAP_DPI = 600
+
+HEATMAP_SHOW_RB_OCCUPANCY = True
+
+HEATMAP_SHOW_SELECTION_SCORE = True
+
+HEATMAP_SHOW_SELECTED_SUBSLOT = True
+
+
+# Routing footprint
+
+RBC_ROUTING_PLOT_ENABLED = True
+
+ROUTING_SAVE_FORMAT = [
+
+    "png",
+
+    "eps"
+
+]
+
+ROUTING_DPI = 600
+
+ROUTING_SHOW_VISITED_NODES = True
+
+ROUTING_SHOW_SELECTED_LINKS = True
+
+ROUTING_SHOW_CANDIDATE_PATHS = True
+
+ROUTING_SHOW_FINAL_SUBSLOT = True
+
+
+# Record navigation events
+
+RBC_RECORD_NAVIGATION = True
+
+RBC_RECORD_LINK_SELECTION = True
+
+RBC_RECORD_SUBSLOT_SELECTION = True
+
+# ============================================================
+# 1.10 TRAINING CONFIGURATION
+# ============================================================
+
+NUM_EPISODES = 1000
+
+MAX_STEPS_PER_EPISODE = 100
+
+EVALUATION_EPISODES = 20
+
+
+LEARNING_RATE = 3e-4
+
+GAMMA = 0.99
+
+REPLAY_BUFFER_CAPACITY = 50000
+
+BATCH_SIZE = 128
+
+TARGET_UPDATE_INTERVAL = 250
+
+
+EPSILON_START = 1.0
+
+EPSILON_END = 0.05
+
+EPSILON_DECAY_STEPS = 20000
+
+
+HIDDEN_DIM = 128
+
+
+# ============================================================
+# 1.11 TRAFFIC PROFILES
+# ============================================================
+
+TRAFFIC_CLASSES = [
+
+    "eMBB",
+
+    "uRLLC",
+
+    "MTM",
+
+    "IoT",
+
+    "Vehicular"
+
+]
+
+
+TRAFFIC_PROFILES = {
+
+    "eMBB": {
+
+        "weight": 0.25,
+
+        "min_rate_mbps": 10.0,
+
+        "target_rate_mbps": 50.0,
+
+        "max_latency_ms": 100.0,
+
+        "min_reliability": 0.99,
+
+        "priority": 2
+
+    },
+
+
+    "uRLLC": {
+
+        "weight": 0.20,
+
+        "min_rate_mbps": 1.0,
+
+        "target_rate_mbps": 10.0,
+
+        "max_latency_ms": 5.0,
+
+        "min_reliability": 0.99999,
+
+        "priority": 5
+
+    },
+
+
+    "MTM": {
+
+        "weight": 0.15,
+
+        "min_rate_mbps": 0.05,
+
+        "target_rate_mbps": 0.25,
+
+        "max_latency_ms": 1000.0,
+
+        "min_reliability": 0.99,
+
+        "priority": 1
+
+    },
+
+
+    "IoT": {
+
+        "weight": 0.20,
+
+        "min_rate_mbps": 0.1,
+
+        "target_rate_mbps": 1.0,
+
+        "max_latency_ms": 100.0,
+
+        "min_reliability": 0.99,
+
+        "priority": 2
+
+    },
+
+
+    "Vehicular": {
+
+        "weight": 0.20,
+
+        "min_rate_mbps": 5.0,
+
+        "target_rate_mbps": 20.0,
+
+        "max_latency_ms": 10.0,
+
+        "min_reliability": 0.999,
+
+        "priority": 4
+
+    }
+
+}
+
+
+assert np.isclose(
+
+    sum(
+
+        TRAFFIC_PROFILES[c]["weight"]
+
+        for c in TRAFFIC_CLASSES
+
+    ),
+
+    1.0
+
+)
+
+# ============================================================
+# 1.12 COMPUTATION DEVICE
+# ============================================================
+
+DEVICE = torch.device(
+
+    "cuda" if torch.cuda.is_available() else "cpu"
+
+)
+
+
+# ============================================================
+# 1.13 PLOTTING CONFIGURATION
+# ============================================================
+
+plt.rcParams.update({
+
+    "font.family": "Times New Roman",
+
+    "font.size": 19,
+
+    "axes.labelsize": 26,
+
+    "xtick.labelsize": 17,
+
+    "ytick.labelsize": 17,
+
+    "legend.fontsize": 25,
+
+    "lines.linewidth": 2.2,
+
+    "axes.linewidth": 1.2,
+
+    "savefig.dpi": 600,
+
+    "figure.dpi": 150,
+
+    "axes.grid": True,
+
+    "grid.linestyle": "--",
+
+    "grid.alpha": 0.30
+
+})
+
+
+# ============================================================
+# 1.14 RBC INITIAL RESOURCE STATES
+# ============================================================
+
+RBC_STATE = {
+
+    "vm_id": VM_ID,
+
+    "rbc_id": RBC_ID,
+
+    "total_slots": NUM_SLOTS,
+
+    "total_subslots": TOTAL_SUBSLOTS,
+
+    "total_rbs": TOTAL_RBS,
+
+    "available_rbs": TOTAL_RBS,
+
+    "allocated_rbs": 0,
+
+    "selected_subslot": None,
+
+    "selected_route": [],
+
+    "visited_subslots": [],
+
+    "selected_links": []
+
+}
+
+
+# Initialize each subslot
+
+SUBSLOT_STATE = {}
+
+
+for slot_index, slot_id in enumerate(SLOT_IDS):
+
+    for subslot_index in range(SUBSLOTS_PER_SLOT):
+
+        subslot_id = (
+
+            f"Slot_{slot_index+1}_"
+
+            f"S{subslot_index+1}"
+
+        )
+
+
+        SUBSLOT_STATE[subslot_id] = {
+
+            "slot_id": slot_id,
+
+            "subslot_index": subslot_index + 1,
+
+            "available_rbs": TOTAL_RBS,
+
+            "allocated_rbs": 0,
+
+            "rb_occupancy": 0.0,
+
+            "rbf_score": 0.0,
+
+            "vertex_cover_status": 0,
+
+            "visited": False,
+
+            "selected": False,
+
+            "allocation_status": "available"
+
+        }
+
+
+# ============================================================
+# 1.15 BLOCK 1 VALIDATION
+# ============================================================
+
+print("\n" + "=" * 75)
+
+print("RBF-VERTEX-COVER-RBC SIMULATION")
+
+print("=" * 75)
+
+
+print("\n[VIRTUAL MACHINE]")
+
+print("VM ID:", VM_ID)
+
+print("RBC ID:", RBC_ID)
+
+
+print("\n[NETWORK ARCHITECTURE]")
+
+print("Number of slots:", NUM_SLOTS)
+
+print("Subslots per slot:", SUBSLOTS_PER_SLOT)
+
+print("Total subslots:", TOTAL_SUBSLOTS)
+
+
+for slot_id in SLOT_IDS:
+
+    print(
+
+        slot_id,
+
+        ":",
+
+        SUBSLOT_IDS[slot_id]
+
+    )
+
+
+print("\n[RADIO RESOURCES]")
+
+print("Total bandwidth:", TOTAL_BANDWIDTH_MHZ, "MHz")
+
+print("Total RBs:", TOTAL_RBS)
+
+print("Bandwidth per RB:", RB_BANDWIDTH_MHZ, "MHz")
+
+print("Maximum transmit power:", MAX_TRANSMIT_POWER_W, "W")
+
+
+print("\n[RBF CONFIGURATION]")
+
+print("RBF centers:", RBF_NUM_CENTERS)
+
+print("RBF sigma:", RBF_SIGMA)
+
+
+print("\n[VERTEX COVER]")
+
+print("Vertex Cover enabled:", VERTEX_COVER_ENABLED)
+
+print("Selection mode:", VERTEX_COVER_MODE)
+
+
+print("\n[RBC VISUALIZATION]")
+
+print("Heat map:", RBC_HEATMAP_ENABLED)
+
+print("Routing footprint:", RBC_ROUTING_PLOT_ENABLED)
+
+
+print("\n[COMPUTATION]")
+
+print("PyTorch version:", torch.__version__)
+
+print("CUDA available:", torch.cuda.is_available())
+
+print("Selected device:", DEVICE)
+
+
+print("\n[DATABASE]")
+
+print("Database:", DATASET_FILE)
+
+print("Database exists:", DATASET_FILE.is_file())
+
+
+print("\n[OUTPUT]")
+
+print("Results:", RESULT_DIR)
+
+print("RBC heat maps:", RBC_HEATMAP_DIR)
+
+print("Routing footprints:", RBC_ROUTING_DIR)
+
+
+# Structural validation
+
+assert len(SUBSLOT_STATE) == 20
+
+assert RBC_STATE["available_rbs"] == TOTAL_RBS
+
+assert RBC_STATE["allocated_rbs"] == 0
+
+assert all(
+
+    state["available_rbs"] == TOTAL_RBS
+
+    for state in SUBSLOT_STATE.values()
+
+)
+
+
+print("\nBLOCK 1 COMPLETED SUCCESSFULLY")
+
+print("RBC initialized.")
+
+print("20 subslots initialized.")
+
+print("No RB allocation performed.")
+
+print("No training started.")
+
+print("=" * 75)
+
+
+# ============================================================
+# BLOCK 2: INTERCONNECTED SUBSLOT GRAPH
+# 2.1 GRAPH CONFIGURATION
+# ============================================================
+
+# Graph architecture
+
+NUM_GRAPH_NODES = TOTAL_SUBSLOTS
+
+GRAPH_TYPE = "undirected"
+
+ALLOW_MULTI_HOP_ROUTING = True
+
+ALLOW_INTRA_SLOT_HOPS = True
+
+ALLOW_INTER_SLOT_HOPS = True
+
+
+# Connectivity configuration
+
+MIN_NODE_DEGREE = 2
+
+MAX_NODE_DEGREE = 6
+
+ALLOW_REPEATED_HOPS = False
+
+MAX_ROUTING_HOPS = 10
+
+
+# Link attributes
+
+MIN_LINK_WEIGHT = 0.1
+
+MAX_LINK_WEIGHT = 1.0
+
+MIN_LINK_CAPACITY_MBPS = 10.0
+
+MAX_LINK_CAPACITY_MBPS = 100.0
+
+MIN_LINK_LATENCY_MS = 0.1
+
+MAX_LINK_LATENCY_MS = 5.0
+
+
+# Link availability
+
+LINK_AVAILABILITY_THRESHOLD = 0.3
+
+
+# Reproducibility
+
+GRAPH_SEED = SEED + 100
+
+graph_rng = np.random.default_rng(GRAPH_SEED)
+
+
+# ============================================================
+# 2.2 CREATE SUBSLOT GRAPH
+# ============================================================
+
+G = nx.Graph()
+
+# Add all 20 subslots as graph vertices
+
+for node_index, node_id in enumerate(GLOBAL_SUBSLOT_IDS):
+
+    slot_number = (
+
+        1 if node_index < SUBSLOTS_PER_SLOT else 2
+
+    )
+
+    local_subslot_number = (
+
+        node_index % SUBSLOTS_PER_SLOT + 1
+
+    )
+
+    G.add_node(
+
+        node_id,
+
+        slot=f"Slot_{slot_number}",
+
+        subslot=local_subslot_number,
+
+        node_index=node_index,
+
+        node_type="subslot",
+
+        is_hop=False,
+
+        is_destination=False,
+
+        visited=False
+
+    )
+
+
+assert G.number_of_nodes() == 20
+
+print("Graph nodes initialized:", G.number_of_nodes())
+
+
+
+# ============================================================
+# 2.3 LINK CREATION FUNCTION
+# ============================================================
+
+def add_subslot_link(
+
+    graph,
+
+    source,
+
+    destination,
+
+    weight=None,
+
+    capacity=None,
+
+    latency=None
+
+):
+
+    """
+    Establish a bidirectional connection between two subslots.
+
+    Each link has:
+        - Link weight
+        - Link capacity
+        - Link latency
+        - Link availability
+    """
+
+    if source == destination:
+
+        return False
+
+    if graph.has_edge(source, destination):
+
+        return False
+
+
+    if weight is None:
+
+        weight = graph_rng.uniform(
+
+            MIN_LINK_WEIGHT,
+
+            MAX_LINK_WEIGHT
+
+        )
+
+
+    if capacity is None:
+
+        capacity = graph_rng.uniform(
+
+            MIN_LINK_CAPACITY_MBPS,
+
+            MAX_LINK_CAPACITY_MBPS
+
+        )
+
+
+    if latency is None:
+
+        latency = graph_rng.uniform(
+
+            MIN_LINK_LATENCY_MS,
+
+            MAX_LINK_LATENCY_MS
+
+        )
+
+
+    # Higher weight indicates a stronger link.
+
+    graph.add_edge(
+
+        source,
+
+        destination,
+
+        weight=float(weight),
+
+        capacity_mbps=float(capacity),
+
+        latency_ms=float(latency),
+
+        available=True,
+
+        selected=False,
+
+        traversed=False,
+
+        link_type=(
+
+            "intra-slot"
+
+            if graph.nodes[source]["slot"]
+
+            == graph.nodes[destination]["slot"]
+
+            else "inter-slot"
+
+        )
+
+    )
+
+    return True
+
+
+# ============================================================
+# 2.4 INTERCONNECTED GRAPH TOPOLOGY
+# ============================================================
+
+def build_interconnected_subslot_graph(graph):
+
+    """
+    Construct a sparse multi-hop graph.
+
+    Each node may connect to multiple other nodes.
+    Intermediate nodes can be used as routing hops.
+    """
+
+    # --------------------------------------------------------
+    # A. Intra-slot connections
+    # --------------------------------------------------------
+
+    intra_slot_links = [
+
+        # Slot 1
+
+        ("Slot_1_S1", "Slot_1_S3"),
+
+        ("Slot_1_S2", "Slot_1_S3"),
+
+        ("Slot_1_S3", "Slot_1_S4"),
+
+        ("Slot_1_S4", "Slot_1_S6"),
+
+        ("Slot_1_S5", "Slot_1_S6"),
+
+        ("Slot_1_S6", "Slot_1_S7"),
+
+        ("Slot_1_S7", "Slot_1_S9"),
+
+        ("Slot_1_S8", "Slot_1_S9"),
+
+        ("Slot_1_S9", "Slot_1_S10"),
+
+
+        # Slot 2
+
+        ("Slot_2_S1", "Slot_2_S2"),
+
+        ("Slot_2_S2", "Slot_2_S4"),
+
+        ("Slot_2_S3", "Slot_2_S4"),
+
+        ("Slot_2_S4", "Slot_2_S5"),
+
+        ("Slot_2_S5", "Slot_2_S7"),
+
+        ("Slot_2_S6", "Slot_2_S7"),
+
+        ("Slot_2_S7", "Slot_2_S8"),
+
+        ("Slot_2_S8", "Slot_2_S10"),
+
+        ("Slot_2_S9", "Slot_2_S10")
+
+    ]
+
+
+    # --------------------------------------------------------
+    # B. Inter-slot connections
+    # --------------------------------------------------------
+
+    inter_slot_links = [
+
+        ("Slot_1_S1", "Slot_2_S2"),
+
+        ("Slot_1_S3", "Slot_2_S3"),
+
+        ("Slot_1_S4", "Slot_2_S5"),
+
+        ("Slot_1_S5", "Slot_2_S4"),
+
+        ("Slot_1_S6", "Slot_2_S7"),
+
+        ("Slot_1_S7", "Slot_2_S8"),
+
+        ("Slot_1_S8", "Slot_2_S6"),
+
+        ("Slot_1_S9", "Slot_2_S9"),
+
+        ("Slot_1_S10", "Slot_2_S10")
+
+    ]
+
+
+    # Add intra-slot links
+
+    for source, destination in intra_slot_links:
+
+        add_subslot_link(
+
+            graph,
+
+            source,
+
+            destination
+
+        )
+
+
+    # Add inter-slot links
+
+    for source, destination in inter_slot_links:
+
+        add_subslot_link(
+
+            graph,
+
+            source,
+
+            destination
+
+        )
+
+
+    return graph
+
+
+
+# ============================================================
+# 2.5 GENERATE INTERCONNECTED SUBSLOT GRAPH
+# ============================================================
+
+G = build_interconnected_subslot_graph(G)
+
+
+print("\nGRAPH TOPOLOGY SUMMARY")
+
+print("-" * 60)
+
+print("Number of vertices:", G.number_of_nodes())
+
+print("Number of edges:", G.number_of_edges())
+
+print("Graph connected:", nx.is_connected(G))
+
+print("Number of connected components:",
+      nx.number_connected_components(G))
+
+
+print("\nNODE DEGREES")
+
+for node in G.nodes():
+
+    print(
+
+        f"{node:15s}",
+
+        "Degree:",
+
+        G.degree(node)
+
+    )
+
+
+# ============================================================
+# 2.6 ROUTING COST CALCULATION
+# ============================================================
+
+ROUTING_ALPHA = 0.40
+
+ROUTING_BETA = 0.35
+
+ROUTING_GAMMA = 0.25
+
+
+def calculate_routing_cost(edge_data):
+
+    """
+    Calculate routing cost for an interconnection link.
+    Lower cost means a better routing link.
+    """
+
+    weight = edge_data["weight"]
+
+    latency = edge_data["latency_ms"]
+
+    capacity = edge_data["capacity_mbps"]
+
+
+    normalized_latency = (
+
+        latency / MAX_LINK_LATENCY_MS
+
+    )
+
+
+    normalized_capacity_cost = (
+
+        MIN_LINK_CAPACITY_MBPS / capacity
+
+    )
+
+
+    inverse_quality_cost = (
+
+        1.0 / (weight + RBF_EPS)
+
+    )
+
+    cost = (
+
+        ROUTING_ALPHA * inverse_quality_cost
+
+        + ROUTING_BETA * normalized_latency
+
+        + ROUTING_GAMMA * normalized_capacity_cost
+
+    )
+
+    return float(cost)
+
+
+# Assign routing costs to all edges
+
+for source, destination, edge_data in G.edges(data=True):
+
+    edge_data["routing_cost"] = calculate_routing_cost(
+
+        edge_data
+
+    )
+
+
+print("\nRouting costs assigned to all graph edges.")
+
+
+
+# ============================================================
+# 2.7 ADJACENCY MATRIX
+# ============================================================
+
+ADJACENCY_MATRIX = nx.to_numpy_array(
+
+    G,
+
+    nodelist=GLOBAL_SUBSLOT_IDS,
+
+    weight=None
+
+)
+
+
+print("\nADJACENCY MATRIX")
+
+print(ADJACENCY_MATRIX.astype(int))
+
+
+assert ADJACENCY_MATRIX.shape == (20, 20)
+
+assert np.allclose(
+
+    ADJACENCY_MATRIX,
+
+    ADJACENCY_MATRIX.T
+
+)
+
+
+# ============================================================
+# 2.8 WEIGHTED ADJACENCY MATRIX
+# ============================================================
+
+WEIGHTED_ADJACENCY_MATRIX = nx.to_numpy_array(
+
+    G,
+
+    nodelist=GLOBAL_SUBSLOT_IDS,
+
+    weight="weight"
+
+)
+
+
+print("\nWeighted adjacency matrix shape:")
+
+print(WEIGHTED_ADJACENCY_MATRIX.shape)
+
+
+
+# ============================================================
+# 2.9 GRAPH TOPOLOGY VISUALIZATION
+# ============================================================
+
+def plot_rbc_graph_topology(graph):
+
+    """
+    Plot the initial RBC interconnected subslot topology.
+    """
+
+    fig, ax = plt.subplots(
+
+        figsize=(16, 10)
+
+    )
+
+
+    # Place nodes in two columns
+
+    positions = {}
+
+
+    for i in range(SUBSLOTS_PER_SLOT):
+
+        positions[
+
+            f"Slot_1_S{i+1}"
+
+        ] = (0, -i)
+
+
+        positions[
+
+            f"Slot_2_S{i+1}"
+
+        ] = (5, -i)
+
+
+    # Draw intra-slot links
+
+    intra_edges = [
+
+        (u, v)
+
+        for u, v, d in graph.edges(data=True)
+
+        if d["link_type"] == "intra-slot"
+
+    ]
+
+
+    # Draw inter-slot links
+
+    inter_edges = [
+
+        (u, v)
+
+        for u, v, d in graph.edges(data=True)
+
+        if d["link_type"] == "inter-slot"
+
+    ]
+
+
+    nx.draw_networkx_edges(
+
+        graph,
+
+        positions,
+
+        edgelist=intra_edges,
+
+        ax=ax,
+
+        edge_color="gray",
+
+        width=1.8,
+
+        style="solid"
+
+    )
+
+
+    nx.draw_networkx_edges(
+
+        graph,
+
+        positions,
+
+        edgelist=inter_edges,
+
+        ax=ax,
+
+        edge_color="darkorange",
+
+        width=2.2,
+
+        style="dashed"
+
+    )
+
+
+    # Draw nodes
+
+    nx.draw_networkx_nodes(
+
+        graph,
+
+        positions,
+
+        nodelist=[
+
+            n for n in graph.nodes()
+
+            if graph.nodes[n]["slot"] == "Slot_1"
+
+        ],
+
+        node_color="steelblue",
+
+        node_size=1100,
+
+        ax=ax
+
+    )
+
+
+    nx.draw_networkx_nodes(
+
+        graph,
+
+        positions,
+
+        nodelist=[
+
+            n for n in graph.nodes()
+
+            if graph.nodes[n]["slot"] == "Slot_2"
+
+        ],
+
+        node_color="seagreen",
+
+        node_size=1100,
+
+        ax=ax
+
+    )
+
+
+    nx.draw_networkx_labels(
+
+        graph,
+
+        positions,
+
+        font_size=10,
+
+        font_weight="bold",
+
+        font_color="white",
+
+        ax=ax
+
+    )
+
+
+    ax.set_title(
+
+        "RBC Interconnected Subslot Graph",
+
+        pad=20
+
+    )
+
+
+    ax.text(
+
+        0,
+
+        0.5,
+
+        "Slot 1",
+
+        ha="center",
+
+        fontsize=19,
+
+        fontweight="bold"
+
+    )
+
+
+    ax.text(
+
+        5,
+
+        0.5,
+
+        "Slot 2",
+
+        ha="center",
+
+        fontsize=19,
+
+        fontweight="bold"
+
+    )
+
+
+    ax.text(
+
+        2.5,
+
+        -10.5,
+
+        "Solid lines: Intra-slot links | "
+
+        "Dashed lines: Inter-slot links",
+
+        ha="center",
+
+        fontsize=13
+
+    )
+
+
+    ax.axis("off")
+
+    plt.tight_layout()
+
+
+    for fmt in ROUTING_SAVE_FORMAT:
+
+        fig.savefig(
+
+            RBC_GRAPH_DIR /
+
+            f"RBC_Initial_Topology.{fmt}",
+
+            dpi=ROUTING_DPI,
+
+            bbox_inches="tight"
+
+        )
+
+
+    plt.show()
+
+    plt.close(fig)
+
+
+plot_rbc_graph_topology(G)
+
+
+# ============================================================
+# 2.10 SAVE GRAPH EDGES AND NODE INFORMATION
+# ============================================================
+
+edge_records = []
+
+
+for source, destination, data in G.edges(data=True):
+
+    edge_records.append({
+
+        "Source": source,
+
+        "Destination": destination,
+
+        "Link_Type": data["link_type"],
+
+        "Link_Weight": data["weight"],
+
+        "Capacity_Mbps": data["capacity_mbps"],
+
+        "Latency_ms": data["latency_ms"],
+
+        "Routing_Cost": data["routing_cost"],
+
+        "Available": data["available"]
+
+    })
+
+
+edge_df = pd.DataFrame(edge_records)
+
+
+edge_df.to_csv(
+
+    RBC_GRAPH_DIR / "RBC_Graph_Edges.csv",
+
+    index=False
+
+)
+
+
+node_records = []
+
+
+for node, data in G.nodes(data=True):
+
+    node_records.append({
+
+        "Node": node,
+
+        "Slot": data["slot"],
+
+        "Subslot": data["subslot"],
+
+        "Degree": G.degree(node)
+
+    })
+
+
+node_df = pd.DataFrame(node_records)
+
+
+node_df.to_csv(
+
+    RBC_GRAPH_DIR / "RBC_Graph_Nodes.csv",
+
+    index=False
+
+)
+
+
+# ============================================================
+# 2.11 GRAPH CONNECTIVITY VALIDATION
+# ============================================================
+
+print("\nGRAPH CONNECTIVITY VALIDATION")
+
+print("-" * 60)
+
+
+if nx.is_connected(G):
+
+    print("All 20 subslots belong to one connected component.")
+
+else:
+
+    components = list(nx.connected_components(G))
+
+    print("Warning: Graph contains disconnected components.")
+
+    for index, component in enumerate(components, start=1):
+
+        print(
+
+            f"Component {index}:",
+
+            sorted(component)
+
+        )
+
+
+# Verify multi-hop paths
+
+source_node = "Slot_1_S1"
+
+destination_node = "Slot_2_S10"
+
+
+if nx.has_path(G, source_node, destination_node):
+
+    example_path = nx.shortest_path(
+
+        G,
+
+        source=source_node,
+
+        target=destination_node,
+
+        weight="routing_cost"
+
+    )
+
+    print("\nExample routing path:")
+
+    print(" -> ".join(example_path))
+
+    print("Number of hops:", len(example_path) - 1)
+
+else:
+
+    print("No path exists between the selected example nodes.")
+
+print("\nGraph files saved successfully.")
+
+print("Edge records:", len(edge_df))
+
+print("Node records:", len(node_df))
+
+
+# ============================================================
+# 3.1 RBC MULTI-HOP NAVIGATION CONFIGURATION
+# ============================================================
+
+# Navigation parameters
+
+RBC_START_NODE = "Slot_1_S1"
+
+RBC_DESTINATION_NODE = "Slot_2_S10"
+
+RBC_MAX_HOPS = 10
+
+RBC_MAX_ROUTE_ATTEMPTS = 5
+
+
+# Routing cost weights
+
+HOP_COST_WEIGHT = 0.50
+
+LATENCY_COST_WEIGHT = 0.25
+
+CAPACITY_COST_WEIGHT = 0.25
+
+
+# Link selection
+
+RBC_MIN_LINK_QUALITY = 0.0
+
+RBC_REQUIRE_AVAILABLE_LINK = True
+
+RBC_USE_DYNAMIC_NEXT_HOP = True
+
+
+# Route tracking
+
+RBC_ROUTE_HISTORY = []
+
+RBC_LINK_SELECTION_HISTORY = []
+
+RBC_VISITED_HISTORY = []
+
+RBC_CANDIDATE_HISTORY = []
+
+
+print("RBC multi-hop navigation initialized.")
+
+
+# ============================================================
+# 3.2 DYNAMIC LINK QUALITY EVALUATION
+# ============================================================
+
+def evaluate_rbc_link(graph, source, destination):
+
+    """
+    Evaluate a connection between two subslots.
+
+    Returns link quality, capacity, latency,
+    routing cost, and normalized utility.
+    """
+
+    if not graph.has_edge(source, destination):
+
+        return None
+
+
+    edge = graph[source][destination]
+
+
+    if RBC_REQUIRE_AVAILABLE_LINK and not edge["available"]:
+
+        return None
+
+
+    weight = float(edge["weight"])
+
+    capacity = float(edge["capacity_mbps"])
+
+    latency = float(edge["latency_ms"])
+
+    routing_cost = float(edge["routing_cost"])
+
+
+    normalized_quality = np.clip(
+
+        weight,
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    normalized_capacity = np.clip(
+
+        capacity / MAX_LINK_CAPACITY_MBPS,
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    normalized_latency = np.clip(
+
+        latency / MAX_LINK_LATENCY_MS,
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    utility = (
+
+        HOP_COST_WEIGHT * normalized_quality
+
+        + CAPACITY_COST_WEIGHT * normalized_capacity
+
+        - LATENCY_COST_WEIGHT * normalized_latency
+
+    )
+
+
+    return {
+
+        "source": source,
+
+        "destination": destination,
+
+        "link_quality": weight,
+
+        "capacity_mbps": capacity,
+
+        "latency_ms": latency,
+
+        "routing_cost": routing_cost,
+
+        "utility": float(utility)
+
+    }
+
+
+# ============================================================
+# 3.3 DYNAMIC NEXT-HOP SELECTION
+# ============================================================
+
+def select_rbc_next_hop(
+
+    graph,
+
+    current_node,
+
+    destination_node,
+
+    visited_nodes=None
+
+):
+
+    """
+    Dynamically select the next hop toward the destination.
+
+    Previously visited nodes are avoided unless the node
+    is the final destination.
+    """
+
+    if visited_nodes is None:
+
+        visited_nodes = set()
+
+
+    if current_node == destination_node:
+
+        return None, []
+
+
+    # Exclude previously visited nodes from onward routing.
+
+    blocked_nodes = (
+
+        set(visited_nodes)
+
+        - {current_node, destination_node}
+
+    )
+
+
+    routing_graph = graph.copy()
+
+    routing_graph.remove_nodes_from(
+
+        node
+
+        for node in blocked_nodes
+
+        if node in routing_graph
+
+    )
+
+
+    if destination_node not in routing_graph:
+
+        return None, []
+
+
+    # Calculate remaining shortest-path distances.
+
+    try:
+
+        remaining_distances = nx.single_source_dijkstra_path_length(
+
+            routing_graph,
+
+            destination_node,
+
+            weight="routing_cost"
+
+        )
+
+    except nx.NetworkXNoPath:
+
+        return None, []
+
+
+    candidate_records = []
+
+
+    # Evaluate each neighboring node.
+
+    for neighbor in graph.neighbors(current_node):
+
+
+        if neighbor in visited_nodes:
+
+            if neighbor != destination_node:
+
+                continue
+
+
+        link_information = evaluate_rbc_link(
+
+            graph,
+
+            current_node,
+
+            neighbor
+
+        )
+
+
+        if link_information is None:
+
+            continue
+
+
+        if neighbor not in remaining_distances:
+
+            continue
+
+
+        immediate_cost = link_information["routing_cost"]
+
+        remaining_cost = remaining_distances[neighbor]
+
+
+        estimated_total_cost = (
+
+            immediate_cost + remaining_cost
+
+        )
+
+
+        candidate_records.append({
+
+            **link_information,
+
+            "remaining_cost": remaining_cost,
+
+            "estimated_total_cost": estimated_total_cost
+
+        })
+
+
+    if not candidate_records:
+
+        return None, []
+
+
+    # Lowest estimated total route cost is preferred.
+
+    candidate_records.sort(
+
+        key=lambda item: (
+
+            item["estimated_total_cost"],
+
+            -item["utility"],
+
+            item["destination"]
+
+        )
+
+    )
+
+
+    selected_candidate = candidate_records[0]
+
+
+    selected_next_hop = selected_candidate["destination"]
+
+
+    return selected_next_hop, candidate_records
+
+
+
+# ============================================================
+# 3.4 RBC MULTI-HOP ROUTING ALGORITHM
+# ============================================================
+
+def execute_rbc_routing(
+
+    graph,
+
+    start_node,
+
+    destination_node,
+
+    max_hops=RBC_MAX_HOPS
+
+):
+
+    """
+    Execute multi-hop RBC navigation.
+
+    Returns:
+        Route
+        Visited nodes
+        Selected links
+        Candidate history
+        Total routing cost
+        Total end-to-end latency
+        Routing status
+    """
+
+    if start_node not in graph:
+
+        raise ValueError(
+            f"Unknown starting node: {start_node}"
+        )
+
+    if destination_node not in graph:
+
+        raise ValueError(
+            f"Unknown destination node: {destination_node}"
+        )
+
+    if start_node != destination_node and not nx.has_path(
+        graph,
+        start_node,
+        destination_node
+    ):
+
+        raise nx.NetworkXNoPath(
+            f"No route exists from {start_node} "
+            f"to {destination_node}."
+        )
+
+    # --------------------------------------------------------
+    # INITIALIZE ROUTE RECORDS
+    # --------------------------------------------------------
+
+    route = [start_node]
+
+    visited_nodes = [start_node]
+
+    selected_links = []
+
+    candidate_history = []
+
+    total_routing_cost = 0.0
+
+    total_latency = 0.0
+
+    current_node = start_node
+
+    route_status = "in_progress"
+
+    # --------------------------------------------------------
+    # RESET PREVIOUS GRAPH VISUALIZATION FLAGS
+    # --------------------------------------------------------
+
+    for node in graph.nodes:
+
+        graph.nodes[node]["visited"] = False
+
+        graph.nodes[node]["is_hop"] = False
+
+        graph.nodes[node]["is_destination"] = False
+
+    for u, v in graph.edges:
+
+        graph[u][v]["selected"] = False
+
+        graph[u][v]["traversed"] = False
+
+    graph.nodes[start_node]["visited"] = True
+
+    # --------------------------------------------------------
+    # MULTI-HOP NAVIGATION
+    # --------------------------------------------------------
+
+    for step in range(max_hops):
+
+        if current_node == destination_node:
+
+            route_status = "success"
+
+            break
+
+        next_hop, candidates = select_rbc_next_hop(
+
+            graph,
+
+            current_node,
+
+            destination_node,
+
+            visited_nodes=set(visited_nodes)
+
+        )
+
+        candidate_history.append({
+
+            "step": step + 1,
+
+            "current_node": current_node,
+
+            "candidates": candidates
+
+        })
+
+        if next_hop is None:
+
+            route_status = "failed_no_available_hop"
+
+            break
+
+        # ----------------------------------------------------
+        # RETRIEVE SELECTED LINK INFORMATION
+        # ----------------------------------------------------
+
+        link_data = evaluate_rbc_link(
+
+            graph,
+
+            current_node,
+
+            next_hop
+
+        )
+
+        if link_data is None:
+
+            route_status = "failed_invalid_link"
+
+            break
+
+        # ----------------------------------------------------
+        # RECORD SELECTED LINK
+        # ----------------------------------------------------
+
+        graph[current_node][next_hop]["selected"] = True
+
+        graph[current_node][next_hop]["traversed"] = True
+
+        graph.nodes[next_hop]["visited"] = True
+
+        if next_hop != destination_node:
+
+            graph.nodes[next_hop]["is_hop"] = True
+
+        # ----------------------------------------------------
+        # EXTRACT LINK LATENCY AND ROUTING COST
+        # ----------------------------------------------------
+
+        link_latency = float(link_data["latency_ms"])
+
+        link_routing_cost = float(link_data["routing_cost"])
+
+        # ----------------------------------------------------
+        # RECORD SELECTED LINK METRICS
+        # ----------------------------------------------------
+
+        selected_links.append({
+
+            "step": step + 1,
+
+            "source": current_node,
+
+            "destination": next_hop,
+
+            "link_quality": link_data["link_quality"],
+
+            "capacity_mbps": link_data["capacity_mbps"],
+
+            "latency_ms": link_latency,
+
+            "routing_cost": link_routing_cost,
+
+            "utility": link_data["utility"]
+
+        })
+
+        # ----------------------------------------------------
+        # ACCUMULATE ROUTE METRICS
+        # ----------------------------------------------------
+
+        total_routing_cost += link_routing_cost
+
+        total_latency += link_latency
+
+        # ----------------------------------------------------
+        # UPDATE NAVIGATION STATE
+        # ----------------------------------------------------
+
+        current_node = next_hop
+
+        route.append(current_node)
+
+        visited_nodes.append(current_node)
+
+        # ----------------------------------------------------
+        # CHECK DESTINATION
+        # ----------------------------------------------------
+
+        if current_node == destination_node:
+
+            route_status = "success"
+
+            graph.nodes[destination_node]["is_destination"] = True
+
+            break
+
+    # --------------------------------------------------------
+    # FINALIZE ROUTING STATUS
+    # --------------------------------------------------------
+
+    if current_node == destination_node:
+
+        route_status = "success"
+
+    elif route_status == "in_progress":
+
+        route_status = "failed_max_hops"
+
+    # --------------------------------------------------------
+    # UPDATE GLOBAL RBC STATE
+    # --------------------------------------------------------
+
+    RBC_STATE["selected_route"] = route.copy()
+
+    RBC_STATE["visited_subslots"] = visited_nodes.copy()
+
+    RBC_STATE["selected_links"] = selected_links.copy()
+
+    RBC_STATE["total_routing_cost"] = total_routing_cost
+
+    RBC_STATE["total_latency"] = total_latency
+
+    RBC_STATE["selected_subslot"] = (
+
+        destination_node
+
+        if route_status == "success"
+
+        else None
+
+    )
+
+    # --------------------------------------------------------
+    # STORE NAVIGATION HISTORY
+    # --------------------------------------------------------
+
+    RBC_ROUTE_HISTORY.append({
+
+        "start_node": start_node,
+
+        "destination_node": destination_node,
+
+        "route": route.copy(),
+
+        "visited_nodes": visited_nodes.copy(),
+
+        "selected_links": selected_links.copy(),
+
+        "total_routing_cost": total_routing_cost,
+
+        "total_latency_ms": total_latency,
+
+        "average_latency_ms": (
+
+            total_latency / len(selected_links)
+
+            if selected_links
+
+            else 0.0
+
+        ),
+
+        "number_of_hops": len(selected_links),
+
+        "status": route_status
+
+    })
+
+    # --------------------------------------------------------
+    # UPDATE GLOBAL HISTORIES
+    # --------------------------------------------------------
+
+    RBC_VISITED_HISTORY.extend(visited_nodes)
+
+    RBC_LINK_SELECTION_HISTORY.extend(selected_links)
+
+    RBC_CANDIDATE_HISTORY.extend(candidate_history)
+
+    # --------------------------------------------------------
+    # RETURN ROUTING RESULTS
+    # --------------------------------------------------------
+
+    return {
+
+        "route": route,
+
+        "visited_nodes": visited_nodes,
+
+        "selected_links": selected_links,
+
+        "candidate_history": candidate_history,
+
+        "total_routing_cost": total_routing_cost,
+
+        "total_latency_ms": total_latency,
+
+        "average_latency_ms": (
+
+            total_latency / len(selected_links)
+
+            if selected_links
+
+            else 0.0
+
+        ),
+
+        "number_of_hops": len(selected_links),
+
+        "status": route_status
+
+    }
+
+
+# ============================================================
+# 3.5 RBC ROUTING FOOTPRINT VISUALIZATION
+# ============================================================
+
+from matplotlib.lines import Line2D
+
+
+def get_rbc_node_positions():
+
+    """
+    Position the two groups of ten subslots
+    in a two-column topology.
+    """
+
+    positions = {}
+
+    for i in range(SUBSLOTS_PER_SLOT):
+
+        positions[f"Slot_1_S{i+1}"] = (0, -i)
+
+        positions[f"Slot_2_S{i+1}"] = (5, -i)
+
+    return positions
+
+
+
+# ============================================================
+# RBC ROUTING FOOTPRINT VISUALIZATION
+# ============================================================
+
+def plot_rbc_routing_footprint(
+
+    graph,
+
+    routing_result,
+
+    episode=None
+
+):
+
+    """
+    Visualize the complete RBC routing footprint.
+    Displays cumulative end-to-end latency instead of routing cost.
+    """
+
+    route = routing_result["route"]
+
+    visited = set(routing_result["visited_nodes"])
+
+    selected_links = routing_result["selected_links"]
+
+    candidate_history = routing_result["candidate_history"]
+
+    # --------------------------------------------------------
+    # EXTRACT ROUTING METRICS
+    # --------------------------------------------------------
+
+    total_latency_ms = routing_result.get(
+        "total_latency_ms",
+        sum(
+            float(link["latency_ms"])
+            for link in selected_links
+        )
+    )
+
+    average_latency_ms = routing_result.get(
+        "average_latency_ms",
+        (
+            total_latency_ms / len(selected_links)
+            if selected_links
+            else 0.0
+        )
+    )
+
+    number_of_hops = routing_result["number_of_hops"]
+
+    positions = get_rbc_node_positions()
+
+    fig, ax = plt.subplots(figsize=(16, 11))
+
+    # --------------------------------------------------------
+    # A. IDENTIFY GRAPH EDGES
+    # --------------------------------------------------------
+
+    all_edges = list(graph.edges())
+
+    selected_edges = [
+
+        (item["source"], item["destination"])
+
+        for item in selected_links
+
+    ]
+
+    candidate_edges = []
+
+    for record in candidate_history:
+
+        for candidate in record["candidates"]:
+
+            edge = (
+
+                record["current_node"],
+
+                candidate["destination"]
+
+            )
+
+            if edge not in selected_edges:
+
+                candidate_edges.append(edge)
+
+    # --------------------------------------------------------
+    # B. DRAW ALL AVAILABLE GRAPH CONNECTIONS
+    # --------------------------------------------------------
+
+    nx.draw_networkx_edges(
+
+        graph,
+
+        positions,
+
+        edgelist=all_edges,
+
+        edge_color="lightgray",
+
+        width=1.5,
+
+        ax=ax
+
+    )
+
+    # --------------------------------------------------------
+    # C. DRAW CANDIDATE LINKS
+    # --------------------------------------------------------
+
+    candidate_edges = list(dict.fromkeys(candidate_edges))
+
+    nx.draw_networkx_edges(
+
+        graph,
+
+        positions,
+
+        edgelist=candidate_edges,
+
+        edge_color="darkorange",
+
+        width=2.0,
+
+        style="dashed",
+
+        alpha=0.8,
+
+        ax=ax
+
+    )
+
+    # --------------------------------------------------------
+    # D. DRAW SELECTED ROUTING LINKS
+    # --------------------------------------------------------
+
+    nx.draw_networkx_edges(
+
+        graph,
+
+        positions,
+
+        edgelist=selected_edges,
+
+        edge_color="red",
+
+        width=4.0,
+
+        ax=ax
+
+    )
+
+    # --------------------------------------------------------
+    # E. DRAW GRAPH NODES
+    # --------------------------------------------------------
+
+    start_node = route[0]
+
+    destination_node = (
+
+        routing_result.get("destination_node")
+
+        or RBC_STATE["selected_subslot"]
+
+    )
+
+    node_colors = []
+
+    for node in graph.nodes():
+
+        if node == start_node:
+
+            node_colors.append("royalblue")
+
+        elif (
+
+            routing_result["status"] == "success"
+
+            and node == destination_node
+
+        ):
+
+            node_colors.append("limegreen")
+
+        elif node in visited:
+
+            node_colors.append("darkorange")
+
+        else:
+
+            node_colors.append("lightgray")
+
+    nx.draw_networkx_nodes(
+
+        graph,
+
+        positions,
+
+        node_color=node_colors,
+
+        node_size=1250,
+
+        edgecolors="black",
+
+        linewidths=1.2,
+
+        ax=ax
+
+    )
+
+    # --------------------------------------------------------
+    # F. DRAW NODE LABELS
+    # --------------------------------------------------------
+
+    nx.draw_networkx_labels(
+
+        graph,
+
+        positions,
+
+        font_size=10,
+
+        font_weight="bold",
+
+        font_color="black",
+
+        ax=ax
+
+    )
+
+    # --------------------------------------------------------
+    # G. DRAW ROUTE STEP LABELS
+    # --------------------------------------------------------
+
+    for index, node in enumerate(route):
+
+        x, y = positions[node]
+
+        ax.annotate(
+
+            f"Step {index}",
+
+            xy=(x, y),
+
+            xytext=(0, 17),
+
+            textcoords="offset points",
+
+            ha="center",
+
+            fontsize=20,
+
+            fontweight="bold"
+
+        )
+
+    # --------------------------------------------------------
+    # H. TITLES AND LEGEND
+    # --------------------------------------------------------
+
+    ax.text(
+
+        0,
+
+        0.7,
+
+        "Slot 1",
+
+        ha="center",
+
+        fontsize=19,
+
+        fontweight="bold"
+
+    )
+
+    ax.text(
+
+        5,
+
+        0.7,
+
+        "Slot 2",
+
+        ha="center",
+
+        fontsize=19,
+
+        fontweight="bold"
+
+    )
+
+    legend_elements = [
+
+        Line2D(
+
+            [0], [0],
+
+            color="lightgray",
+
+            lw=2,
+
+            label="Available links"
+
+        ),
+
+        Line2D(
+
+            [0], [0],
+
+            color="darkorange",
+
+            lw=2,
+
+            linestyle="--",
+
+            label="Candidate links"
+
+        ),
+
+        Line2D(
+
+            [0], [0],
+
+            color="red",
+
+            lw=4,
+
+            label="Selected routing links"
+
+        ),
+
+        Line2D(
+
+            [0], [0],
+
+            marker="o",
+
+            color="w",
+
+            markerfacecolor="royalblue",
+
+            markeredgecolor="black",
+
+            markersize=12,
+
+            label="Starting subslot"
+
+        ),
+
+        Line2D(
+
+            [0], [0],
+
+            marker="o",
+
+            color="w",
+
+            markerfacecolor="darkorange",
+
+            markeredgecolor="black",
+
+            markersize=12,
+
+            label="Intermediate hop"
+
+        ),
+
+        Line2D(
+
+            [0], [0],
+
+            marker="o",
+
+            color="w",
+
+            markerfacecolor="limegreen",
+
+            markeredgecolor="black",
+
+            markersize=12,
+
+            label="Destination"
+
+        )
+
+    ]
+
+    ax.legend(
+
+        handles=legend_elements,
+
+        loc="upper center",
+
+        bbox_to_anchor=(0.5, 1.112),
+
+        ncol=3,
+
+        frameon=True
+
+    )
+
+    # --------------------------------------------------------
+    # I. ROUTING INFORMATION WITH LATENCY
+    # --------------------------------------------------------
+
+    route_text = " → ".join(route)
+
+    status = routing_result["status"]
+
+    ax.text(
+
+        2.5,
+
+        -11.0,
+
+        f"Routing status: {status}\n"
+
+        f"Number of hops: {number_of_hops}\n"
+
+        f"Total End-to-End Latency: {total_latency_ms:.4f} ms\n"
+
+        f"Average Link Latency: {average_latency_ms:.4f} ms\n"
+
+        f"Route: {route_text}",
+
+        ha="center",
+
+        va="top",
+
+        fontsize=11,
+
+        bbox=dict(
+
+            boxstyle="round,pad=0.5",
+
+            facecolor="white",
+
+            edgecolor="gray",
+
+            alpha=0.9
+
+        )
+
+    )
+
+    # --------------------------------------------------------
+    # J. AXIS CONFIGURATION
+    # --------------------------------------------------------
+
+    ax.set_xlim(-1.5, 6.5)
+
+    ax.set_ylim(-12.0, 1.5)
+
+    ax.axis("off")
+
+    plt.tight_layout()
+
+    # --------------------------------------------------------
+
+    # --------------------------------------------------------
+    # K. SAVE ROUTING FOOTPRINT (ROBUST WINDOWS PATH HANDLING)
+    # --------------------------------------------------------
+
+    from pathlib import Path
+    import re
+
+    # Ensure output directory exists
+    output_dir = Path(RBC_ROUTING_DIR)
+
+    output_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    # Construct filename
+    if episode is not None:
+
+        filename = f"RBC_Routing_Footprint_Episode_{episode}"
+
+    else:
+
+        filename = "RBC_Routing_Footprint"
+
+    # Remove invalid Windows filename characters
+    filename = re.sub(
+        r'[<>:"/\\|?*\x00-\x1f]',
+        "_",
+        str(filename)
+    ).strip(" .")
+
+    # Save in configured formats
+    for fmt in ROUTING_SAVE_FORMAT:
+
+        fmt = str(fmt).strip().lower().lstrip(".")
+
+        if not fmt:
+            continue
+
+        output_path = output_dir / f"{filename}.{fmt}"
+
+        try:
+
+            fig.savefig(
+                str(output_path),
+                format=fmt,
+                dpi=ROUTING_DPI,
+                bbox_inches="tight"
+            )
+
+            print(
+                f"[RBC] Routing footprint saved: {output_path}"
+            )
+
+        except (OSError, ValueError) as error:
+
+            print(
+                f"[RBC] Failed to save routing footprint:\n"
+                f"Path: {output_path!s}\n"
+                f"Format: {fmt}\n"
+                f"Error: {error}"
+            )
+
+    plt.show()
+
+    plt.close(fig)
+
+
+# ============================================================
+# 3.6 RBC ROUTING EXPERIMENT
+# ============================================================
+
+print("\n" + "=" * 75)
+
+print("RBC MULTI-HOP ROUTING EXPERIMENT")
+
+print("=" * 75)
+
+
+routing_result = execute_rbc_routing(
+
+    graph=G,
+
+    start_node=RBC_START_NODE,
+
+    destination_node=RBC_DESTINATION_NODE,
+
+    max_hops=RBC_MAX_HOPS
+
+)
+
+
+# Add destination information for plotting.
+
+routing_result["destination_node"] = RBC_DESTINATION_NODE
+
+
+print("\nSTARTING SUBSLOT:")
+
+print(RBC_START_NODE)
+
+
+print("\nDESTINATION SUBSLOT:")
+
+print(RBC_DESTINATION_NODE)
+
+
+print("\nSELECTED ROUTE:")
+
+print(
+
+    " -> ".join(
+
+        routing_result["route"]
+
+    )
+
+)
+
+
+print("\nVISITED SUBSLOTS:")
+
+for node in routing_result["visited_nodes"]:
+
+    print(node)
+
+
+print("\nSELECTED LINKS:")
+
+for link in routing_result["selected_links"]:
+
+    print(
+
+        f"{link['source']} -> "
+
+        f"{link['destination']} | "
+
+        f"Quality: {link['link_quality']:.3f} | "
+
+        f"Capacity: {link['capacity_mbps']:.2f} Mbps | "
+
+        f"Latency: {link['latency_ms']:.3f} ms | "
+
+        f"Cost: {link['routing_cost']:.4f}"
+
+    )
+
+
+print("\nROUTING PERFORMANCE")
+
+print("Status:", routing_result["status"])
+
+print("Number of hops:", routing_result["number_of_hops"])
+
+print(
+
+    "Total routing cost:",
+
+    round(routing_result["total_routing_cost"], 5)
+
+)
+
+
+print("=" * 75)
+
+
+# ============================================================
+# 3.7 GENERATE RBC ROUTING FOOTPRINT
+# ============================================================
+
+plot_rbc_routing_footprint(
+
+    graph=G,
+
+    routing_result=routing_result,
+
+    episode=1
+
+)
+
+
+# ============================================================
+# 3.8 SAVE RBC ROUTING DATA
+# ============================================================
+
+# ------------------------------------------------------------
+# A. Save complete routing history
+# ------------------------------------------------------------
+
+routing_records = []
+
+
+for route_index, record in enumerate(
+
+    RBC_ROUTE_HISTORY,
+
+    start=1
+
+):
+
+    routing_records.append({
+
+        "Route_ID": route_index,
+
+        "Start_Node": record["start_node"],
+
+        "Destination_Node": record["destination_node"],
+
+        "Route": " -> ".join(record["route"]),
+
+        "Number_of_Hops": record["number_of_hops"],
+
+        "Total_Routing_Cost": record["total_routing_cost"],
+
+        "Routing_Status": record["status"]
+
+    })
+
+
+routing_df = pd.DataFrame(routing_records)
+
+
+routing_df.to_csv(
+
+    RBC_LOG_DIR / "RBC_Routing_History.csv",
+
+    index=False
+
+)
+
+
+# ------------------------------------------------------------
+# B. Save selected links
+# ------------------------------------------------------------
+
+link_df = pd.DataFrame(
+
+    RBC_LINK_SELECTION_HISTORY
+
+)
+
+
+link_df.to_csv(
+
+    RBC_LOG_DIR / "RBC_Selected_Links.csv",
+
+    index=False
+
+)
+
+
+# ------------------------------------------------------------
+# C. Save candidate next-hop evaluations
+# ------------------------------------------------------------
+
+candidate_records = []
+
+
+for record in RBC_CANDIDATE_HISTORY:
+
+    for candidate in record["candidates"]:
+
+        candidate_records.append({
+
+            "Step": record["step"],
+
+            "Current_Node": record["current_node"],
+
+            "Candidate_Node": candidate["destination"],
+
+            "Link_Quality": candidate["link_quality"],
+
+            "Capacity_Mbps": candidate["capacity_mbps"],
+
+            "Latency_ms": candidate["latency_ms"],
+
+            "Routing_Cost": candidate["routing_cost"],
+
+            "Remaining_Cost": candidate["remaining_cost"],
+
+            "Estimated_Total_Cost": candidate["estimated_total_cost"],
+
+            "Utility": candidate["utility"]
+
+        })
+
+
+candidate_df = pd.DataFrame(candidate_records)
+
+
+candidate_df.to_csv(
+
+    RBC_LOG_DIR / "RBC_Candidate_Evaluations.csv",
+
+    index=False
+
+)
+
+
+print("\nRBC ROUTING DATA SAVED")
+
+print("Routing history:", RBC_LOG_DIR)
+
+print("Selected links:", len(link_df))
+
+print("Candidate evaluations:", len(candidate_df))
+
+
+# ============================================================
+# 3.9 BLOCK 3 VALIDATION
+# ============================================================
+
+print("\n" + "=" * 75)
+
+print("BLOCK 3: RBC MULTI-HOP NAVIGATION VALIDATION")
+
+print("=" * 75)
+
+
+assert G.number_of_nodes() == 20
+
+assert routing_result["status"] == "success"
+
+assert routing_result["number_of_hops"] <= RBC_MAX_HOPS
+
+assert routing_result["route"][0] == RBC_START_NODE
+
+assert routing_result["route"][-1] == RBC_DESTINATION_NODE
+
+assert len(
+
+    routing_result["route"]
+
+) == len(set(routing_result["route"]))
+
+
+# Verify every selected link exists.
+
+for link in routing_result["selected_links"]:
+
+    assert G.has_edge(
+
+        link["source"],
+
+        link["destination"]
+
+    )
+
+
+# Verify route connectivity.
+
+for i in range(
+
+    len(routing_result["route"]) - 1
+
+):
+
+    assert G.has_edge(
+
+        routing_result["route"][i],
+
+        routing_result["route"][i+1]
+
+    )
+
+
+print("\n[VALIDATION RESULTS]")
+
+print("Graph nodes:", G.number_of_nodes())
+
+print("Graph edges:", G.number_of_edges())
+
+print("Routing successful:", routing_result["status"])
+
+print("Multi-hop navigation: Enabled")
+
+print("Repeated nodes:", False)
+
+print("Selected links:", len(routing_result["selected_links"]))
+
+print("Routing cost:", routing_result["total_routing_cost"])
+
+print("Routing footprint: Generated")
+
+print("Routing CSV records: Saved")
+
+
+print("\nBLOCK 3 COMPLETED SUCCESSFULLY")
+
+print("=" * 75)
+
+
+# ============================================================
+# BLOCK 4: RBF-BASED SUBSLOT FEATURE EXTRACTION AND SCORING
+# ============================================================
+
+RBF_INPUT_DIM = 6
+RBF_OUTPUT_DIM = RBF_NUM_CENTERS
+
+RBF_TRAINING_EPOCHS = 200
+RBF_LEARNING_RATE = 0.001
+
+RBF_NORMALIZATION_EPS = 1e-8
+
+RBF_FEATURE_NAMES = [
+    "RB_Availability",
+    "Connectivity",
+    "Link_Quality",
+    "Link_Capacity",
+    "Link_Latency",
+    "Subslot_Occupancy"
+]
+
+print("\n" + "=" * 65)
+print("BLOCK 4: RBF SUBSLOT FEATURE EXTRACTION")
+print("=" * 65)
+
+print(f"RBF input dimensions : {RBF_INPUT_DIM}")
+print(f"RBF centers          : {RBF_NUM_CENTERS}")
+print(f"RBF output dimensions: {RBF_OUTPUT_DIM}")
+
+
+
+
+# ============================================================
+# 4.2 EXTRACT SUBSLOT FEATURES
+# ============================================================
+
+def extract_subslot_features(graph, node):
+
+    if node not in graph:
+        raise ValueError(
+            f"Subslot {node} does not exist in graph."
+        )
+
+    if node not in SUBSLOT_STATE:
+        raise KeyError(
+            f"Subslot {node} is missing from SUBSLOT_STATE."
+        )
+
+    node_state = SUBSLOT_STATE[node]
+
+    neighbors = list(graph.neighbors(node))
+
+    # --------------------------------------------------------
+    # Feature 1: RB availability
+    # --------------------------------------------------------
+
+    available_rbs = float(
+        node_state["available_rbs"]
+    )
+
+    rb_availability = np.clip(
+        available_rbs / max(1.0, float(TOTAL_RBS)),
+        0.0,
+        1.0
+    )
+
+    # --------------------------------------------------------
+    # Feature 2: Connectivity
+    # --------------------------------------------------------
+
+    connectivity = len(neighbors) / max(
+        1, MAX_NODE_DEGREE
+    )
+
+    connectivity = np.clip(
+        connectivity,
+        0.0,
+        1.0
+    )
+
+    # --------------------------------------------------------
+    # Initialize link-related features
+    # --------------------------------------------------------
+
+    link_qualities = []
+    link_capacities = []
+    link_latencies = []
+
+    # --------------------------------------------------------
+    # Extract neighboring link characteristics
+    # --------------------------------------------------------
+
+    for neighbor in neighbors:
+
+        edge_data = graph.get_edge_data(node, neighbor)
+
+        if edge_data is None:
+            continue
+
+        # Skip unavailable links.
+        if not edge_data.get("available", True):
+            continue
+
+        # ----------------------------------------------------
+        # Extract capacity
+        # Supports both attribute names.
+        # ----------------------------------------------------
+
+        capacity = edge_data.get(
+            "capacity_mbps",
+            edge_data.get("capacity")
+        )
+
+        # ----------------------------------------------------
+        # Extract latency
+        # Supports both attribute names.
+        # ----------------------------------------------------
+
+        latency = edge_data.get(
+            "latency_ms",
+            edge_data.get("latency")
+        )
+
+        # ----------------------------------------------------
+        # Extract link quality
+        # ----------------------------------------------------
+
+        weight = edge_data.get("weight")
+
+        if weight is None:
+            weight = edge_data.get("link_quality")
+
+        # ----------------------------------------------------
+        # Validate edge attributes
+        # ----------------------------------------------------
+
+        missing_attributes = []
+
+        if capacity is None:
+            missing_attributes.append("capacity/capacity_mbps")
+
+        if latency is None:
+            missing_attributes.append("latency/latency_ms")
+
+        if weight is None:
+            missing_attributes.append("weight/link_quality")
+
+        if missing_attributes:
+            raise KeyError(
+                f"Missing attributes {missing_attributes} "
+                f"for edge {node} -> {neighbor}. "
+                f"Available attributes: {list(edge_data.keys())}"
+            )
+
+        capacity = float(capacity)
+        latency = float(latency)
+        weight = float(weight)
+
+        # ----------------------------------------------------
+        # Feature 3: Normalized link quality
+        # ----------------------------------------------------
+
+        link_quality = np.clip(
+            weight,
+            0.0,
+            1.0
+        )
+
+        # ----------------------------------------------------
+        # Feature 4: Normalized link capacity
+        # ----------------------------------------------------
+
+        link_capacity = np.clip(
+            capacity / max(1e-8, RBC_MAX_LINK_CAPACITY),
+            0.0,
+            1.0
+        )
+
+        # ----------------------------------------------------
+        # Feature 5: Normalized link latency
+        # ----------------------------------------------------
+
+        link_latency = np.clip(
+            latency / max(1e-8, RBC_MAX_LINK_LATENCY),
+            0.0,
+            1.0
+        )
+
+        # ----------------------------------------------------
+        # Store link characteristics
+        # ----------------------------------------------------
+
+        link_qualities.append(link_quality)
+        link_capacities.append(link_capacity)
+        link_latencies.append(link_latency)
+
+    # --------------------------------------------------------
+    # Average neighboring link characteristics
+    # --------------------------------------------------------
+
+    if link_qualities:
+
+        avg_link_quality = float(
+            np.mean(link_qualities)
+        )
+
+        avg_link_capacity = float(
+            np.mean(link_capacities)
+        )
+
+        avg_link_latency = float(
+            np.mean(link_latencies)
+        )
+
+    else:
+
+        # No available neighboring links.
+        avg_link_quality = 0.0
+        avg_link_capacity = 0.0
+        avg_link_latency = 1.0
+
+    # --------------------------------------------------------
+    # Feature 6: Subslot occupancy
+    # --------------------------------------------------------
+
+    allocated_rbs = float(
+        node_state["allocated_rbs"]
+    )
+
+    occupancy = np.clip(
+        allocated_rbs / max(1.0, float(TOTAL_RBS)),
+        0.0,
+        1.0
+    )
+
+    # --------------------------------------------------------
+    # Construct six-dimensional feature vector
+    # --------------------------------------------------------
+
+    feature_vector = np.array(
+        [
+            rb_availability,       # Feature 1
+            connectivity,          # Feature 2
+            avg_link_quality,      # Feature 3
+            avg_link_capacity,     # Feature 4
+            avg_link_latency,      # Feature 5
+            occupancy              # Feature 6
+        ],
+        dtype=np.float32
+    )
+
+    # --------------------------------------------------------
+    # Validate feature vector
+    # --------------------------------------------------------
+
+    if feature_vector.shape != (6,):
+        raise ValueError(
+            f"Invalid feature dimension for {node}: "
+            f"{feature_vector.shape}. Expected (6,)."
+        )
+
+    if not np.all(np.isfinite(feature_vector)):
+        raise ValueError(
+            f"Non-finite feature values detected for {node}: "
+            f"{feature_vector}"
+        )
+
+    return feature_vector
+
+
+
+
+# ============================================================
+# 4.3 BUILD RBC SUBSLOT FEATURE MATRIX
+# ============================================================
+
+def build_rbc_state_matrix(graph):
+
+    feature_rows = []
+
+    node_order = []
+
+    for node in GLOBAL_SUBSLOT_IDS:
+
+        features = extract_subslot_features(
+            graph,
+            node
+        )
+
+        feature_rows.append(features)
+
+        node_order.append(node)
+
+    feature_matrix = np.vstack(feature_rows)
+
+    feature_df = pd.DataFrame(
+        feature_matrix,
+        columns=RBF_FEATURE_NAMES
+    )
+
+    feature_df.insert(
+        0,
+        "Subslot_ID",
+        node_order
+    )
+
+    return feature_matrix, feature_df
+
+# ============================================================
+# DIAGNOSE RBC GRAPH EDGE ATTRIBUTES
+# ============================================================
+
+print("\n" + "=" * 65)
+print("RBC GRAPH EDGE ATTRIBUTE DIAGNOSTICS")
+print("=" * 65)
+
+print("Number of graph edges:", G.number_of_edges())
+
+for u, v, data in list(G.edges(data=True))[:10]:
+
+    print(f"\nEdge: {u} -- {v}")
+    print("Available attributes:", data)
+
+missing_capacity_edges = [
+    (u, v, data)
+    for u, v, data in G.edges(data=True)
+    if "capacity" not in data
+]
+
+print(
+    "\nEdges missing capacity:",
+    len(missing_capacity_edges)
+)
+
+for u, v, data in missing_capacity_edges:
+
+    print(
+        f"{u} -- {v} | "
+        f"Available keys: {list(data.keys())}"
+    )
+RBC_FEATURE_MATRIX, RBC_FEATURE_DF = build_rbc_state_matrix(G)
+
+print("\nRBC feature matrix shape:")
+print(RBC_FEATURE_MATRIX.shape)
+
+print("\nExtracted subslot features:")
+print(RBC_FEATURE_DF.to_string(index=False))
+
+RBC_FEATURE_DF.to_csv(
+    RBC_DIR / "RBC_Subslot_Features.csv",
+    index=False
+)
+
+assert RBC_FEATURE_MATRIX.shape == (
+    TOTAL_SUBSLOTS,
+    RBF_INPUT_DIM
+)
+
+
+# ============================================================
+# 4.4 NORMALIZE SUBSLOT FEATURES
+# ============================================================
+
+def normalize_rbc_features(feature_matrix):
+
+    feature_min = np.min(
+        feature_matrix,
+        axis=0,
+        keepdims=True
+    )
+
+    feature_max = np.max(
+        feature_matrix,
+        axis=0,
+        keepdims=True
+    )
+
+    feature_range = feature_max - feature_min
+
+    normalized = (
+        feature_matrix - feature_min
+    ) / (
+        feature_range + RBF_NORMALIZATION_EPS
+    )
+
+    return normalized.astype(np.float32), feature_min, feature_max
+
+
+RBC_NORMALIZED_FEATURES, RBC_FEATURE_MIN, RBC_FEATURE_MAX = (
+    normalize_rbc_features(RBC_FEATURE_MATRIX)
+)
+
+print("\nNormalized feature matrix:")
+print(RBC_NORMALIZED_FEATURES.shape)
+
+print(
+    np.round(
+        RBC_NORMALIZED_FEATURES,
+        4
+    )
+)
+
+
+
+# ============================================================
+# 4.5 DEFINE RBF NETWORK
+# ============================================================
+
+class RBC_RBF_Network(nn.Module):
+
+    def __init__(
+        self,
+        input_dim,
+        num_centers,
+        sigma=None
+    ):
+
+        super(RBC_RBF_Network, self).__init__()
+
+        self.input_dim = input_dim
+        self.num_centers = num_centers
+
+        # ----------------------------------------------------
+        # Initialize RBF centers
+        # ----------------------------------------------------
+
+        centers = torch.rand(
+            num_centers,
+            input_dim
+        )
+
+        self.centers = nn.Parameter(centers)
+
+        # ----------------------------------------------------
+        # Initialize Gaussian widths
+        # ----------------------------------------------------
+
+        if sigma is None:
+
+            initial_sigma = torch.ones(
+                num_centers
+            ) * 0.5
+
+        else:
+
+            initial_sigma = torch.ones(
+                num_centers
+            ) * float(sigma)
+
+        self.log_sigma = nn.Parameter(
+            torch.log(initial_sigma)
+        )
+
+        # ----------------------------------------------------
+        # Output transformation
+        # ----------------------------------------------------
+
+        self.output_layer = nn.Linear(
+            num_centers,
+            num_centers
+        )
+
+    def forward(self, x):
+
+        # ----------------------------------------------------
+        # Pairwise squared Euclidean distances
+        # ----------------------------------------------------
+
+        distances = torch.cdist(
+            x,
+            self.centers,
+            p=2
+        ) ** 2
+
+        # ----------------------------------------------------
+        # Positive Gaussian widths
+        # ----------------------------------------------------
+
+        sigma = torch.exp(
+            self.log_sigma
+        ).clamp(min=RBF_NORMALIZATION_EPS)
+
+        # ----------------------------------------------------
+        # Gaussian RBF activation
+        # ----------------------------------------------------
+
+        rbf_activations = torch.exp(
+            -distances /
+            (2.0 * sigma.unsqueeze(0) ** 2)
+        )
+
+        # ----------------------------------------------------
+        # Learnable feature transformation
+        # ----------------------------------------------------
+
+        output = torch.relu(
+            self.output_layer(rbf_activations)
+        )
+
+        return rbf_activations, output
+
+
+# ============================================================
+# 4.6 INITIALIZE RBF MODEL
+# ============================================================
+
+RBC_RBF_MODEL = RBC_RBF_Network(
+    input_dim=RBF_INPUT_DIM,
+    num_centers=RBF_NUM_CENTERS,
+    sigma=RBF_SIGMA
+).to(DEVICE)
+
+RBC_RBF_OPTIMIZER = optim.Adam(
+    RBC_RBF_MODEL.parameters(),
+    lr=RBF_LEARNING_RATE
+)
+
+RBC_RBF_INPUT_TENSOR = torch.tensor(
+    RBC_NORMALIZED_FEATURES,
+    dtype=torch.float32,
+    device=DEVICE
+)
+
+print("\nRBF network initialized successfully.")
+
+print("Device:", DEVICE)
+
+print(
+    "Trainable parameters:",
+    sum(
+        parameter.numel()
+        for parameter in RBC_RBF_MODEL.parameters()
+        if parameter.requires_grad
+    )
+)
+
+
+# ============================================================
+# 4.7 COMPUTE RBF ACTIVATIONS
+# ============================================================
+
+RBC_RBF_MODEL.eval()
+
+with torch.no_grad():
+
+    RBC_RBF_ACTIVATIONS, RBC_RBF_OUTPUT = (
+        RBC_RBF_MODEL(
+            RBC_RBF_INPUT_TENSOR
+        )
+    )
+
+RBC_RBF_ACTIVATIONS_NP = (
+    RBC_RBF_ACTIVATIONS
+    .cpu()
+    .numpy()
+)
+
+RBC_RBF_OUTPUT_NP = (
+    RBC_RBF_OUTPUT
+    .cpu()
+    .numpy()
+)
+
+print("\nRBF activation matrix:")
+print(RBC_RBF_ACTIVATIONS_NP.shape)
+
+print("\nRBF output matrix:")
+print(RBC_RBF_OUTPUT_NP.shape)
+
+assert RBC_RBF_ACTIVATIONS_NP.shape == (
+    TOTAL_SUBSLOTS,
+    RBF_NUM_CENTERS
+)
+
+
+# ============================================================
+# 4.8 CALCULATE PRELIMINARY SUBSLOT SCORES
+# ============================================================
+
+RBC_PRELIMINARY_WEIGHTS = np.array(
+    [
+        0.30,   # RB availability
+        0.15,   # Connectivity
+        0.20,   # Link quality
+        0.15,   # Link capacity
+        0.10,   # Link latency
+        0.10    # Occupancy
+    ],
+    dtype=np.float32
+)
+
+# Lower latency and occupancy are preferable.
+RBC_SCORING_FEATURES = RBC_NORMALIZED_FEATURES.copy()
+
+RBC_SCORING_FEATURES[:, 4] = (
+    1.0 - RBC_SCORING_FEATURES[:, 4]
+)
+
+RBC_SCORING_FEATURES[:, 5] = (
+    1.0 - RBC_SCORING_FEATURES[:, 5]
+)
+
+RBC_PRELIMINARY_SCORES = (
+    RBC_SCORING_FEATURES @ RBC_PRELIMINARY_WEIGHTS
+)
+
+# ------------------------------------------------------------
+# Store scores in subslot states
+# ------------------------------------------------------------
+
+for index, node in enumerate(GLOBAL_SUBSLOT_IDS):
+
+    SUBSLOT_STATE[node]["rbf_score"] = float(
+        RBC_PRELIMINARY_SCORES[index]
+    )
+
+print("\nPreliminary RBF-related subslot scores:")
+
+for node, score in zip(
+    GLOBAL_SUBSLOT_IDS,
+    RBC_PRELIMINARY_SCORES
+):
+
+    print(f"{node:15s}: {score:.6f}")
+
+
+
+# ============================================================
+# 4.9 SAVE RBF RESULTS
+# ============================================================
+
+RBC_RBF_RESULTS_DF = pd.DataFrame(
+    RBC_RBF_ACTIVATIONS_NP,
+    columns=[
+        f"RBF_{i + 1}"
+        for i in range(RBF_NUM_CENTERS)
+    ]
+)
+
+RBC_RBF_RESULTS_DF.insert(
+    0,
+    "Subslot_ID",
+    GLOBAL_SUBSLOT_IDS
+)
+
+RBC_RBF_RESULTS_DF["Preliminary_Score"] = (
+    RBC_PRELIMINARY_SCORES
+)
+
+RBC_RBF_RESULTS_DF.to_csv(
+    RBC_DIR / "RBC_RBF_Activations.csv",
+    index=False
+)
+
+print("\nRBF activation results saved.")
+
+
+
+# ============================================================
+# 4.10 PLOT PRELIMINARY RBF SCORES
+# ============================================================
+
+fig, ax = plt.subplots(
+    figsize=(15, 6)
+)
+
+x_positions = np.arange(
+    TOTAL_SUBSLOTS
+)
+
+bars = ax.bar(
+    x_positions,
+    RBC_PRELIMINARY_SCORES,
+    edgecolor="black",
+    linewidth=0.8
+)
+
+ax.set_xticks(x_positions)
+
+ax.set_xticklabels(
+    GLOBAL_SUBSLOT_IDS,
+    rotation=45,
+    ha="right"
+)
+
+ax.set_xlabel(
+    "RBC Subslots",
+    fontweight="bold"
+)
+
+ax.set_ylabel(
+    "Preliminary Subslot Score",
+    fontweight="bold"
+)
+
+ax.set_title(
+    "RBF-Based RBC Subslot Evaluation"
+)
+
+ax.grid(
+    axis="y",
+    linestyle="--",
+    alpha=0.5
+)
+
+ax.set_ylim(
+    0,
+    max(1.0, np.max(RBC_PRELIMINARY_SCORES) * 1.15)
+)
+
+plt.tight_layout()
+
+plt.savefig(
+    RBC_HEATMAP_DIR / "RBC_RBF_Subslot_Scores.png",
+    dpi=600,
+    bbox_inches="tight"
+)
+
+plt.savefig(
+    RBC_HEATMAP_DIR / "RBC_RBF_Subslot_Scores.eps",
+    format="eps",
+    dpi=600,
+    bbox_inches="tight"
+)
+
+plt.show()
+
+
+
+# ============================================================
+# 4.11 BLOCK 4 VALIDATION
+# ============================================================
+
+assert len(GLOBAL_SUBSLOT_IDS) == 20
+
+assert RBC_FEATURE_MATRIX.shape == (20, 6)
+
+assert RBC_RBF_ACTIVATIONS_NP.shape == (20, 64)
+
+assert np.all(
+    np.isfinite(RBC_RBF_ACTIVATIONS_NP)
+)
+
+assert np.all(
+    np.isfinite(RBC_PRELIMINARY_SCORES)
+)
+
+assert np.all(
+    RBC_PRELIMINARY_SCORES >= 0
+)
+
+for node in GLOBAL_SUBSLOT_IDS:
+
+    assert "rbf_score" in SUBSLOT_STATE[node]
+
+print("\n" + "=" * 65)
+print("BLOCK 4 COMPLETED SUCCESSFULLY")
+print("=" * 65)
+
+print("Total subslots:", TOTAL_SUBSLOTS)
+print("Feature dimensions:", RBF_INPUT_DIM)
+print("RBF centers:", RBF_NUM_CENTERS)
+print("RBF activation dimensions:", RBC_RBF_ACTIVATIONS_NP.shape)
+print("Feature extraction: PASSED")
+print("Score generation: PASSED")
+
+# ============================================================
+# BLOCK 5: VERTEX COVER-BASED SUBSLOT SELECTION
+# ============================================================
+
+VERTEX_COVER_ENABLED = True
+
+VERTEX_COVER_MODE = "greedy_weighted"
+
+VERTEX_COVER_USE_RBF = True
+
+VERTEX_COVER_USE_CENTRALITY = True
+
+VERTEX_COVER_MAX_ITERATIONS = TOTAL_SUBSLOTS
+
+VERTEX_COVER_EPS = 1e-8
+
+# Relative importance of the RBF score and graph centrality.
+VERTEX_COVER_RBF_WEIGHT = 0.60
+VERTEX_COVER_CENTRALITY_WEIGHT = 0.40
+
+# Results
+RBC_VERTEX_COVER = set()
+
+RBC_VERTEX_COVER_HISTORY = []
+
+RBC_COVERED_EDGES = []
+
+RBC_UNCOVERED_EDGES = []
+
+print("\n" + "=" * 65)
+print("BLOCK 5: VERTEX COVER SUBSLOT SELECTION")
+print("=" * 65)
+
+print("Graph vertices:", G.number_of_nodes())
+print("Graph edges:", G.number_of_edges())
+print("Vertex Cover mode:", VERTEX_COVER_MODE)
+
+
+# ============================================================
+# 5.2 CALCULATE SUBSLOT GRAPH CENTRALITY
+# ============================================================
+
+def calculate_rbc_centrality(graph):
+
+    degree_centrality = nx.degree_centrality(graph)
+
+    betweenness_centrality = nx.betweenness_centrality(
+        graph,
+        weight="routing_cost",
+        normalized=True
+    )
+
+    closeness_centrality = nx.closeness_centrality(
+        graph,
+        distance="routing_cost"
+    )
+
+    centrality_results = {}
+
+    for node in graph.nodes():
+
+        degree_value = degree_centrality[node]
+
+        betweenness_value = betweenness_centrality[node]
+
+        closeness_value = closeness_centrality[node]
+
+        centrality_score = (
+            0.25 * degree_value
+            + 0.50 * betweenness_value
+            + 0.25 * closeness_value
+        )
+
+        centrality_results[node] = {
+            "degree_centrality": float(degree_value),
+            "betweenness_centrality": float(
+                betweenness_value
+            ),
+            "closeness_centrality": float(
+                closeness_value
+            ),
+            "centrality_score": float(
+                centrality_score
+            )
+        }
+
+    return centrality_results
+
+
+RBC_CENTRALITY = calculate_rbc_centrality(G)
+
+print("\nSubslot centrality results:")
+
+for node in GLOBAL_SUBSLOT_IDS:
+
+    values = RBC_CENTRALITY[node]
+
+    print(
+        f"{node:15s} | "
+        f"Degree={values['degree_centrality']:.4f} | "
+        f"Betweenness={values['betweenness_centrality']:.4f} | "
+        f"Closeness={values['closeness_centrality']:.4f}"
+    )
+
+# ============================================================
+# 5.3 COMBINE RBF AND CENTRALITY SCORES
+# ============================================================
+
+def normalize_score_dictionary(score_dict):
+
+    values = np.array(
+        list(score_dict.values()),
+        dtype=np.float32
+    )
+
+    minimum = np.min(values)
+
+    maximum = np.max(values)
+
+    normalized_values = (
+        values - minimum
+    ) / (
+        maximum - minimum + VERTEX_COVER_EPS
+    )
+
+    return {
+        node: float(normalized_values[index])
+        for index, node in enumerate(score_dict.keys())
+    }
+
+
+RBC_RBF_SCORE_DICT = {
+    node: float(SUBSLOT_STATE[node]["rbf_score"])
+    for node in GLOBAL_SUBSLOT_IDS
+}
+
+RBC_CENTRALITY_SCORE_DICT = {
+    node: RBC_CENTRALITY[node]["centrality_score"]
+    for node in GLOBAL_SUBSLOT_IDS
+}
+
+RBC_NORMALIZED_RBF_SCORES = normalize_score_dictionary(
+    RBC_RBF_SCORE_DICT
+)
+
+RBC_NORMALIZED_CENTRALITY_SCORES = (
+    normalize_score_dictionary(
+        RBC_CENTRALITY_SCORE_DICT
+    )
+)
+
+RBC_VERTEX_PRIORITY = {}
+
+for node in GLOBAL_SUBSLOT_IDS:
+
+    rbf_score = RBC_NORMALIZED_RBF_SCORES[node]
+
+    centrality_score = (
+        RBC_NORMALIZED_CENTRALITY_SCORES[node]
+    )
+
+    if VERTEX_COVER_USE_RBF and VERTEX_COVER_USE_CENTRALITY:
+
+        priority = (
+            VERTEX_COVER_RBF_WEIGHT * rbf_score
+            + VERTEX_COVER_CENTRALITY_WEIGHT
+            * centrality_score
+        )
+
+    elif VERTEX_COVER_USE_RBF:
+
+        priority = rbf_score
+
+    else:
+
+        priority = centrality_score
+
+    RBC_VERTEX_PRIORITY[node] = float(priority)
+
+
+
+# ============================================================
+# BLOCK 6: RBF-VERTEX COVER SUBSLOT SELECTION
+# ============================================================
+
+RBC_SELECTION_ENABLED = True
+
+# Combined selection weights
+RBC_RBF_SELECTION_WEIGHT = 0.40
+RBC_CENTRALITY_SELECTION_WEIGHT = 0.25
+RBC_RESOURCE_SELECTION_WEIGHT = 0.20
+RBC_ROUTE_SELECTION_WEIGHT = 0.15
+
+# Selection constraints
+RBC_MIN_AVAILABLE_RBS = 1
+RBC_EXCLUDE_START_NODE = True
+RBC_SELECTION_EPS = 1e-8
+
+# Results
+RBC_SELECTED_DESTINATION = None
+RBC_SELECTED_ROUTE = []
+RBC_SELECTION_RESULTS = []
+RBC_SELECTION_HISTORY = []
+
+print("\n" + "=" * 65)
+print("BLOCK 6: RBF-VERTEX COVER SUBSLOT SELECTION")
+print("=" * 65)
+
+print("Starting node:", RBC_START_NODE)
+print("Vertex Cover candidates:", len(RBC_ALLOCATION_CANDIDATES))
+print("Maximum route hops:", RBC_MAX_ROUTE_HOPS)
+
+RBC_MAX_ROUTE_HOPS = RBC_MAX_HOPS
+
+# ============================================================
+# 6.2 CALCULATE CANDIDATE ROUTE ACCESSIBILITY
+# ============================================================
+
+def evaluate_candidate_route(graph, start_node, candidate_node):
+
+    if start_node not in graph:
+        return None
+
+    if candidate_node not in graph:
+        return None
+
+    if not nx.has_path(
+        graph,
+        start_node,
+        candidate_node
+    ):
+        return None
+
+    try:
+
+        route = nx.shortest_path(
+            graph,
+            source=start_node,
+            target=candidate_node,
+            weight="routing_cost"
+        )
+
+        route_cost = nx.shortest_path_length(
+            graph,
+            source=start_node,
+            target=candidate_node,
+            weight="routing_cost"
+        )
+
+        route_hops = len(route) - 1
+
+        if route_hops > RBC_MAX_ROUTE_HOPS:
+            return None
+
+        return {
+            "route": route,
+            "route_cost": float(route_cost),
+            "route_hops": int(route_hops),
+            "reachable": True
+        }
+
+    except nx.NetworkXNoPath:
+
+        return None
+
+
+RBC_CANDIDATE_ROUTES = {}
+
+for candidate in RBC_ALLOCATION_CANDIDATES:
+
+    if (
+        RBC_EXCLUDE_START_NODE
+        and candidate == RBC_START_NODE
+    ):
+        continue
+
+    route_information = evaluate_candidate_route(
+        G,
+        RBC_START_NODE,
+        candidate
+    )
+
+    if route_information is not None:
+
+        RBC_CANDIDATE_ROUTES[candidate] = (
+            route_information
+        )
+
+print("\nReachable allocation candidates:")
+
+for node, route_info in RBC_CANDIDATE_ROUTES.items():
+
+    print(
+        f"{node:15s} | "
+        f"Hops={route_info['route_hops']} | "
+        f"Cost={route_info['route_cost']:.4f} | "
+        f"Route={route_info['route']}"
+    )
+
+if not RBC_CANDIDATE_ROUTES:
+
+    raise RuntimeError(
+        "No Vertex Cover allocation candidate is reachable "
+        "within the configured maximum number of hops."
+    )
+
+
+# ============================================================
+# 6.3 EXTRACT CANDIDATE RESOURCE AND LINK INFORMATION
+# ============================================================
+
+def evaluate_candidate_resources(graph, node):
+
+    state = SUBSLOT_STATE[node]
+
+    available_rbs = state["available_rbs"]
+
+    allocated_rbs = state["allocated_rbs"]
+
+    neighbors = list(graph.neighbors(node))
+
+    capacities = []
+    latencies = []
+    qualities = []
+
+    for neighbor in neighbors:
+
+        edge = graph[node][neighbor]
+
+        if not edge.get("available", True):
+            continue
+
+        capacities.append(edge["capacity"])
+        latencies.append(edge["latency"])
+        qualities.append(edge["weight"])
+
+    if capacities:
+
+        average_capacity = float(np.mean(capacities))
+
+        average_latency = float(np.mean(latencies))
+
+        average_quality = float(np.mean(qualities))
+
+    else:
+
+        average_capacity = 0.0
+        average_latency = float("inf")
+        average_quality = 0.0
+
+    # --------------------------------------------------------
+    # Normalize resource availability
+    # --------------------------------------------------------
+
+    resource_availability = np.clip(
+        available_rbs / TOTAL_RBS,
+        0.0,
+        1.0
+    )
+
+    # --------------------------------------------------------
+    # Return candidate characteristics
+    # --------------------------------------------------------
+
+    return {
+        "available_rbs": int(available_rbs),
+        "allocated_rbs": int(allocated_rbs),
+        "resource_availability": float(
+            resource_availability
+        ),
+        "average_capacity": average_capacity,
+        "average_latency": average_latency,
+        "average_link_quality": average_quality,
+        "degree": int(graph.degree(node))
+    }
+
+# ============================================================
+# 6.4 NORMALIZE CANDIDATE EVALUATION METRICS
+# ============================================================
+
+def min_max_normalize(values):
+
+    values = np.asarray(
+        values,
+        dtype=np.float32
+    )
+
+    minimum = np.min(values)
+
+    maximum = np.max(values)
+
+    if np.isclose(maximum, minimum):
+
+        return np.ones_like(values)
+
+    return (
+        (values - minimum)
+        / (maximum - minimum + RBC_SELECTION_EPS)
+    )
+
+
+RBC_CANDIDATE_RESOURCE_DATA = {}
+
+for node in RBC_CANDIDATE_ROUTES:
+
+    RBC_CANDIDATE_RESOURCE_DATA[node] = (
+        evaluate_candidate_resources(
+            G,
+            node
+        )
+    )
+
+candidate_nodes = list(
+    RBC_CANDIDATE_ROUTES.keys()
+)
+
+# ------------------------------------------------------------
+# Extract metric arrays
+# ------------------------------------------------------------
+
+rbf_values = np.array(
+    [
+        RBC_NORMALIZED_RBF_SCORES[node]
+        for node in candidate_nodes
+    ],
+    dtype=np.float32
+)
+
+centrality_values = np.array(
+    [
+        RBC_NORMALIZED_CENTRALITY_SCORES[node]
+        for node in candidate_nodes
+    ],
+    dtype=np.float32
+)
+
+resource_values = np.array(
+    [
+        RBC_CANDIDATE_RESOURCE_DATA[node][
+            "resource_availability"
+        ]
+        for node in candidate_nodes
+    ],
+    dtype=np.float32
+)
+
+route_cost_values = np.array(
+    [
+        RBC_CANDIDATE_ROUTES[node]["route_cost"]
+        for node in candidate_nodes
+    ],
+    dtype=np.float32
+)
+
+# ------------------------------------------------------------
+# Higher route score means lower route cost
+# ------------------------------------------------------------
+
+route_quality_values = 1.0 / (
+    route_cost_values + RBC_SELECTION_EPS
+)
+
+# ------------------------------------------------------------
+# Normalize route quality
+# ------------------------------------------------------------
+
+normalized_route_values = min_max_normalize(
+    route_quality_values
+)
+
+# ------------------------------------------------------------
+# Normalize resource availability
+# ------------------------------------------------------------
+
+normalized_resource_values = min_max_normalize(
+    resource_values
+)
+
+# ============================================================
+# 6.5 CALCULATE COMBINED SUBSLOT SELECTION SCORES
+# ============================================================
+
+weight_sum = (
+    RBC_RBF_SELECTION_WEIGHT
+    + RBC_CENTRALITY_SELECTION_WEIGHT
+    + RBC_RESOURCE_SELECTION_WEIGHT
+    + RBC_ROUTE_SELECTION_WEIGHT
+)
+
+assert np.isclose(weight_sum, 1.0), (
+    "RBC selection weights must sum to 1."
+)
+
+RBC_COMBINED_SCORES = {}
+
+for index, node in enumerate(candidate_nodes):
+
+    combined_score = (
+
+        RBC_RBF_SELECTION_WEIGHT
+        * rbf_values[index]
+
+        + RBC_CENTRALITY_SELECTION_WEIGHT
+        * centrality_values[index]
+
+        + RBC_RESOURCE_SELECTION_WEIGHT
+        * normalized_resource_values[index]
+
+        + RBC_ROUTE_SELECTION_WEIGHT
+        * normalized_route_values[index]
+    )
+
+    RBC_COMBINED_SCORES[node] = float(
+        combined_score
+    )
+
+print("\nCombined candidate scores:")
+
+for node in candidate_nodes:
+
+    print(
+        f"{node:15s}: "
+        f"{RBC_COMBINED_SCORES[node]:.6f}"
+    )
+
+
+# ============================================================
+# 6.6 RANK AND SELECT OPTIMAL DESTINATION
+# ============================================================
+
+RBC_SELECTION_RESULTS = []
+
+for node in candidate_nodes:
+
+    resource_data = RBC_CANDIDATE_RESOURCE_DATA[node]
+
+    route_data = RBC_CANDIDATE_ROUTES[node]
+
+    if (
+        resource_data["available_rbs"]
+        < RBC_MIN_AVAILABLE_RBS
+    ):
+        continue
+
+    result = {
+
+        "Subslot_ID": node,
+
+        "RBF_Score": RBC_NORMALIZED_RBF_SCORES[node],
+
+        "Centrality_Score": (
+            RBC_NORMALIZED_CENTRALITY_SCORES[node]
+        ),
+
+        "Available_RBs": resource_data["available_rbs"],
+
+        "Resource_Availability": (
+            resource_data["resource_availability"]
+        ),
+
+        "Average_Link_Quality": (
+            resource_data["average_link_quality"]
+        ),
+
+        "Average_Link_Capacity": (
+            resource_data["average_capacity"]
+        ),
+
+        "Average_Link_Latency": (
+            resource_data["average_latency"]
+        ),
+
+        "Route_Hops": route_data["route_hops"],
+
+        "Route_Cost": route_data["route_cost"],
+
+        "Combined_Score": RBC_COMBINED_SCORES[node],
+
+        "Route": " -> ".join(route_data["route"])
+    }
+
+    RBC_SELECTION_RESULTS.append(result)
+
+
+if not RBC_SELECTION_RESULTS:
+
+    raise RuntimeError(
+        "No eligible destination subslot has sufficient RB availability."
+    )
+
+RBC_SELECTION_RESULTS.sort(
+    key=lambda item: (
+        -item["Combined_Score"],
+        item["Route_Cost"],
+        item["Subslot_ID"]
+    )
+)
+
+RBC_SELECTION_DF = pd.DataFrame(
+    RBC_SELECTION_RESULTS
+)
+
+# ------------------------------------------------------------
+# Select the highest-ranked candidate
+# ------------------------------------------------------------
+
+RBC_SELECTED_DESTINATION = (
+    RBC_SELECTION_RESULTS[0]["Subslot_ID"]
+)
+
+RBC_SELECTED_ROUTE = (
+    RBC_CANDIDATE_ROUTES[
+        RBC_SELECTED_DESTINATION
+    ]["route"]
+)
+
+# ------------------------------------------------------------
+# Update RBC state
+# ------------------------------------------------------------
+
+RBC_STATE["selected_subslot"] = (
+    RBC_SELECTED_DESTINATION
+)
+
+RBC_STATE["selected_route"] = (
+    RBC_SELECTED_ROUTE
+)
+
+RBC_SELECTION_HISTORY.append(
+    {
+        "selected_destination": RBC_SELECTED_DESTINATION,
+        "combined_score": RBC_COMBINED_SCORES[
+            RBC_SELECTED_DESTINATION
+        ],
+        "route": RBC_SELECTED_ROUTE
+    }
+)
+
+print("\n" + "=" * 65)
+print("SELECTED RBC DESTINATION")
+print("=" * 65)
+
+print("Selected destination:", RBC_SELECTED_DESTINATION)
+
+print("Combined score:", round(
+    RBC_COMBINED_SCORES[RBC_SELECTED_DESTINATION],
+    6
+))
+
+print("Selected route:")
+
+print(" -> ".join(RBC_SELECTED_ROUTE))
+
+print(
+    "Route hops:",
+    len(RBC_SELECTED_ROUTE) - 1
+)
+
+# ============================================================
+# 6.7 DISPLAY CANDIDATE RANKING
+# ============================================================
+
+RBC_SELECTION_DF.insert(
+    0,
+    "Rank",
+    np.arange(
+        1,
+        len(RBC_SELECTION_DF) + 1
+    )
+)
+
+print("\nRBC candidate ranking:")
+
+print(
+    RBC_SELECTION_DF[
+        [
+            "Rank",
+            "Subslot_ID",
+            "RBF_Score",
+            "Centrality_Score",
+            "Available_RBs",
+            "Route_Hops",
+            "Route_Cost",
+            "Combined_Score"
+        ]
+    ].to_string(index=False)
+)
+
+RBC_SELECTION_DF.to_csv(
+    RBC_DIR / "RBC_Optimal_Subslot_Ranking.csv",
+    index=False
+)
+
+# ============================================================
+# 6.8 EXECUTE ROUTING TO SELECTED DESTINATION
+# ============================================================
+
+RBC_DESTINATION_NODE = RBC_SELECTED_DESTINATION
+
+RBC_FINAL_ROUTING_RESULT = execute_rbc_routing(
+    graph=G,
+    start_node=RBC_START_NODE,
+    destination_node=RBC_SELECTED_DESTINATION
+)
+
+RBC_FINAL_ROUTING_RESULT["destination_node"] = (
+    RBC_SELECTED_DESTINATION
+)
+
+if RBC_FINAL_ROUTING_RESULT["status"] != "success":
+
+    raise RuntimeError(
+        "RBC routing failed to reach the selected destination."
+    )
+
+if (
+    RBC_FINAL_ROUTING_RESULT["route"][-1]
+    != RBC_SELECTED_DESTINATION
+):
+
+    raise AssertionError(
+        "The executed route does not terminate at the selected destination."
+    )
+
+print("\nSelected destination successfully reached.")
+
+print(
+    "Executed route:",
+    " -> ".join(
+        RBC_FINAL_ROUTING_RESULT["route"]
+    )
+)
+
+
+# ============================================================
+# 6.9 PLOT FINAL RBC ROUTING FOOTPRINT
+# ============================================================
+
+plot_rbc_routing_footprint(
+    G,
+    RBC_FINAL_ROUTING_RESULT,
+    episode="RBF_VertexCover_Selection"
+)
+
+# ============================================================
+# 6.10 COMBINED RBF-VERTEX COVER HEATMAP
+# ============================================================
+
+RBC_SELECTION_HEATMAP = np.zeros(
+    (NUM_SLOTS, SUBSLOTS_PER_SLOT)
+)
+
+RBC_SELECTION_MASK = np.zeros(
+    (NUM_SLOTS, SUBSLOTS_PER_SLOT)
+)
+
+for slot_index in range(NUM_SLOTS):
+
+    for subslot_index in range(SUBSLOTS_PER_SLOT):
+
+        node = GLOBAL_SUBSLOT_IDS[
+            slot_index * SUBSLOTS_PER_SLOT
+            + subslot_index
+        ]
+
+        if node in RBC_COMBINED_SCORES:
+
+            RBC_SELECTION_HEATMAP[
+                slot_index,
+                subslot_index
+            ] = RBC_COMBINED_SCORES[node]
+
+        if node == RBC_SELECTED_DESTINATION:
+
+            RBC_SELECTION_MASK[
+                slot_index,
+                subslot_index
+            ] = 1
+
+
+fig, ax = plt.subplots(
+    figsize=(14, 5)
+)
+
+im = ax.imshow(
+    RBC_SELECTION_HEATMAP,
+    cmap="YlOrRd",
+    aspect="auto",
+    interpolation="nearest",
+    vmin=0,
+    vmax=1
+)
+
+ax.set_xticks(
+    np.arange(SUBSLOTS_PER_SLOT)
+)
+
+ax.set_xticklabels(
+    [f"S{i + 1}" for i in range(SUBSLOTS_PER_SLOT)]
+)
+
+ax.set_yticks(
+    np.arange(NUM_SLOTS)
+)
+
+ax.set_yticklabels(SLOT_IDS)
+
+ax.set_xlabel(
+    "Subslots",
+    fontweight="bold"
+)
+
+ax.set_ylabel(
+    "RBC Slots",
+    fontweight="bold"
+)
+
+ax.set_title(
+    "RBF-Vertex Cover-Based RBC Subslot Selection",
+    fontweight="bold"
+)
+
+for i in range(NUM_SLOTS):
+
+    for j in range(SUBSLOTS_PER_SLOT):
+
+        node = GLOBAL_SUBSLOT_IDS[
+            i * SUBSLOTS_PER_SLOT + j
+        ]
+
+        score = RBC_SELECTION_HEATMAP[i, j]
+
+        if node == RBC_SELECTED_DESTINATION:
+
+            label = f"{score:.2f}\nSELECTED"
+
+        elif node in RBC_VERTEX_COVER:
+
+            label = f"{score:.2f}\nCOVER"
+
+        else:
+
+            label = f"{score:.2f}"
+
+        ax.text(
+            j,
+            i,
+            label,
+            ha="center",
+            va="center",
+            fontsize=8,
+            fontweight=(
+                "bold"
+                if node == RBC_SELECTED_DESTINATION
+                else "normal"
+            )
+        )
+
+fig.colorbar(
+    im,
+    ax=ax,
+    label="Combined Selection Score"
+)
+
+plt.tight_layout()
+
+plt.savefig(
+    RBC_HEATMAP_DIR / "RBC_RBF_VertexCover_Selection.png",
+    dpi=600,
+    bbox_inches="tight"
+)
+
+plt.savefig(
+    RBC_HEATMAP_DIR / "RBC_RBF_VertexCover_Selection.eps",
+    format="eps",
+    dpi=600,
+    bbox_inches="tight"
+)
+
+plt.show()
+
+
+# ============================================================
+# 6.11 SAVE FINAL RBC SELECTION AND ROUTING RESULTS
+# ============================================================
+
+RBC_FINAL_SELECTION_SUMMARY = pd.DataFrame(
+    [
+        {
+            "Starting_Node": RBC_START_NODE,
+
+            "Selected_Destination": (
+                RBC_SELECTED_DESTINATION
+            ),
+
+            "Route": " -> ".join(
+                RBC_FINAL_ROUTING_RESULT["route"]
+            ),
+
+            "Route_Hops": (
+                RBC_FINAL_ROUTING_RESULT["hops"]
+            ),
+
+            "Route_Cost": (
+                RBC_FINAL_ROUTING_RESULT["total_cost"]
+            ),
+
+            "Combined_Score": RBC_COMBINED_SCORES[
+                RBC_SELECTED_DESTINATION
+            ],
+
+            "Available_RBs": SUBSLOT_STATE[
+                RBC_SELECTED_DESTINATION
+            ]["available_rbs"],
+
+            "Vertex_Cover_Membership": (
+                RBC_SELECTED_DESTINATION
+                in RBC_VERTEX_COVER
+            ),
+
+            "Routing_Status": (
+                RBC_FINAL_ROUTING_RESULT["status"]
+            )
+        }
+    ]
+)
+
+RBC_FINAL_SELECTION_SUMMARY.to_csv(
+    RBC_DIR / "RBC_Final_Subslot_Selection.csv",
+    index=False
+)
+
+print("\nFinal selection and routing results saved.")
+
+
+# ============================================================
+# 6.12 BLOCK 6 VALIDATION
+# ============================================================
+
+assert RBC_SELECTED_DESTINATION is not None
+
+assert RBC_SELECTED_DESTINATION in RBC_VERTEX_COVER
+
+assert RBC_SELECTED_DESTINATION in RBC_ALLOCATION_CANDIDATES
+
+assert (
+    SUBSLOT_STATE[RBC_SELECTED_DESTINATION]["available_rbs"]
+    >= RBC_MIN_AVAILABLE_RBS
+)
+
+assert RBC_FINAL_ROUTING_RESULT["status"] == "success"
+
+assert (
+    RBC_FINAL_ROUTING_RESULT["route"][0]
+    == RBC_START_NODE
+)
+
+assert (
+    RBC_FINAL_ROUTING_RESULT["route"][-1]
+    == RBC_SELECTED_DESTINATION
+)
+
+assert (
+    RBC_FINAL_ROUTING_RESULT["hops"]
+    <= RBC_MAX_ROUTE_HOPS
+)
+
+assert (
+    RBC_FINAL_ROUTING_RESULT["total_cost"] >= 0
+)
+
+print("\n" + "=" * 65)
+print("BLOCK 6 COMPLETED SUCCESSFULLY")
+print("=" * 65)
+
+print("RBF evaluation: PASSED")
+print("Vertex Cover filtering: PASSED")
+print("RB availability filtering: PASSED")
+print("Candidate ranking: PASSED")
+print("Destination selection: PASSED")
+print("Multi-hop routing: PASSED")
+
+print("\nSelected destination:", RBC_SELECTED_DESTINATION)
+
+print(
+    "Final route:",
+    " -> ".join(
+        RBC_FINAL_ROUTING_RESULT["route"]
+    )
+)
+
+
+print("\nCombined vertex priority scores:")
+
+for node, score in RBC_VERTEX_PRIORITY.items():
+
+    print(f"{node:15s}: {score:.6f}")
+
+
+# ============================================================
+# 5.4 WEIGHTED GREEDY VERTEX COVER
+# ============================================================
+
+def weighted_greedy_vertex_cover(graph, priority_scores):
+
+    if graph.is_directed():
+        raise ValueError(
+            "Vertex Cover requires an undirected graph."
+        )
+
+    if graph.number_of_nodes() == 0:
+        raise ValueError("The RBC graph is empty.")
+
+    if graph.number_of_edges() == 0:
+        raise ValueError(
+            "The RBC graph contains no edges."
+        )
+
+    uncovered_edges = set(
+        frozenset(edge)
+        for edge in graph.edges()
+    )
+
+    selected_vertices = set()
+
+    selection_history = []
+
+    # --------------------------------------------------------
+    # Iteratively select vertices until every edge is covered
+    # --------------------------------------------------------
+
+    iteration = 0
+
+    while uncovered_edges:
+
+        iteration += 1
+
+        if iteration > VERTEX_COVER_MAX_ITERATIONS:
+
+            raise RuntimeError(
+                "Vertex Cover exceeded the maximum iterations."
+            )
+
+        vertex_candidates = []
+
+        for node in graph.nodes():
+
+            if node in selected_vertices:
+                continue
+
+            # Find uncovered edges incident to this vertex.
+            incident_uncovered_edges = [
+                edge
+                for edge in uncovered_edges
+                if node in edge
+            ]
+
+            if not incident_uncovered_edges:
+                continue
+
+            # ------------------------------------------------
+            # Calculate total uncovered edge importance
+            # ------------------------------------------------
+
+            coverage_weight = 0.0
+
+            for edge in incident_uncovered_edges:
+
+                edge_nodes = list(edge)
+
+                u, v = edge_nodes
+
+                edge_data = graph[u][v]
+
+                edge_importance = (
+                    1.0 /
+                    (
+                        edge_data["routing_cost"]
+                        + VERTEX_COVER_EPS
+                    )
+                )
+
+                coverage_weight += edge_importance
+
+            # ------------------------------------------------
+            # Selection cost
+            # ------------------------------------------------
+
+            priority = priority_scores[node]
+
+            selection_cost = (
+                1.0 - priority
+                + VERTEX_COVER_EPS
+            )
+
+            # ------------------------------------------------
+            # Greedy selection ratio
+            # ------------------------------------------------
+
+            selection_ratio = (
+                coverage_weight / selection_cost
+            )
+
+            vertex_candidates.append(
+                {
+                    "node": node,
+                    "coverage_weight": coverage_weight,
+                    "selection_cost": selection_cost,
+                    "selection_ratio": selection_ratio,
+                    "priority": priority,
+                    "covered_edge_count": len(
+                        incident_uncovered_edges
+                    )
+                }
+            )
+
+        if not vertex_candidates:
+
+            raise RuntimeError(
+                "Unable to cover all remaining RBC graph edges."
+            )
+
+        # ----------------------------------------------------
+        # Select the vertex with the highest ratio
+        # ----------------------------------------------------
+
+        vertex_candidates.sort(
+            key=lambda item: (
+                -item["selection_ratio"],
+                -item["priority"],
+                item["node"]
+            )
+        )
+
+        best_candidate = vertex_candidates[0]
+
+        selected_node = best_candidate["node"]
+
+        selected_vertices.add(selected_node)
+
+        # ----------------------------------------------------
+        # Remove all edges covered by the selected vertex
+        # ----------------------------------------------------
+
+        newly_covered_edges = [
+            edge
+            for edge in uncovered_edges
+            if selected_node in edge
+        ]
+
+        for edge in newly_covered_edges:
+
+            uncovered_edges.remove(edge)
+
+        selection_history.append(
+            {
+                "iteration": iteration,
+                "selected_vertex": selected_node,
+                "priority_score": best_candidate["priority"],
+                "coverage_weight": best_candidate[
+                    "coverage_weight"
+                ],
+                "selection_cost": best_candidate[
+                    "selection_cost"
+                ],
+                "selection_ratio": best_candidate[
+                    "selection_ratio"
+                ],
+                "newly_covered_edges": len(
+                    newly_covered_edges
+                ),
+                "remaining_uncovered_edges": len(
+                    uncovered_edges
+                )
+            }
+        )
+
+    return (
+        selected_vertices,
+        selection_history
+    )
+
+
+# ============================================================
+# 5.5 EXECUTE VERTEX COVER
+# ============================================================
+
+if not VERTEX_COVER_ENABLED:
+
+    raise RuntimeError(
+        "Vertex Cover is disabled in the RBC configuration."
+    )
+
+RBC_VERTEX_COVER, RBC_VERTEX_COVER_HISTORY = (
+    weighted_greedy_vertex_cover(
+        graph=G,
+        priority_scores=RBC_VERTEX_PRIORITY
+    )
+)
+
+# ------------------------------------------------------------
+# Identify covered and uncovered edges
+# ------------------------------------------------------------
+
+RBC_COVERED_EDGES = []
+
+RBC_UNCOVERED_EDGES = []
+
+for u, v in G.edges():
+
+    if u in RBC_VERTEX_COVER or v in RBC_VERTEX_COVER:
+
+        RBC_COVERED_EDGES.append((u, v))
+
+    else:
+
+        RBC_UNCOVERED_EDGES.append((u, v))
+
+print("\n" + "=" * 65)
+print("VERTEX COVER EXECUTION RESULTS")
+print("=" * 65)
+
+print("Total graph vertices:", G.number_of_nodes())
+
+print("Total graph edges:", G.number_of_edges())
+
+print("Selected cover vertices:", len(RBC_VERTEX_COVER))
+
+print("Covered edges:", len(RBC_COVERED_EDGES))
+
+print("Uncovered edges:", len(RBC_UNCOVERED_EDGES))
+
+print("\nSelected Vertex Cover subslots:")
+
+for node in GLOBAL_SUBSLOT_IDS:
+
+    if node in RBC_VERTEX_COVER:
+
+        print(
+            f"{node:15s} | "
+            f"Priority={RBC_VERTEX_PRIORITY[node]:.6f}"
+        )
+
+assert len(RBC_UNCOVERED_EDGES) == 0
+
+
+# ============================================================
+# 5.6 IDENTIFY RB ALLOCATION CANDIDATES
+# ============================================================
+
+RBC_ALLOCATION_CANDIDATES = []
+
+RBC_INTERMEDIATE_HOPS = []
+
+RBC_COVER_VERTEX_DETAILS = []
+
+for node in GLOBAL_SUBSLOT_IDS:
+
+    if node not in RBC_VERTEX_COVER:
+        continue
+
+    node_state = SUBSLOT_STATE[node]
+
+    available_rbs = node_state["available_rbs"]
+
+    degree = G.degree(node)
+
+    betweenness = RBC_CENTRALITY[node][
+        "betweenness_centrality"
+    ]
+
+    priority = RBC_VERTEX_PRIORITY[node]
+
+    # --------------------------------------------------------
+    # Check RB availability
+    # --------------------------------------------------------
+
+    if available_rbs > 0:
+
+        RBC_ALLOCATION_CANDIDATES.append(node)
+
+    # --------------------------------------------------------
+    # Identify intermediate-hop vertices
+    # --------------------------------------------------------
+
+    if degree >= 2 and betweenness > 0:
+
+        RBC_INTERMEDIATE_HOPS.append(node)
+
+    RBC_COVER_VERTEX_DETAILS.append(
+        {
+            "Subslot_ID": node,
+            "Available_RBs": available_rbs,
+            "Degree": degree,
+            "Betweenness": betweenness,
+            "RBF_Score": RBC_RBF_SCORE_DICT[node],
+            "Centrality_Score": RBC_CENTRALITY_SCORE_DICT[node],
+            "Vertex_Priority": priority,
+            "Allocation_Eligible": available_rbs > 0,
+            "Intermediate_Hop": (
+                degree >= 2 and betweenness > 0
+            )
+        }
+    )
+
+RBC_COVER_VERTEX_DF = pd.DataFrame(
+    RBC_COVER_VERTEX_DETAILS
+)
+
+print("\nVertex Cover allocation candidates:")
+
+for node in RBC_ALLOCATION_CANDIDATES:
+
+    print(
+        f"{node:15s} | "
+        f"RBF score={RBC_RBF_SCORE_DICT[node]:.4f} | "
+        f"Priority={RBC_VERTEX_PRIORITY[node]:.4f}"
+    )
+
+print("\nIntermediate-hop subslots:")
+
+for node in RBC_INTERMEDIATE_HOPS:
+
+    print(node)
+
+RBC_COVER_VERTEX_DF.to_csv(
+    RBC_DIR / "RBC_Vertex_Cover_Details.csv",
+    index=False
+)
+
+# ============================================================
+# 5.7 PLOT RBC VERTEX COVER
+# ============================================================
+
+def plot_rbc_vertex_cover(graph):
+
+    positions = get_rbc_node_positions()
+
+    fig, ax = plt.subplots(
+        figsize=(16, 9)
+    )
+
+    # --------------------------------------------------------
+    # Draw all graph edges
+    # --------------------------------------------------------
+
+    nx.draw_networkx_edges(
+        graph,
+        positions,
+        ax=ax,
+        edge_color="lightgray",
+        width=1.5,
+        alpha=0.8
+    )
+
+    # --------------------------------------------------------
+    # Draw cover vertices
+    # --------------------------------------------------------
+
+    cover_nodes = list(
+        RBC_VERTEX_COVER
+    )
+
+    nx.draw_networkx_nodes(
+        graph,
+        positions,
+        nodelist=cover_nodes,
+        node_color="orange",
+        node_size=950,
+        edgecolors="black",
+        linewidths=1.5,
+        ax=ax,
+        label="Vertex Cover"
+    )
+
+    # --------------------------------------------------------
+    # Draw non-cover vertices
+    # --------------------------------------------------------
+
+    non_cover_nodes = [
+        node
+        for node in graph.nodes()
+        if node not in RBC_VERTEX_COVER
+    ]
+
+    nx.draw_networkx_nodes(
+        graph,
+        positions,
+        nodelist=non_cover_nodes,
+        node_color="lightgray",
+        node_size=800,
+        edgecolors="black",
+        linewidths=1.0,
+        ax=ax,
+        label="Non-cover vertex"
+    )
+
+    # --------------------------------------------------------
+    # Highlight intermediate-hop vertices
+    # --------------------------------------------------------
+
+    hop_nodes = [
+        node
+        for node in RBC_INTERMEDIATE_HOPS
+        if node in RBC_VERTEX_COVER
+    ]
+
+    nx.draw_networkx_nodes(
+        graph,
+        positions,
+        nodelist=hop_nodes,
+        node_color="red",
+        node_size=500,
+        node_shape="s",
+        edgecolors="black",
+        linewidths=1.2,
+        ax=ax,
+        label="Intermediate-hop cover vertex"
+    )
+
+    # --------------------------------------------------------
+    # Node labels
+    # --------------------------------------------------------
+
+    nx.draw_networkx_labels(
+        graph,
+        positions,
+        font_size=8,
+        font_weight="bold",
+        ax=ax
+    )
+
+    # --------------------------------------------------------
+    # Plot information
+    # --------------------------------------------------------
+
+    ax.set_title(
+        "RBC Weighted Vertex Cover Selection",
+        fontweight="bold"
+    )
+
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.08),
+        ncol=3,
+        frameon=True
+    )
+
+    ax.text(
+        0.02,
+        0.98,
+        (
+            f"Total vertices: {graph.number_of_nodes()}\n"
+            f"Total edges: {graph.number_of_edges()}\n"
+            f"Selected cover vertices: {len(RBC_VERTEX_COVER)}\n"
+            f"Covered edges: {len(RBC_COVERED_EDGES)}"
+        ),
+        transform=ax.transAxes,
+        verticalalignment="top",
+        bbox=dict(
+            boxstyle="round",
+            facecolor="white",
+            alpha=0.9
+        )
+    )
+
+    ax.axis("off")
+
+    plt.tight_layout()
+
+    plt.savefig(
+        RBC_GRAPH_DIR / "RBC_Vertex_Cover.png",
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    plt.savefig(
+        RBC_GRAPH_DIR / "RBC_Vertex_Cover.eps",
+        format="eps",
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    plt.show()
+
+
+plot_rbc_vertex_cover(G)
+
+
+# ============================================================
+# 5.8 RBC VERTEX COVER HEATMAP
+# ============================================================
+
+vertex_cover_matrix = np.zeros(
+    (NUM_SLOTS, SUBSLOTS_PER_SLOT)
+)
+
+for slot_index in range(NUM_SLOTS):
+
+    for subslot_index in range(SUBSLOTS_PER_SLOT):
+
+        node = GLOBAL_SUBSLOT_IDS[
+            slot_index * SUBSLOTS_PER_SLOT
+            + subslot_index
+        ]
+
+        vertex_cover_matrix[
+            slot_index,
+            subslot_index
+        ] = (
+            RBC_VERTEX_PRIORITY[node]
+            if node in RBC_VERTEX_COVER
+            else 0.0
+        )
+
+
+fig, ax = plt.subplots(
+    figsize=(14, 5)
+)
+
+im = ax.imshow(
+    vertex_cover_matrix,
+    cmap="YlOrRd",
+    aspect="auto",
+    interpolation="nearest"
+)
+
+ax.set_xticks(
+    np.arange(SUBSLOTS_PER_SLOT)
+)
+
+ax.set_xticklabels(
+    [
+        f"S{i + 1}"
+        for i in range(SUBSLOTS_PER_SLOT)
+    ]
+)
+
+ax.set_yticks(
+    np.arange(NUM_SLOTS)
+)
+
+ax.set_yticklabels(
+    SLOT_IDS
+)
+
+ax.set_xlabel(
+    "Subslots",
+    fontweight="bold"
+)
+
+ax.set_ylabel(
+    "RBC Slots",
+    fontweight="bold"
+)
+
+ax.set_title(
+    "RBC Vertex Cover Selection Heatmap",
+    fontweight="bold"
+)
+
+for i in range(NUM_SLOTS):
+
+    for j in range(SUBSLOTS_PER_SLOT):
+
+        node = GLOBAL_SUBSLOT_IDS[
+            i * SUBSLOTS_PER_SLOT + j
+        ]
+
+        selected = node in RBC_VERTEX_COVER
+
+        label = (
+            f"{vertex_cover_matrix[i, j]:.2f}\nSelected"
+            if selected
+            else "Not selected"
+        )
+
+        ax.text(
+            j,
+            i,
+            label,
+            ha="center",
+            va="center",
+            fontsize=8
+        )
+
+fig.colorbar(
+    im,
+    ax=ax,
+    label="Vertex Priority"
+)
+
+plt.tight_layout()
+
+plt.savefig(
+    RBC_HEATMAP_DIR / "RBC_Vertex_Cover_Heatmap.png",
+    dpi=600,
+    bbox_inches="tight"
+)
+
+plt.savefig(
+    RBC_HEATMAP_DIR / "RBC_Vertex_Cover_Heatmap.eps",
+    format="eps",
+    dpi=600,
+    bbox_inches="tight"
+)
+
+plt.show()
+
+
+# ============================================================
+# 5.9 SAVE VERTEX COVER RESULTS
+# ============================================================
+
+RBC_VERTEX_COVER_HISTORY_DF = pd.DataFrame(
+    RBC_VERTEX_COVER_HISTORY
+)
+
+RBC_VERTEX_COVER_HISTORY_DF.to_csv(
+    RBC_DIR / "RBC_Vertex_Cover_Selection_History.csv",
+    index=False
+)
+
+RBC_VERTEX_COVER_SUMMARY = pd.DataFrame(
+    [
+        {
+            "Total_Vertices": G.number_of_nodes(),
+            "Total_Edges": G.number_of_edges(),
+            "Selected_Cover_Vertices": len(
+                RBC_VERTEX_COVER
+            ),
+            "Covered_Edges": len(
+                RBC_COVERED_EDGES
+            ),
+            "Uncovered_Edges": len(
+                RBC_UNCOVERED_EDGES
+            ),
+            "Allocation_Candidates": len(
+                RBC_ALLOCATION_CANDIDATES
+            ),
+            "Intermediate_Hops": len(
+                RBC_INTERMEDIATE_HOPS
+            ),
+            "Cover_Ratio": (
+                len(RBC_VERTEX_COVER)
+                / G.number_of_nodes()
+            )
+        }
+    ]
+)
+
+RBC_VERTEX_COVER_SUMMARY.to_csv(
+    RBC_DIR / "RBC_Vertex_Cover_Summary.csv",
+    index=False
+)
+
+print("\nVertex Cover results saved.")
+
+
+# ============================================================
+# 5.10 BLOCK 5 VALIDATION
+# ============================================================
+
+assert G.number_of_nodes() == TOTAL_SUBSLOTS
+
+assert len(RBC_VERTEX_COVER) > 0
+
+assert len(RBC_UNCOVERED_EDGES) == 0
+
+# Every graph edge must have at least one endpoint in the cover.
+for u, v in G.edges():
+
+    assert (
+        u in RBC_VERTEX_COVER
+        or v in RBC_VERTEX_COVER
+    ), f"Uncovered edge detected: {u} -- {v}"
+
+# All allocation candidates must belong to the Vertex Cover.
+for node in RBC_ALLOCATION_CANDIDATES:
+
+    assert node in RBC_VERTEX_COVER
+
+    assert SUBSLOT_STATE[node]["available_rbs"] > 0
+
+print("\n" + "=" * 65)
+print("BLOCK 5 COMPLETED SUCCESSFULLY")
+print("=" * 65)
+
+print("Vertex Cover validation: PASSED")
+
+print("All graph edges covered: PASSED")
+
+print("RBF-based vertex prioritization: PASSED")
+
+print("Allocation candidate identification: PASSED")
+
+print("Intermediate-hop identification: PASSED")
