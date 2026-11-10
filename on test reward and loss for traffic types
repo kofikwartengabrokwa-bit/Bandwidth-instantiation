@@ -1,0 +1,5164 @@
+
+# ============================================================
+# BLOCK 1: EXPERIMENT CONFIGURATION AND DIRECTORY SETUP
+#
+# Objective:
+# Configure the four DDQN-based models for independent
+# training on traffic types 1, 2, and 3.
+#
+# Models:
+#   1. RBF-DDQN
+#   2. DDQN
+#   3. GGN-DDQN
+#   4. GCN-DDQN
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. IMPORT REQUIRED LIBRARIES
+# ------------------------------------------------------------
+
+import os
+import random
+import sqlite3
+import warnings
+
+from pathlib import Path
+from itertools import product
+
+import numpy as np
+import pandas as pd
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+import matplotlib.pyplot as plt
+
+
+warnings.filterwarnings("ignore")
+
+
+# ------------------------------------------------------------
+# 2. PROJECT DIRECTORY CONFIGURATION
+# ------------------------------------------------------------
+
+BASE_DIR = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3"
+)
+
+# Dataset location.
+DATASET_PATH = Path(
+    r"E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv"
+)
+
+# The dataset directory is explicitly selected.
+# This avoids accidentally selecting another dataset folder.
+DATA_DIR = DATASET_PATH.parent
+
+# Dataset configuration used by Block 2.
+DATA_FILE = DATASET_PATH
+DATA_TABLE = None
+
+# The exact column name in the supplied dataset.
+TRAFFIC_TYPE_COLUMN = "Traffic Type"
+
+# Supported dataset formats.
+SUPPORTED_EXTENSIONS = {
+    ".csv",
+    ".parquet",
+    ".db",
+    ".sqlite",
+    ".sqlite3"
+}
+
+
+# ------------------------------------------------------------
+# 3. PROJECT SUBDIRECTORIES
+# ------------------------------------------------------------
+
+PY5CHESIM_DIR = BASE_DIR / "py5chesim"
+
+MODEL_DIR = BASE_DIR / "models"
+
+RESULT_DIR = (
+    BASE_DIR
+    / "results"
+    / "Traffic_1_2_3_Radio_Performance"
+)
+
+FIGURE_DIR = RESULT_DIR / "figures"
+
+CSV_DIR = RESULT_DIR / "csv"
+
+CHECKPOINT_DIR = RESULT_DIR / "checkpoints"
+
+TRAINING_HISTORY_DIR = RESULT_DIR / "training_histories"
+
+
+# Create all required directories.
+for directory in [
+    BASE_DIR,
+    MODEL_DIR,
+    RESULT_DIR,
+    FIGURE_DIR,
+    CSV_DIR,
+    CHECKPOINT_DIR,
+    TRAINING_HISTORY_DIR
+]:
+
+    directory.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+
+# ------------------------------------------------------------
+# 4. REPRODUCIBILITY CONFIGURATION
+# ------------------------------------------------------------
+
+SEED = 1000#1000#42#1000
+#SEEDS = [42, 100, 202, 420, 520, 777, 1000, 1220, 2026, 4321]
+
+random.seed(SEED)
+
+np.random.seed(SEED)
+
+torch.manual_seed(SEED)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(SEED)
+    torch.cuda.manual_seed_all(SEED)
+
+
+# Select CPU or GPU automatically.
+DEVICE = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+
+print("=" * 70)
+print("EXPERIMENT CONFIGURATION")
+print("=" * 70)
+
+print("Project directory:", BASE_DIR)
+
+print("Dataset:", DATASET_PATH)
+
+print("Device:", DEVICE)
+
+print("Random seed:", SEED)
+
+
+# ------------------------------------------------------------
+# 5. MODEL CONFIGURATION
+# ------------------------------------------------------------
+
+MODELS = [
+    "RBF-DDQN",
+    "DDQN",
+    "GGN-DDQN",
+    "GCN-DDQN"
+]
+
+# Traffic classes selected for the experiment.
+TRAFFIC_TYPES = [1, 2, 3]
+
+# Each model will be trained independently for each
+# traffic type.
+#
+# Total independent training runs:
+# 4 models x 3 traffic types = 12 runs.
+
+
+# ------------------------------------------------------------
+# 6. DATASET CONFIGURATION
+# ------------------------------------------------------------
+
+EXPECTED_DATASET_ROWS = 2345
+
+EXPECTED_DATASET_COLUMNS = 18
+
+EXPECTED_TRAFFIC_COUNTS = {
+    1: 579,
+    2: 614,
+    3: 574
+}
+
+# The dataset has 18 original columns.
+# The neural networks will receive a constructed
+# 12-dimensional state in a later block.
+STATE_DIM = 12
+
+
+# ------------------------------------------------------------
+# 7. RADIO RESOURCE CONFIGURATION
+# ------------------------------------------------------------
+
+TOTAL_RBS = 100
+
+TOTAL_BANDWIDTH_MHZ = 20.0
+
+TOTAL_POWER_BUDGET = 40.0
+
+SLOT_SECONDS = 0.001
+
+# NR subcarrier spacing.
+SUBCARRIER_SPACING_KHZ = 15
+
+# One resource block contains 12 subcarriers.
+SUBCARRIERS_PER_RB = 12
+
+# Traffic demand will be converted into Mbps
+# after confirming the dataset units.
+
+
+# ------------------------------------------------------------
+# 8. ACTION-SPACE CONFIGURATION
+# ------------------------------------------------------------
+
+RB_ACTIONS = [
+    1,
+    2,
+    4,
+    8,
+    16
+]
+
+POWER_ACTIONS = [
+    1,
+    2,
+    4,
+    8
+]
+
+# Each action represents a combination of:
+# (requested RBs, requested transmission power).
+
+ACTIONS = list(
+    product(
+        RB_ACTIONS,
+        POWER_ACTIONS
+    )
+)
+
+NUM_ACTIONS = len(ACTIONS)
+
+
+# ------------------------------------------------------------
+# 9. DEEP REINFORCEMENT LEARNING CONFIGURATION
+# ------------------------------------------------------------
+
+# Replay memory.
+REPLAY_BUFFER_SIZE = 30000
+
+# Mini-batch size.
+BATCH_SIZE = 128
+
+# Discount factor.
+GAMMA = 0.99
+
+# Optimizer learning rate.
+LEARNING_RATE = 1e-3
+
+# Target network update interval.
+TARGET_UPDATE_FREQUENCY = 250
+
+
+# ------------------------------------------------------------
+# 10. EXPLORATION CONFIGURATION
+# ------------------------------------------------------------
+
+EPSILON_START = 1.0
+
+EPSILON_END = 0.05
+
+EPSILON_DECAY = 0.985
+
+
+# ------------------------------------------------------------
+# 11. NEURAL NETWORK CONFIGURATION
+# ------------------------------------------------------------
+
+HIDDEN_DIM = 64
+
+RBF_CENTERS = 128
+
+# The four architectures will use the same input
+# dimension and output action dimension.
+#
+# Their internal feature-processing structures remain
+# different as defined in Block 3.
+
+
+# ------------------------------------------------------------
+# 12. TRAINING CONFIGURATION
+# ------------------------------------------------------------
+
+NUM_EPISODES = 50
+
+TRAINING_EPISODES = NUM_EPISODES
+
+# Number of training records available for each
+# traffic type is determined by Block 2.
+
+# Dataset-based training will use the records belonging
+# to the selected traffic type.
+
+
+# ------------------------------------------------------------
+# 13. EVALUATION CONFIGURATION
+# ------------------------------------------------------------
+
+EVALUATION_TRAFFIC_TYPES = [1, 2, 3]
+
+EVALUATION_USER_COUNTS = [
+    100,
+    200,
+    400,
+    600,
+    800,
+    1000
+]
+
+FIXED_EVALUATION_USERS = 200
+
+EVALUATION_REPEATS = 5
+
+
+# ------------------------------------------------------------
+# 14. PRIMARY PERFORMANCE METRICS
+# ------------------------------------------------------------
+
+PRIMARY_METRICS = [
+    "data_rate",
+    "throughput"
+]
+
+
+# ------------------------------------------------------------
+# 15. TRAINING HISTORY CONFIGURATION
+# ------------------------------------------------------------
+
+# The training loop will store:
+#
+# episode_reward:
+#     Total reward accumulated during one episode.
+#
+# average_episode_reward:
+#     Mean reward per decision during one episode.
+#
+# episode_loss:
+#     Mean of the actual DDQN optimization losses
+#     returned by agent.learn() during one episode.
+#
+# These histories will be recorded independently
+# for every model and traffic type.
+
+RECORD_TRAINING_REWARD = True
+
+RECORD_TRAINING_LOSS = True
+
+
+# ------------------------------------------------------------
+# 16. CONFIGURATION VALIDATION
+# ------------------------------------------------------------
+
+assert STATE_DIM == 12, (
+    "STATE_DIM must match the 12-dimensional "
+    "state expected by the neural networks."
+)
+
+assert NUM_ACTIONS == 20, (
+    "Unexpected action-space dimension."
+)
+
+assert len(MODELS) == 4, (
+    "Exactly four models are expected."
+)
+
+assert TRAFFIC_TYPES == [1, 2, 3], (
+    "Traffic types 1, 2, and 3 must be selected."
+)
+
+assert TOTAL_RBS > 0
+
+assert TOTAL_POWER_BUDGET > 0
+
+assert BATCH_SIZE <= REPLAY_BUFFER_SIZE
+
+assert NUM_EPISODES > 0
+
+
+# ------------------------------------------------------------
+# 17. DISPLAY FINAL CONFIGURATION
+# ------------------------------------------------------------
+
+print("\n" + "=" * 70)
+print("FINAL EXPERIMENT SETTINGS")
+print("=" * 70)
+
+print("Models:", MODELS)
+
+print("Traffic types:", TRAFFIC_TYPES)
+
+print("Independent training runs:",
+      len(MODELS) * len(TRAFFIC_TYPES))
+
+print("State dimension:", STATE_DIM)
+
+print("Number of actions:", NUM_ACTIONS)
+
+print("Actions:", ACTIONS)
+
+print("Total RBs:", TOTAL_RBS)
+
+print("Bandwidth:", TOTAL_BANDWIDTH_MHZ, "MHz")
+
+print("Power budget:", TOTAL_POWER_BUDGET, "W")
+
+print("Replay buffer:", REPLAY_BUFFER_SIZE)
+
+print("Batch size:", BATCH_SIZE)
+
+print("Training episodes:", NUM_EPISODES)
+
+print("Learning rate:", LEARNING_RATE)
+
+print("Discount factor:", GAMMA)
+
+print("Device:", DEVICE)
+
+print("\nOutput directories:")
+
+print("Figures:", FIGURE_DIR)
+
+print("CSV files:", CSV_DIR)
+
+print("Checkpoints:", CHECKPOINT_DIR)
+
+print("Training histories:", TRAINING_HISTORY_DIR)
+
+print("\nBLOCK 1 COMPLETED SUCCESSFULLY.")
+
+# ============================================================
+# BLOCK 2: LOAD DATASET AND EXTRACT TRAFFIC TYPES 1, 2, AND 3
+#
+# Dataset:
+# 6G_network_slicing_qos_dataset_2345.csv
+#
+# Traffic types:
+#   Type 1: 579 records
+#   Type 2: 614 records
+#   Type 3: 574 records
+#
+# Excluded:
+#   Type 0
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 2.1: VERIFY DATASET CONFIGURATION
+# ------------------------------------------------------------
+
+print("\n" + "=" * 72)
+print("BLOCK 2: DATASET LOADING AND TRAFFIC-TYPE EXTRACTION")
+print("=" * 72)
+
+if not DATASET_PATH.exists():
+    raise FileNotFoundError(
+        f"Dataset file was not found:\n{DATASET_PATH}"
+    )
+
+if not DATA_DIR.exists():
+    raise FileNotFoundError(
+        f"Dataset directory was not found:\n{DATA_DIR}"
+    )
+
+print("\nDataset file:", DATASET_PATH)
+print("Dataset directory:", DATA_DIR)
+
+
+# ------------------------------------------------------------
+# 2.2: NORMALIZE COLUMN NAMES FOR DETECTION
+# ------------------------------------------------------------
+
+def normalize_column_name(name):
+    """
+    Normalize column names for matching only.
+
+    Original dataset column names remain unchanged.
+    """
+
+    return (
+        str(name)
+        .strip()
+        .lower()
+        .replace(" ", "_")
+        .replace("-", "_")
+    )
+
+
+def find_traffic_column(columns):
+    """
+    Identify the traffic-type column using the
+    configured column name from Block 1.
+    """
+
+    normalized_columns = {
+        normalize_column_name(column): column
+        for column in columns
+    }
+
+    requested_column = normalize_column_name(
+        TRAFFIC_TYPE_COLUMN
+    )
+
+    if requested_column in normalized_columns:
+
+        return normalized_columns[requested_column]
+
+    raise KeyError(
+        f"Traffic-type column '{TRAFFIC_TYPE_COLUMN}' "
+        f"was not found.\n"
+        f"Available columns: {list(columns)}"
+    )
+
+
+# ------------------------------------------------------------
+# 2.3: LOAD THE SELECTED DATASET
+# ------------------------------------------------------------
+
+def load_selected_dataset(file_path, table_name=None):
+    """
+    Load the explicitly selected dataset.
+
+    Supported formats:
+        CSV
+        Parquet
+        SQLite
+    """
+
+    file_path = Path(file_path)
+
+    if not file_path.exists():
+        raise FileNotFoundError(
+            f"Dataset file not found: {file_path}"
+        )
+
+    suffix = file_path.suffix.lower()
+
+    if suffix == ".csv":
+
+        frame = pd.read_csv(file_path)
+
+    elif suffix == ".parquet":
+
+        frame = pd.read_parquet(file_path)
+
+    elif suffix in {".db", ".sqlite", ".sqlite3"}:
+
+        with sqlite3.connect(str(file_path)) as connection:
+
+            if table_name is None:
+
+                tables = pd.read_sql_query(
+                    """
+                    SELECT name
+                    FROM sqlite_master
+                    WHERE type = 'table'
+                      AND name NOT LIKE 'sqlite_%'
+                    ORDER BY name
+                    """,
+                    connection
+                )["name"].tolist()
+
+                if len(tables) != 1:
+                    raise ValueError(
+                        "Specify DATA_TABLE because the "
+                        "database does not contain exactly "
+                        "one user table."
+                    )
+
+                table_name = tables[0]
+
+            # Safely quote the table identifier.
+            escaped_table = table_name.replace('"', '""')
+
+            frame = pd.read_sql_query(
+                f'SELECT * FROM "{escaped_table}"',
+                connection
+            )
+
+    else:
+
+        raise ValueError(
+            f"Unsupported dataset extension: {suffix}"
+        )
+
+    if frame.empty:
+        raise ValueError(
+            "The selected dataset contains no records."
+        )
+
+    return frame
+
+
+# Load the explicitly configured dataset.
+df = load_selected_dataset(
+    file_path=DATA_FILE,
+    table_name=DATA_TABLE
+)
+
+
+# ------------------------------------------------------------
+# 2.4: IDENTIFY AND VALIDATE THE TRAFFIC-TYPE COLUMN
+# ------------------------------------------------------------
+
+TRAFFIC_TYPE_COLUMN = find_traffic_column(
+    df.columns
+)
+
+print("\n" + "=" * 72)
+print("SELECTED DATASET")
+print("=" * 72)
+
+print("File:", DATA_FILE)
+print("Table:", DATA_TABLE)
+
+print("Rows:", f"{len(df):,}")
+
+print("Columns:", len(df.columns))
+
+print("Traffic-type column:", TRAFFIC_TYPE_COLUMN)
+
+
+print("\nColumn names:")
+
+for column in df.columns:
+
+    print(" -", column)
+
+
+# ------------------------------------------------------------
+# 2.5: VALIDATE DATASET DIMENSIONS
+# ------------------------------------------------------------
+
+if len(df) != EXPECTED_DATASET_ROWS:
+
+    raise ValueError(
+        f"Unexpected dataset row count.\n"
+        f"Expected: {EXPECTED_DATASET_ROWS}\n"
+        f"Actual: {len(df)}"
+    )
+
+
+if len(df.columns) != EXPECTED_DATASET_COLUMNS:
+
+    raise ValueError(
+        f"Unexpected number of dataset columns.\n"
+        f"Expected: {EXPECTED_DATASET_COLUMNS}\n"
+        f"Actual: {len(df.columns)}"
+    )
+
+
+print("\nDataset dimensions validated successfully.")
+
+
+# ------------------------------------------------------------
+# 2.6: CALCULATE TRAFFIC-TYPE DISTRIBUTION
+# ------------------------------------------------------------
+
+traffic_values = pd.to_numeric(
+    df[TRAFFIC_TYPE_COLUMN],
+    errors="coerce"
+)
+
+# Check for missing or invalid traffic-type values.
+invalid_traffic_values = traffic_values.isna().sum()
+
+if invalid_traffic_values > 0:
+
+    raise ValueError(
+        f"The traffic-type column contains "
+        f"{invalid_traffic_values} missing or invalid values."
+    )
+
+
+traffic_distribution = (
+    traffic_values
+    .value_counts()
+    .sort_index()
+    .rename_axis("traffic_type")
+    .reset_index(name="record_count")
+)
+
+
+print("\n" + "=" * 72)
+print("TRAFFIC-TYPE DISTRIBUTION IN SOURCE DATASET")
+print("=" * 72)
+
+print(
+    traffic_distribution.to_string(index=False)
+)
+
+
+# ------------------------------------------------------------
+# 2.7: EXTRACT TRAFFIC TYPES 1, 2, AND 3
+# ------------------------------------------------------------
+
+# Preserve the original dataset.
+df = df.copy()
+
+# Convert the traffic-type column to numeric
+# for reliable filtering.
+df["_traffic_type_numeric"] = pd.to_numeric(
+    df[TRAFFIC_TYPE_COLUMN],
+    errors="coerce"
+)
+
+
+# Dictionary containing the three traffic-type datasets.
+traffic_data = {}
+
+
+for traffic_type in TRAFFIC_TYPES:
+
+    subset = df.loc[
+        df["_traffic_type_numeric"] == traffic_type
+    ].copy()
+
+
+    # Remove the temporary filtering column.
+    # All original dataset columns are preserved.
+    subset.drop(
+        columns=["_traffic_type_numeric"],
+        inplace=True
+    )
+
+
+    # Store the extracted dataset.
+    traffic_data[traffic_type] = subset
+
+
+    print(
+        f"\nTraffic type {traffic_type}: "
+        f"{len(subset):,} records"
+    )
+
+
+    if subset.empty:
+
+        raise ValueError(
+            f"No records were extracted for "
+            f"traffic type {traffic_type}."
+        )
+
+
+# ------------------------------------------------------------
+# 2.8: VERIFY EXPECTED TRAFFIC-TYPE RECORD COUNTS
+# ------------------------------------------------------------
+
+print("\n" + "=" * 72)
+print("TRAFFIC-TYPE RECORD VALIDATION")
+print("=" * 72)
+
+
+for traffic_type in TRAFFIC_TYPES:
+
+    actual_count = len(
+        traffic_data[traffic_type]
+    )
+
+    expected_count = EXPECTED_TRAFFIC_COUNTS[
+        traffic_type
+    ]
+
+
+    print(
+        f"Traffic type {traffic_type}: "
+        f"Expected = {expected_count}, "
+        f"Actual = {actual_count}"
+    )
+
+
+    if actual_count != expected_count:
+
+        raise ValueError(
+            f"Record count mismatch for traffic "
+            f"type {traffic_type}.\n"
+            f"Expected: {expected_count}\n"
+            f"Actual: {actual_count}"
+        )
+
+
+print("\nAll three traffic types passed validation.")
+
+
+# ------------------------------------------------------------
+# 2.9: CREATE TRAFFIC-TYPE EXTRACTION SUMMARY
+# ------------------------------------------------------------
+
+traffic_summary = pd.DataFrame([
+
+    {
+        "traffic_type": traffic_type,
+
+        "record_count": len(
+            traffic_data[traffic_type]
+        ),
+
+        "column_count": len(
+            traffic_data[traffic_type].columns
+        )
+    }
+
+    for traffic_type in TRAFFIC_TYPES
+
+])
+
+
+print("\n" + "=" * 72)
+print("TRAFFIC-TYPE EXTRACTION SUMMARY")
+print("=" * 72)
+
+print(
+    traffic_summary.to_string(index=False)
+)
+
+
+# ------------------------------------------------------------
+# 2.10: SAVE TRAFFIC-TYPE SUMMARY
+# ------------------------------------------------------------
+
+summary_path = (
+    CSV_DIR
+    / "traffic_type_dataset_summary.csv"
+)
+
+traffic_summary.to_csv(
+    summary_path,
+    index=False
+)
+
+print("\nSummary saved to:")
+print(summary_path)
+
+
+# ------------------------------------------------------------
+# 2.11: SAVE INDIVIDUAL TRAFFIC-TYPE DATASETS
+# ------------------------------------------------------------
+
+for traffic_type in TRAFFIC_TYPES:
+
+    output_path = (
+        CSV_DIR
+        / f"traffic_type_{traffic_type}_dataset.csv"
+    )
+
+    traffic_data[traffic_type].to_csv(
+        output_path,
+        index=False
+    )
+
+    print(
+        f"Traffic type {traffic_type} dataset saved: "
+        f"{output_path}"
+    )
+
+
+# ------------------------------------------------------------
+# 2.12: FINAL VALIDATION
+# ------------------------------------------------------------
+
+TOTAL_SELECTED_RECORDS = sum(
+    len(traffic_data[traffic_type])
+    for traffic_type in TRAFFIC_TYPES
+)
+
+EXPECTED_SELECTED_RECORDS = sum(
+    EXPECTED_TRAFFIC_COUNTS.values()
+)
+
+assert TOTAL_SELECTED_RECORDS == EXPECTED_SELECTED_RECORDS
+
+assert all(
+    isinstance(
+        traffic_data[traffic_type],
+        pd.DataFrame
+    )
+    for traffic_type in TRAFFIC_TYPES
+)
+
+assert all(
+    not traffic_data[traffic_type].empty
+    for traffic_type in TRAFFIC_TYPES
+)
+
+
+# ------------------------------------------------------------
+# 2.13: DISPLAY FINAL RESULT
+# ------------------------------------------------------------
+
+print("\n" + "=" * 72)
+print("BLOCK 2 COMPLETED SUCCESSFULLY")
+print("=" * 72)
+
+print("Total source records:", len(df))
+
+print("Total selected records:", TOTAL_SELECTED_RECORDS)
+
+print("Excluded traffic type: 0")
+
+print("\nAvailable training datasets:")
+
+for traffic_type in TRAFFIC_TYPES:
+
+    print(
+        f"traffic_data[{traffic_type}] "
+        f"= {len(traffic_data[traffic_type]):,} records"
+    )
+
+
+print("\nNext step:")
+print(
+    "Block 3: Neural network architectures "
+    "for the four DDQN-based models."
+)
+
+# ============================================================
+# BLOCK 3: NEURAL NETWORK ARCHITECTURES
+#
+# Models:
+#   1. RBF-DDQN
+#   2. DDQN
+#   3. GGN-DDQN
+#   4. GCN-DDQN
+#
+# Input:
+#   12-dimensional state vector
+#
+# Output:
+#   20 action-value estimates (Q-values)
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 3.1: RADIAL BASIS FUNCTION (RBF)-DDQN
+# ------------------------------------------------------------
+
+class RBFQNetwork(nn.Module):
+
+    def __init__(
+        self,
+        state_dim=STATE_DIM,
+        num_actions=NUM_ACTIONS,
+        num_centers=RBF_CENTERS,
+        hidden_dim=HIDDEN_DIM
+    ):
+
+        super().__init__()
+
+        # Fixed RBF centers.
+        self.register_buffer(
+            "centers",
+            torch.randn(num_centers, state_dim)
+        )
+
+        # Learnable RBF width parameter.
+        self.log_gamma = nn.Parameter(
+            torch.tensor(4.0)
+        )
+
+        # Fully connected Q-value prediction layers.
+        self.fc1 = nn.Linear(
+            num_centers,
+            128
+        )
+
+        self.fc2 = nn.Linear(
+            128,
+            hidden_dim
+        )
+
+        self.fc3 = nn.Linear(
+            hidden_dim,
+            num_actions
+        )
+
+
+    def forward(self, state):
+
+        # Ensure state has shape:
+        # [batch_size, state_dim]
+
+        if state.dim() == 1:
+
+            state = state.unsqueeze(0)
+
+
+        # Calculate squared Euclidean distances
+        # between states and RBF centers.
+
+        distances = torch.sum(
+            (
+                state.unsqueeze(1)
+                - self.centers.unsqueeze(0)
+            ) ** 2,
+            dim=2
+        )
+
+
+        # Positive gamma ensures a valid RBF width.
+
+        gamma = (
+            F.softplus(self.log_gamma)
+            + 1e-8
+        )
+
+
+        # Generate RBF feature representations.
+
+        rbf_features = torch.exp(
+            -gamma * distances
+        )
+
+
+        # Estimate Q-values.
+
+        x = F.relu(
+            self.fc1(rbf_features)
+        )
+
+        x = F.relu(
+            self.fc2(x)
+        )
+
+        q_values = self.fc3(x)
+
+        return q_values
+
+
+# ------------------------------------------------------------
+# 3.2: CONVENTIONAL DDQN
+# ------------------------------------------------------------
+
+class DDQNQNetwork(nn.Module):
+
+    def __init__(
+        self,
+        state_dim=STATE_DIM,
+        num_actions=NUM_ACTIONS
+    ):
+
+        super().__init__()
+
+        self.fc1 = nn.Linear(
+            state_dim,
+            128
+        )
+
+        self.fc2 = nn.Linear(
+            128,
+            128
+        )
+
+        self.fc3 = nn.Linear(
+            128,
+            64
+        )
+
+        self.fc4 = nn.Linear(
+            64,
+            num_actions
+        )
+
+
+    def forward(self, state):
+
+        if state.dim() == 1:
+
+            state = state.unsqueeze(0)
+
+
+        x = F.relu(
+            self.fc1(state)
+        )
+
+        x = F.relu(
+            self.fc2(x)
+        )
+
+        x = F.relu(
+            self.fc3(x)
+        )
+
+
+        # Output one Q-value for every available action.
+
+        q_values = self.fc4(x)
+
+        return q_values
+
+
+# ------------------------------------------------------------
+# 3.3: GRAPH GENERATIVE NETWORK (GGN)-DDQN
+# ------------------------------------------------------------
+
+class GGNQNetwork(nn.Module):
+
+    def __init__(
+        self,
+        state_dim=STATE_DIM,
+        num_actions=NUM_ACTIONS,
+        hidden_dim=HIDDEN_DIM
+    ):
+
+        super().__init__()
+
+
+        # Encode each state feature as a graph node.
+
+        self.node_encoder = nn.Linear(
+            1,
+            hidden_dim
+        )
+
+
+        # Combine node representations with
+        # aggregated neighboring representations.
+
+        self.message_layer = nn.Linear(
+            hidden_dim * 2,
+            hidden_dim
+        )
+
+
+        # Graph-level Q-value prediction head.
+
+        self.q_head = nn.Sequential(
+
+            nn.Linear(
+                hidden_dim,
+                128
+            ),
+
+            nn.ReLU(),
+
+            nn.Linear(
+                128,
+                num_actions
+            )
+        )
+
+
+        # ----------------------------------------------------
+        # Construct a deterministic chain graph.
+        #
+        # Each state feature is represented as one node.
+        # Neighboring nodes are connected.
+        # Self-connections are included.
+        # ----------------------------------------------------
+
+        adjacency = torch.eye(
+            state_dim
+        )
+
+
+        for i in range(state_dim - 1):
+
+            adjacency[i, i + 1] = 1.0
+
+            adjacency[i + 1, i] = 1.0
+
+
+        # Symmetric degree normalization.
+
+        degree = adjacency.sum(
+            dim=1
+        ).clamp(min=1.0)
+
+
+        inv_sqrt_degree = degree.pow(
+            -0.5
+        )
+
+
+        normalized_adjacency = (
+
+            inv_sqrt_degree.unsqueeze(1)
+
+            * adjacency
+
+            * inv_sqrt_degree.unsqueeze(0)
+
+        )
+
+
+        self.register_buffer(
+            "adjacency",
+            normalized_adjacency
+        )
+
+
+    def forward(self, state):
+
+        if state.dim() == 1:
+
+            state = state.unsqueeze(0)
+
+
+        # Each state feature becomes a graph node.
+
+        nodes = state.unsqueeze(-1)
+
+
+        # Initial node representations.
+
+        embeddings = F.relu(
+            self.node_encoder(nodes)
+        )
+
+
+        # Aggregate neighboring node representations.
+
+        neighbors = torch.matmul(
+            self.adjacency,
+            embeddings
+        )
+
+
+        # Message passing.
+
+        updated = torch.cat(
+            [
+                embeddings,
+                neighbors
+            ],
+            dim=-1
+        )
+
+
+        updated = F.relu(
+            self.message_layer(updated)
+        )
+
+
+        # Mean graph pooling.
+
+        graph_embedding = updated.mean(
+            dim=1
+        )
+
+
+        # Estimate action values.
+
+        q_values = self.q_head(
+            graph_embedding
+        )
+
+        return q_values
+
+
+# ------------------------------------------------------------
+# 3.4: GRAPH CONVOLUTIONAL NETWORK (GCN)-DDQN
+# ------------------------------------------------------------
+
+class GCNQNetwork(nn.Module):
+
+    def __init__(
+        self,
+        state_dim=STATE_DIM,
+        num_actions=NUM_ACTIONS,
+        hidden_dim=HIDDEN_DIM
+    ):
+
+        super().__init__()
+
+
+        # Project each scalar state feature
+        # into a hidden-dimensional node representation.
+
+        self.input_projection = nn.Linear(
+            1,
+            hidden_dim
+        )
+
+
+        # Two graph convolution layers.
+
+        self.gcn1 = nn.Linear(
+            hidden_dim,
+            hidden_dim
+        )
+
+        self.gcn2 = nn.Linear(
+            hidden_dim,
+            hidden_dim
+        )
+
+
+        # Q-value prediction head.
+
+        self.q_head = nn.Sequential(
+
+            nn.Linear(
+                hidden_dim,
+                128
+            ),
+
+            nn.ReLU(),
+
+            nn.Linear(
+                128,
+                num_actions
+            )
+        )
+
+
+        # ----------------------------------------------------
+        # Construct the same normalized chain graph
+        # used by GGN-DDQN.
+        # ----------------------------------------------------
+
+        adjacency = torch.eye(
+            state_dim
+        )
+
+
+        for i in range(state_dim - 1):
+
+            adjacency[i, i + 1] = 1.0
+
+            adjacency[i + 1, i] = 1.0
+
+
+        degree = adjacency.sum(
+            dim=1
+        ).clamp(min=1.0)
+
+
+        inv_sqrt_degree = degree.pow(
+            -0.5
+        )
+
+
+        normalized_adjacency = (
+
+            inv_sqrt_degree.unsqueeze(1)
+
+            * adjacency
+
+            * inv_sqrt_degree.unsqueeze(0)
+
+        )
+
+
+        self.register_buffer(
+            "adjacency",
+            normalized_adjacency
+        )
+
+
+    def forward(self, state):
+
+        if state.dim() == 1:
+
+            state = state.unsqueeze(0)
+
+
+        # Convert each state feature into a graph node.
+
+        nodes = state.unsqueeze(-1)
+
+
+        # Initial node projection.
+
+        x = F.relu(
+            self.input_projection(nodes)
+        )
+
+
+        # First graph convolution.
+
+        x = torch.matmul(
+            self.adjacency,
+            x
+        )
+
+        x = F.relu(
+            self.gcn1(x)
+        )
+
+
+        # Second graph convolution.
+
+        x = torch.matmul(
+            self.adjacency,
+            x
+        )
+
+        x = F.relu(
+            self.gcn2(x)
+        )
+
+
+        # Mean graph pooling.
+
+        graph_embedding = x.mean(
+            dim=1
+        )
+
+
+        # Estimate Q-values.
+
+        q_values = self.q_head(
+            graph_embedding
+        )
+
+        return q_values
+
+
+# ------------------------------------------------------------
+# 3.5: NETWORK FACTORY
+# ------------------------------------------------------------
+
+# The factory allows Block 4 to create the correct
+# architecture using only the model name.
+
+NETWORK_FACTORIES = {
+
+    "RBF-DDQN": lambda: RBFQNetwork(),
+
+    "DDQN": lambda: DDQNQNetwork(),
+
+    "GGN-DDQN": lambda: GGNQNetwork(),
+
+    "GCN-DDQN": lambda: GCNQNetwork()
+
+}
+
+
+# ------------------------------------------------------------
+# 3.6: VERIFY ALL FOUR NETWORK ARCHITECTURES
+# ------------------------------------------------------------
+
+def verify_network_architectures():
+
+    print("\n" + "=" * 72)
+
+    print("BLOCK 3: NEURAL NETWORK ARCHITECTURE VERIFICATION")
+
+    print("=" * 72)
+
+
+    # Test input: one 12-dimensional state.
+
+    test_state = torch.zeros(
+        1,
+        STATE_DIM,
+        dtype=torch.float32
+    )
+
+
+    for model_name, factory in NETWORK_FACTORIES.items():
+
+        model = factory().to(DEVICE)
+
+        model.eval()
+
+
+        with torch.no_grad():
+
+            q_values = model(
+                test_state.to(DEVICE)
+            )
+
+
+        # Verify output dimensions.
+
+        expected_shape = (
+            1,
+            NUM_ACTIONS
+        )
+
+
+        assert q_values.shape == expected_shape, (
+
+            f"{model_name}: expected output shape "
+            f"{expected_shape}, "
+
+            f"but received {tuple(q_values.shape)}"
+
+        )
+
+
+        # Verify numerical validity.
+
+        assert torch.isfinite(
+            q_values
+        ).all(), (
+
+            f"{model_name} generated "
+            "non-finite Q-values."
+
+        )
+
+
+        # Calculate the number of trainable parameters.
+
+        parameter_count = sum(
+
+            parameter.numel()
+
+            for parameter in model.parameters()
+
+            if parameter.requires_grad
+
+        )
+
+
+        print(
+
+            f"{model_name:12s} | "
+
+            f"Input: {STATE_DIM:2d} | "
+
+            f"Actions: {NUM_ACTIONS:2d} | "
+
+            f"Parameters: {parameter_count:,} | "
+
+            f"Output: {tuple(q_values.shape)}"
+
+        )
+
+
+    print("\nAll four network architectures passed verification.")
+
+
+# ------------------------------------------------------------
+# 3.7: EXECUTE ARCHITECTURE VERIFICATION
+# ------------------------------------------------------------
+
+verify_network_architectures()
+
+
+print("\nBLOCK 3 COMPLETED SUCCESSFULLY.")
+
+# ============================================================
+# BLOCK 4: EXPERIENCE REPLAY BUFFER AND DDQN AGENT
+#
+# Models:
+#   RBF-DDQN
+#   DDQN
+#   GGN-DDQN
+#   GCN-DDQN
+#
+# Each agent has independent:
+#   - Online network
+#   - Target network
+#   - Optimizer
+#   - Replay buffer
+#   - Epsilon value
+#   - Learning-step counter
+# ============================================================
+
+import random
+from collections import deque
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+
+# ------------------------------------------------------------
+# 4.1: EXPERIENCE REPLAY BUFFER
+# ------------------------------------------------------------
+
+class ReplayBuffer:
+
+    def __init__(self, capacity=REPLAY_BUFFER_SIZE):
+
+        self.buffer = deque(
+            maxlen=capacity
+        )
+
+
+    # --------------------------------------------------------
+    # Store one transition
+    # --------------------------------------------------------
+
+    def push(
+        self,
+        state,
+        action,
+        reward,
+        next_state,
+        done
+    ):
+
+        self.buffer.append(
+
+            (
+                np.asarray(
+                    state,
+                    dtype=np.float32
+                ).copy(),
+
+                int(action),
+
+                float(reward),
+
+                np.asarray(
+                    next_state,
+                    dtype=np.float32
+                ).copy(),
+
+                float(done)
+            )
+
+        )
+
+
+    # --------------------------------------------------------
+    # Sample a random mini-batch
+    # --------------------------------------------------------
+
+    def sample(self, batch_size):
+
+        batch = random.sample(
+            self.buffer,
+            batch_size
+        )
+
+
+        states, actions, rewards, next_states, dones = zip(
+            *batch
+        )
+
+
+        return (
+
+            torch.as_tensor(
+                np.asarray(states),
+                dtype=torch.float32
+            ),
+
+            torch.as_tensor(
+                actions,
+                dtype=torch.long
+            ),
+
+            torch.as_tensor(
+                rewards,
+                dtype=torch.float32
+            ),
+
+            torch.as_tensor(
+                np.asarray(next_states),
+                dtype=torch.float32
+            ),
+
+            torch.as_tensor(
+                dones,
+                dtype=torch.float32
+            )
+
+        )
+
+
+    def __len__(self):
+
+        return len(self.buffer)
+
+
+# ------------------------------------------------------------
+# 4.2: DOUBLE DEEP Q-NETWORK AGENT
+# ------------------------------------------------------------
+
+class DDQNAgent:
+
+    def __init__(
+        self,
+        model_name,
+        state_dim=STATE_DIM,
+        num_actions=NUM_ACTIONS,
+        learning_rate=LEARNING_RATE,
+        gamma=GAMMA,
+        batch_size=BATCH_SIZE,
+        target_update_frequency=TARGET_UPDATE_FREQUENCY,
+        epsilon_start=EPSILON_START,
+        epsilon_end=EPSILON_END,
+        epsilon_decay=EPSILON_DECAY,
+        device=None
+    ):
+
+        # Validate model name.
+
+        if model_name not in NETWORK_FACTORIES:
+
+            raise ValueError(
+                f"Unknown model '{model_name}'. "
+                f"Available models: {list(NETWORK_FACTORIES)}"
+            )
+
+
+        self.model_name = model_name
+
+        self.state_dim = state_dim
+
+        self.num_actions = num_actions
+
+        self.gamma = gamma
+
+        self.batch_size = batch_size
+
+        self.target_update_frequency = target_update_frequency
+
+
+        # ----------------------------------------------------
+        # Epsilon-greedy exploration parameters
+        # ----------------------------------------------------
+
+        self.epsilon = epsilon_start
+
+        self.epsilon_end = epsilon_end
+
+        self.epsilon_decay = epsilon_decay
+
+
+        # ----------------------------------------------------
+        # Computational device
+        # ----------------------------------------------------
+
+        self.device = torch.device(
+
+            device or (
+                "cuda"
+                if torch.cuda.is_available()
+                else "cpu"
+            )
+
+        )
+
+
+        # ----------------------------------------------------
+        # Online and target Q-networks
+        # ----------------------------------------------------
+
+        self.online_network = NETWORK_FACTORIES[
+            model_name
+        ]().to(self.device)
+
+
+        self.target_network = NETWORK_FACTORIES[
+            model_name
+        ]().to(self.device)
+
+
+        # Initially synchronize target and online networks.
+
+        self.target_network.load_state_dict(
+            self.online_network.state_dict()
+        )
+
+        self.target_network.eval()
+
+
+        # ----------------------------------------------------
+        # Optimizer
+        # ----------------------------------------------------
+
+        self.optimizer = optim.Adam(
+
+            self.online_network.parameters(),
+
+            lr=learning_rate
+
+        )
+
+
+        # ----------------------------------------------------
+        # Loss function
+        # ----------------------------------------------------
+
+        self.loss_function = nn.SmoothL1Loss()
+
+
+        # ----------------------------------------------------
+        # Independent replay buffer
+        # ----------------------------------------------------
+
+        self.replay_buffer = ReplayBuffer(
+
+            capacity=REPLAY_BUFFER_SIZE
+
+        )
+
+
+        # Count actual optimization steps.
+
+        self.learn_steps = 0
+
+
+    # --------------------------------------------------------
+    # 4.2.1: EPSILON-GREEDY ACTION SELECTION
+    # --------------------------------------------------------
+
+    def select_action(
+        self,
+        state,
+        evaluate=False
+    ):
+
+        # Exploration during training.
+
+        if (
+            not evaluate
+            and random.random() < self.epsilon
+        ):
+
+            return random.randrange(
+                self.num_actions
+            )
+
+
+        # Convert state into a PyTorch tensor.
+
+        state_tensor = torch.as_tensor(
+
+            np.asarray(
+                state,
+                dtype=np.float32
+            ),
+
+            dtype=torch.float32,
+
+            device=self.device
+
+        ).unsqueeze(0)
+
+
+        self.online_network.eval()
+
+
+        with torch.no_grad():
+
+            q_values = self.online_network(
+                state_tensor
+            )
+
+            action = int(
+                q_values.argmax(dim=1).item()
+            )
+
+
+        self.online_network.train()
+
+        return action
+
+
+    # --------------------------------------------------------
+    # 4.2.2: STORE EXPERIENCE
+    # --------------------------------------------------------
+
+    def remember(
+        self,
+        state,
+        action,
+        reward,
+        next_state,
+        done
+    ):
+
+        self.replay_buffer.push(
+
+            state,
+
+            action,
+
+            reward,
+
+            next_state,
+
+            done
+
+        )
+
+
+    # --------------------------------------------------------
+    # 4.2.3: DOUBLE DQN OPTIMIZATION
+    # --------------------------------------------------------
+
+    def learn(self):
+
+        # Wait until enough experiences are available.
+
+        if len(self.replay_buffer) < self.batch_size:
+
+            return None
+
+
+        # Sample a mini-batch.
+
+        (
+            states,
+            actions,
+            rewards,
+            next_states,
+            dones
+
+        ) = self.replay_buffer.sample(
+            self.batch_size
+        )
+
+
+        # Transfer tensors to the selected device.
+
+        states = states.to(self.device)
+
+        actions = actions.to(self.device)
+
+        rewards = rewards.to(self.device)
+
+        next_states = next_states.to(self.device)
+
+        dones = dones.to(self.device)
+
+
+        # ----------------------------------------------------
+        # Current Q-values:
+        #
+        # Q(s_t, a_t; theta)
+        # ----------------------------------------------------
+
+        current_q_values = self.online_network(
+            states
+        ).gather(
+
+            1,
+
+            actions.unsqueeze(1)
+
+        ).squeeze(1)
+
+
+        # ----------------------------------------------------
+        # Double DQN target computation.
+        #
+        # Online network selects the next action.
+        # Target network evaluates that selected action.
+        # ----------------------------------------------------
+
+        with torch.no_grad():
+
+
+            # Select next action using online network.
+
+            next_actions = self.online_network(
+                next_states
+            ).argmax(
+
+                dim=1,
+
+                keepdim=True
+
+            )
+
+
+            # Evaluate selected action using target network.
+
+            next_q_values = self.target_network(
+                next_states
+            ).gather(
+
+                1,
+
+                next_actions
+
+            ).squeeze(1)
+
+
+            # Calculate the DDQN target.
+
+            target_q_values = rewards + (
+
+                self.gamma
+
+                * next_q_values
+
+                * (1.0 - dones)
+
+            )
+
+
+        # ----------------------------------------------------
+        # Calculate Smooth L1 loss.
+        # ----------------------------------------------------
+
+        loss = self.loss_function(
+
+            current_q_values,
+
+            target_q_values
+
+        )
+
+
+        # ----------------------------------------------------
+        # Backpropagation and parameter optimization.
+        # ----------------------------------------------------
+
+        self.optimizer.zero_grad()
+
+        loss.backward()
+
+
+        # Gradient clipping for training stability.
+
+        torch.nn.utils.clip_grad_norm_(
+
+            self.online_network.parameters(),
+
+            max_norm=10.0
+
+        )
+
+
+        self.optimizer.step()
+
+
+        # Count optimization steps.
+
+        self.learn_steps += 1
+
+
+        # ----------------------------------------------------
+        # Periodically synchronize target network.
+        # ----------------------------------------------------
+
+        if (
+
+            self.learn_steps
+            % self.target_update_frequency == 0
+
+        ):
+
+            self.target_network.load_state_dict(
+
+                self.online_network.state_dict()
+
+            )
+
+
+        # Return the actual optimization loss.
+        # Block 6 will record this value for plotting.
+
+        return float(
+            loss.item()
+        )
+
+
+    # --------------------------------------------------------
+    # 4.2.4: EPSILON DECAY
+    # --------------------------------------------------------
+
+    def decay_epsilon(self):
+
+        self.epsilon = max(
+
+            self.epsilon_end,
+
+            self.epsilon * self.epsilon_decay
+
+        )
+
+
+    # --------------------------------------------------------
+    # 4.2.5: SAVE MODEL CHECKPOINT
+    # --------------------------------------------------------
+
+    def save_checkpoint(self, filepath):
+
+        filepath = str(filepath)
+
+
+        torch.save(
+
+            {
+
+                "model_name": self.model_name,
+
+                "state_dim": self.state_dim,
+
+                "num_actions": self.num_actions,
+
+                "online_network":
+                    self.online_network.state_dict(),
+
+                "target_network":
+                    self.target_network.state_dict(),
+
+                "optimizer":
+                    self.optimizer.state_dict(),
+
+                "epsilon": self.epsilon,
+
+                "learn_steps": self.learn_steps
+
+            },
+
+            filepath
+
+        )
+
+
+    # --------------------------------------------------------
+    # 4.2.6: LOAD MODEL CHECKPOINT
+    # --------------------------------------------------------
+
+    def load_checkpoint(self, filepath):
+
+        checkpoint = torch.load(
+
+            filepath,
+
+            map_location=self.device
+
+        )
+
+
+        # Validate checkpoint compatibility.
+
+        if checkpoint["model_name"] != self.model_name:
+
+            raise ValueError(
+                "Checkpoint model does not match the agent model."
+            )
+
+
+        if checkpoint["state_dim"] != self.state_dim:
+
+            raise ValueError(
+                "Checkpoint state dimension does not match."
+            )
+
+
+        if checkpoint["num_actions"] != self.num_actions:
+
+            raise ValueError(
+                "Checkpoint action dimension does not match."
+            )
+
+
+        # Restore networks.
+
+        self.online_network.load_state_dict(
+
+            checkpoint["online_network"]
+
+        )
+
+        self.target_network.load_state_dict(
+
+            checkpoint["target_network"]
+
+        )
+
+
+        # Restore optimizer.
+
+        self.optimizer.load_state_dict(
+
+            checkpoint["optimizer"]
+
+        )
+
+
+        # Restore exploration and learning progress.
+
+        self.epsilon = checkpoint["epsilon"]
+
+        self.learn_steps = checkpoint["learn_steps"]
+
+
+        self.target_network.eval()
+
+
+# ------------------------------------------------------------
+# 4.3: VERIFY ALL FOUR DDQN AGENTS
+# ------------------------------------------------------------
+
+def verify_agents():
+
+    print("\n" + "=" * 72)
+
+    print("BLOCK 4: DDQN AGENT VERIFICATION")
+
+    print("=" * 72)
+
+
+    test_state = np.zeros(
+
+        STATE_DIM,
+
+        dtype=np.float32
+
+    )
+
+
+    for model_name in NETWORK_FACTORIES:
+
+        agent = DDQNAgent(
+            model_name
+        )
+
+
+        # Test greedy action selection.
+
+        action = agent.select_action(
+
+            test_state,
+
+            evaluate=True
+
+        )
+
+
+        assert 0 <= action < NUM_ACTIONS, (
+
+            f"{model_name}: invalid action index {action}"
+
+        )
+
+
+        # Test independent online and target networks.
+
+        assert agent.online_network is not agent.target_network
+
+
+        # Test independent replay buffer.
+
+        assert isinstance(
+            agent.replay_buffer,
+            ReplayBuffer
+        )
+
+
+        # Test that the initial target network
+        # matches the online network.
+
+        for online_param, target_param in zip(
+
+            agent.online_network.parameters(),
+
+            agent.target_network.parameters()
+
+        ):
+
+            assert torch.equal(
+                online_param,
+                target_param
+            )
+
+
+        print(
+
+            f"{model_name:12s} | "
+
+            f"Action: {action:2d} | "
+
+            f"Epsilon: {agent.epsilon:.3f} | "
+
+            f"Replay: {len(agent.replay_buffer):4d} | "
+
+            f"Device: {agent.device}"
+
+        )
+
+
+    print("\nAll four DDQN agents passed verification.")
+
+
+# ------------------------------------------------------------
+# 4.4: VERIFY INDEPENDENCE OF AGENTS
+# ------------------------------------------------------------
+
+def verify_agent_independence():
+
+    print("\n" + "=" * 72)
+
+    print("VERIFYING AGENT INDEPENDENCE")
+
+    print("=" * 72)
+
+
+    agent_1 = DDQNAgent("DDQN")
+
+    agent_2 = DDQNAgent("DDQN")
+
+
+    # Agents must not share their networks.
+
+    assert agent_1.online_network is not agent_2.online_network
+
+    assert agent_1.target_network is not agent_2.target_network
+
+
+    # Agents must not share replay buffers.
+
+    assert agent_1.replay_buffer is not agent_2.replay_buffer
+
+
+    # Store an experience in only the first agent.
+
+    test_state = np.zeros(
+        STATE_DIM,
+        dtype=np.float32
+    )
+
+    test_next_state = np.ones(
+        STATE_DIM,
+        dtype=np.float32
+    )
+
+
+    agent_1.remember(
+
+        test_state,
+
+        0,
+
+        1.0,
+
+        test_next_state,
+
+        False
+
+    )
+
+
+    assert len(agent_1.replay_buffer) == 1
+
+    assert len(agent_2.replay_buffer) == 0
+
+
+    print(
+        "Independent online networks: PASSED"
+    )
+
+    print(
+        "Independent target networks: PASSED"
+    )
+
+    print(
+        "Independent replay buffers: PASSED"
+    )
+
+    print(
+        "\nAgent independence verification completed."
+    )
+
+
+# ------------------------------------------------------------
+# 4.5: EXECUTE VERIFICATION
+# ------------------------------------------------------------
+
+verify_agents()
+
+verify_agent_independence()
+
+
+print("\nBLOCK 4 COMPLETED SUCCESSFULLY.")
+
+
+
+# ============================================================
+# BLOCK 5: RADIO RESOURCE ENVIRONMENT AND STATE CONSTRUCTION
+#
+# Four DDQN-based models interact with an independent
+# simulated radio resource environment.
+#
+# Traffic types:
+#   1. Traffic Type 1
+#   2. Traffic Type 2
+#   3. Traffic Type 3
+#
+# State dimension: 12
+# Action dimension: 20
+#
+# Performance:
+#   - Simulated throughput
+#   - Simulated latency
+#   - RB allocation
+#   - Transmission power
+#   - Reward
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 5.1: IMPORT REQUIRED LIBRARIES
+# ------------------------------------------------------------
+
+import numpy as np
+import pandas as pd
+
+from dataclasses import dataclass
+
+
+# ------------------------------------------------------------
+# 5.2: TRAFFIC-SPECIFIC QoS CONFIGURATION
+# ------------------------------------------------------------
+
+# Traffic demands and latency limits are simulation
+# requirements, not measured dataset throughput values.
+
+TRAFFIC_REQUIREMENTS = {
+
+    1: {
+        "demand_mbps": 2.0,
+        "latency_limit_ms": 50.0
+    },
+
+    2: {
+        "demand_mbps": 5.0,
+        "latency_limit_ms": 20.0
+    },
+
+    3: {
+        "demand_mbps": 10.0,
+        "latency_limit_ms": 10.0
+    }
+
+}
+
+
+# ------------------------------------------------------------
+# 5.3: ENVIRONMENT FEATURE CONFIGURATION
+# ------------------------------------------------------------
+
+NOISE_FLOOR_DBM = -100.0
+
+MIN_SIGNAL_DBM = -120.0
+
+MAX_SIGNAL_DBM = -60.0
+
+MIN_PACKET_LOSS = 0.0
+
+MAX_PACKET_LOSS = 100.0
+
+MAX_NETWORK_UTILIZATION = 100.0
+
+MAX_EPISODE_STEPS = 100
+
+MAX_LATENCY_MS = 100.0
+
+MAX_THROUGHPUT_MULTIPLIER = 2.0
+
+
+# ------------------------------------------------------------
+# 5.4: ENVIRONMENT RESULT STRUCTURE
+# ------------------------------------------------------------
+
+@dataclass
+class StepResult:
+
+    next_state: np.ndarray
+
+    reward: float
+
+    done: bool
+
+    info: dict
+
+
+# ------------------------------------------------------------
+# 5.5: RADIO RESOURCE ENVIRONMENT
+# ------------------------------------------------------------
+
+class RadioResourceEnvironment:
+
+    def __init__(
+        self,
+        traffic_type,
+        dataset,
+        seed=SEED
+    ):
+
+        # ----------------------------------------------------
+        # Validate traffic type.
+        # ----------------------------------------------------
+
+        if traffic_type not in TRAFFIC_TYPES:
+
+            raise ValueError(
+                f"Unsupported traffic type: {traffic_type}"
+            )
+
+
+        if dataset is None or len(dataset) == 0:
+
+            raise ValueError(
+                f"Empty dataset for traffic type {traffic_type}"
+            )
+
+
+        self.traffic_type = traffic_type
+
+        self.dataset = dataset.reset_index(
+            drop=True
+        ).copy()
+
+
+        self.rng = np.random.default_rng(
+            seed + traffic_type
+        )
+
+
+        # Traffic-specific requirements.
+
+        self.requirements = TRAFFIC_REQUIREMENTS[
+            traffic_type
+        ]
+
+        self.demand_mbps = self.requirements[
+            "demand_mbps"
+        ]
+
+        self.latency_limit_ms = self.requirements[
+            "latency_limit_ms"
+        ]
+
+
+        # Radio configuration.
+
+        self.total_rbs = TOTAL_RBS
+
+        self.total_power = TOTAL_POWER_BUDGET
+
+        self.rb_bandwidth_mhz = (
+
+            SUBCARRIERS_PER_RB
+            * SUBCARRIER_SPACING_KHZ
+            / 1000.0
+
+        )
+
+
+        # Episode configuration.
+
+        self.max_steps = MAX_EPISODE_STEPS
+
+        self.state_dim = STATE_DIM
+
+        self.num_actions = NUM_ACTIONS
+
+
+        # Required dataset columns.
+
+        self.required_columns = [
+
+            "Traffic Load (bps)",
+
+            "Network Utilization (%)",
+
+            "Latency (ms)",
+
+            "Packet Loss Rate (%)",
+
+            "Signal Strength (dBm)"
+
+        ]
+
+
+        missing_columns = [
+
+            column
+
+            for column in self.required_columns
+
+            if column not in self.dataset.columns
+
+        ]
+
+
+        if missing_columns:
+
+            raise KeyError(
+                f"Missing environment columns: {missing_columns}"
+            )
+
+
+        # Internal episode variables.
+
+        self.current_step = 0
+
+        self.current_row = None
+
+        self.remaining_rbs = self.total_rbs
+
+        self.last_throughput_mbps = 0.0
+
+        self.last_latency_ms = 0.0
+
+        self.episode_reward = 0.0
+
+        self.episode_throughput = []
+
+        self.episode_latency = []
+
+
+    # --------------------------------------------------------
+    # 5.5.1: SAFE NUMERIC CONVERSION
+    # --------------------------------------------------------
+
+    @staticmethod
+    def safe_numeric(value, default=0.0):
+
+        try:
+
+            result = float(value)
+
+            if not np.isfinite(result):
+
+                return float(default)
+
+            return result
+
+        except (TypeError, ValueError):
+
+            return float(default)
+
+
+    # --------------------------------------------------------
+    # 5.5.2: NORMALIZE ENVIRONMENT FEATURES
+    # --------------------------------------------------------
+
+    def get_environment_features(self, row):
+
+        signal_dbm = self.safe_numeric(
+            row["Signal Strength (dBm)"],
+            default=-100.0
+        )
+
+        network_utilization = self.safe_numeric(
+            row["Network Utilization (%)"],
+            default=0.0
+        )
+
+        packet_loss = self.safe_numeric(
+            row["Packet Loss Rate (%)"],
+            default=0.0
+        )
+
+        measured_latency = self.safe_numeric(
+            row["Latency (ms)"],
+            default=0.0
+        )
+
+        traffic_load = self.safe_numeric(
+            row["Traffic Load (bps)"],
+            default=0.0
+        )
+
+
+        # Channel quality: normalized to [0, 1].
+
+        channel_quality = np.clip(
+
+            (
+                signal_dbm - MIN_SIGNAL_DBM
+            ) / (
+                MAX_SIGNAL_DBM - MIN_SIGNAL_DBM
+            ),
+
+            0.0,
+
+            1.0
+
+        )
+
+
+        # Background network utilization.
+
+        background_load = np.clip(
+
+            network_utilization
+            / MAX_NETWORK_UTILIZATION,
+
+            0.0,
+
+            1.0
+
+        )
+
+
+        # Packet-loss factor.
+
+        packet_loss_factor = np.clip(
+
+            packet_loss
+            / MAX_PACKET_LOSS,
+
+            0.0,
+
+            1.0
+
+        )
+
+
+        # Normalize observed latency for state representation.
+
+        latency_pressure = np.clip(
+
+            measured_latency
+            / self.latency_limit_ms,
+
+            0.0,
+
+            MAX_LATENCY_MS
+            / self.latency_limit_ms
+
+        )
+
+
+        # Dataset traffic load is used to characterize
+        # the background traffic environment.
+
+        normalized_load = np.clip(
+
+            traffic_load / 1e9,
+
+            0.0,
+
+            1.0
+
+        )
+
+
+        return {
+
+            "channel_quality": float(channel_quality),
+
+            "background_load": float(background_load),
+
+            "packet_loss_factor": float(packet_loss_factor),
+
+            "latency_pressure": float(latency_pressure),
+
+            "normalized_load": float(normalized_load)
+
+        }
+
+
+    # --------------------------------------------------------
+    # 5.5.3: CONSTRUCT THE 12-DIMENSIONAL STATE
+    # --------------------------------------------------------
+
+    def get_state(self):
+
+        if self.current_row is None:
+
+            raise RuntimeError(
+                "Environment must be reset before obtaining state."
+            )
+
+
+        features = self.get_environment_features(
+            self.current_row
+        )
+
+
+        # Traffic-type one-hot representation.
+
+        traffic_one_hot = [
+
+            1.0 if self.traffic_type == traffic else 0.0
+
+            for traffic in TRAFFIC_TYPES
+
+        ]
+
+
+        # Normalized traffic demand.
+
+        normalized_demand = (
+
+            self.demand_mbps / 10.0
+
+        )
+
+
+        # Normalized latency requirement.
+
+        normalized_latency_limit = (
+
+            self.latency_limit_ms / 50.0
+
+        )
+
+
+        # Remaining RB and bandwidth fractions.
+
+        remaining_rb_fraction = (
+
+            self.remaining_rbs / self.total_rbs
+
+        )
+
+
+        remaining_bandwidth_fraction = (
+
+            remaining_rb_fraction
+
+        )
+
+
+        # Power availability per transmission decision.
+        # Power is constrained independently in each
+        # 1-ms transmission interval.
+
+        remaining_power_fraction = 1.0
+
+
+        state = np.array(
+
+            traffic_one_hot
+
+            + [
+
+                features["channel_quality"],
+
+                normalized_demand,
+
+                normalized_latency_limit,
+
+                features["background_load"],
+
+                features["packet_loss_factor"],
+
+                features["latency_pressure"],
+
+                remaining_rb_fraction,
+
+                remaining_power_fraction,
+
+                remaining_bandwidth_fraction
+
+            ],
+
+            dtype=np.float32
+
+        )
+
+
+        if state.shape != (STATE_DIM,):
+
+            raise ValueError(
+
+                f"Invalid state shape: {state.shape}. "
+
+                f"Expected ({STATE_DIM},)."
+
+            )
+
+
+        if not np.isfinite(state).all():
+
+            raise ValueError(
+                "State contains non-finite values."
+            )
+
+
+        return state
+
+
+    # --------------------------------------------------------
+    # 5.5.4: CALCULATE SIMULATED RADIO THROUGHPUT
+    # --------------------------------------------------------
+
+    def calculate_throughput(
+        self,
+        allocated_rbs,
+        allocated_power
+    ):
+
+        features = self.get_environment_features(
+            self.current_row
+        )
+
+
+        signal_dbm = self.safe_numeric(
+
+            self.current_row["Signal Strength (dBm)"],
+
+            default=-100.0
+
+        )
+
+
+        # Effective SNR in dB.
+        #
+        # The power adjustment is referenced to 4 W.
+
+        power_adjustment_db = (
+
+            10.0 * np.log10(
+                max(allocated_power, 1e-8) / 4.0
+            )
+
+        )
+
+
+        snr_db = (
+
+            signal_dbm
+            - NOISE_FLOOR_DBM
+            + power_adjustment_db
+
+        )
+
+
+        # Convert SNR into linear scale.
+
+        snr_linear = 10.0 ** (
+
+            np.clip(snr_db, -20.0, 40.0)
+            / 10.0
+
+        )
+
+
+        # Shannon spectral efficiency.
+
+        spectral_efficiency = np.log2(
+
+            1.0 + snr_linear
+
+        )
+
+
+        # Apply channel-quality-dependent efficiency.
+
+        effective_efficiency = (
+
+            spectral_efficiency
+            * features["channel_quality"]
+
+        )
+
+
+        # Allocated bandwidth in MHz.
+
+        allocated_bandwidth_mhz = (
+
+            allocated_rbs
+            * self.rb_bandwidth_mhz
+
+        )
+
+
+        # Simulated throughput in Mbps.
+
+        throughput_mbps = (
+
+            allocated_bandwidth_mhz
+            * effective_efficiency
+
+            * (1.0 - features["packet_loss_factor"])
+
+        )
+
+
+        return max(
+
+            0.0,
+
+            float(throughput_mbps)
+
+        )
+
+
+    # --------------------------------------------------------
+    # 5.5.5: CALCULATE SIMULATED LATENCY
+    # --------------------------------------------------------
+
+    def calculate_latency(
+        self,
+        allocated_rbs,
+        throughput_mbps
+    ):
+
+        features = self.get_environment_features(
+            self.current_row
+        )
+
+
+        # Transmission and processing latency.
+
+        transmission_latency = (
+
+            1.0
+            + 2.0 * (1.0 - features["channel_quality"])
+
+        )
+
+
+        # Queueing pressure due to background load.
+
+        queueing_latency = (
+
+            5.0
+            * features["background_load"]
+            / max(
+                allocated_rbs / self.total_rbs,
+                0.01
+            )
+
+        )
+
+
+        # Insufficient service capacity increases latency.
+
+        service_ratio = (
+
+            throughput_mbps
+            / max(self.demand_mbps, 1e-8)
+
+        )
+
+
+        service_penalty = (
+
+            5.0
+            * max(
+                0.0,
+                1.0 - service_ratio
+            )
+
+        )
+
+
+        latency_ms = (
+
+            transmission_latency
+            + queueing_latency
+            + service_penalty
+
+        )
+
+
+        return float(
+
+            np.clip(
+                latency_ms,
+                0.1,
+                MAX_LATENCY_MS
+            )
+
+        )
+
+
+    # --------------------------------------------------------
+    # 5.5.6: CALCULATE REWARD
+    # --------------------------------------------------------
+
+    def calculate_reward(
+        self,
+        throughput_mbps,
+        allocated_rbs,
+        allocated_power,
+        latency_ms
+    ):
+
+        # Throughput satisfaction.
+
+        throughput_satisfaction = np.clip(
+
+            throughput_mbps
+            / max(self.demand_mbps, 1e-8),
+
+            0.0,
+
+            1.0
+
+        )
+
+
+        # Normalized RB consumption.
+
+        rb_cost = (
+
+            allocated_rbs / 16.0
+
+        )
+
+
+        # Normalized transmission power consumption.
+
+        power_cost = (
+
+            allocated_power / 8.0
+
+        )
+
+
+        # Latency violation.
+
+        latency_violation = max(
+
+            0.0,
+
+            latency_ms / self.latency_limit_ms - 1.0
+
+        )
+
+
+        # Established reward function.
+
+        reward = (
+
+            2.0 * throughput_satisfaction
+
+            - 0.25 * rb_cost
+
+            - 0.20 * power_cost
+
+            - 0.50 * latency_violation
+
+        )
+
+
+        return float(reward)
+
+
+    # --------------------------------------------------------
+    # 5.5.7: RESET ENVIRONMENT
+    # --------------------------------------------------------
+
+    def reset(self):
+
+        self.current_step = 0
+
+        self.remaining_rbs = self.total_rbs
+
+        self.last_throughput_mbps = 0.0
+
+        self.last_latency_ms = 0.0
+
+        self.episode_reward = 0.0
+
+        self.episode_throughput = []
+
+        self.episode_latency = []
+
+
+        # Randomize the starting position of the
+        # traffic-type-specific dataset.
+
+        self.row_order = self.rng.permutation(
+            len(self.dataset)
+        )
+
+
+        self.current_row = self.dataset.iloc[
+            self.row_order[0]
+        ]
+
+
+        return self.get_state()
+
+
+    # --------------------------------------------------------
+    # 5.5.8: EXECUTE ONE RADIO RESOURCE ALLOCATION
+    # --------------------------------------------------------
+
+    def step(self, action_index):
+
+        if not 0 <= action_index < self.num_actions:
+
+            raise ValueError(
+                f"Invalid action index: {action_index}"
+            )
+
+
+        # Decode action.
+
+        allocated_rbs, allocated_power = ACTIONS[
+            action_index
+        ]
+
+
+        # Advance the environment step.
+
+        self.current_step += 1
+
+
+        # ----------------------------------------------------
+        # Invalid allocation handling.
+        # ----------------------------------------------------
+
+        if (
+
+            allocated_rbs > self.remaining_rbs
+
+            or allocated_power > self.total_power
+
+        ):
+
+            reward = -0.5
+
+            throughput_mbps = 0.0
+
+            latency_ms = MAX_LATENCY_MS
+
+            success = False
+
+
+        else:
+
+            # Calculate simulated throughput.
+
+            throughput_mbps = self.calculate_throughput(
+
+                allocated_rbs,
+
+                allocated_power
+
+            )
+
+
+            # Calculate simulated latency.
+
+            latency_ms = self.calculate_latency(
+
+                allocated_rbs,
+
+                throughput_mbps
+
+            )
+
+
+            # Calculate reward.
+
+            reward = self.calculate_reward(
+
+                throughput_mbps,
+
+                allocated_rbs,
+
+                allocated_power,
+
+                latency_ms
+
+            )
+
+
+            # Update RB budget.
+
+            self.remaining_rbs -= allocated_rbs
+
+
+            # Determine whether allocation satisfies QoS.
+
+            success = (
+
+                throughput_mbps >= self.demand_mbps
+
+                and latency_ms <= self.latency_limit_ms
+
+            )
+
+
+        # ----------------------------------------------------
+        # Update episode statistics.
+        # ----------------------------------------------------
+
+        self.last_throughput_mbps = throughput_mbps
+
+        self.last_latency_ms = latency_ms
+
+        self.episode_reward += reward
+
+        self.episode_throughput.append(
+            throughput_mbps
+        )
+
+        self.episode_latency.append(
+            latency_ms
+        )
+
+
+        # ----------------------------------------------------
+        # Select the next dataset record.
+        # ----------------------------------------------------
+
+        next_position = (
+
+            self.current_step
+            % len(self.dataset)
+
+        )
+
+        self.current_row = self.dataset.iloc[
+
+            self.row_order[next_position]
+
+        ]
+
+
+        # ----------------------------------------------------
+        # Determine episode termination.
+        # ----------------------------------------------------
+
+        done = (
+
+            self.remaining_rbs <= 0
+
+            or self.current_step >= self.max_steps
+
+        )
+
+
+        next_state = self.get_state()
+
+
+        # ----------------------------------------------------
+        # Return environment information.
+        # ----------------------------------------------------
+
+        info = {
+
+            "traffic_type": self.traffic_type,
+
+            "allocated_rbs": allocated_rbs,
+
+            "allocated_power_w": allocated_power,
+
+            "throughput_mbps": throughput_mbps,
+
+            "latency_ms": latency_ms,
+
+            "throughput_satisfaction": (
+
+                min(
+                    throughput_mbps
+                    / max(self.demand_mbps, 1e-8),
+                    1.0
+                )
+
+            ),
+
+            "qos_success": success,
+
+            "remaining_rbs": self.remaining_rbs,
+
+            "reward": reward
+
+        }
+
+
+        return StepResult(
+
+            next_state=next_state,
+
+            reward=reward,
+
+            done=done,
+
+            info=info
+
+        )
+
+
+# ------------------------------------------------------------
+# 5.6: VERIFY STATE CONSTRUCTION
+# ------------------------------------------------------------
+
+def verify_environment_states():
+
+    print("\n" + "=" * 72)
+
+    print("BLOCK 5: STATE CONSTRUCTION VERIFICATION")
+
+    print("=" * 72)
+
+
+    for traffic_type in TRAFFIC_TYPES:
+
+        environment = RadioResourceEnvironment(
+
+            traffic_type=traffic_type,
+
+            dataset=traffic_data[traffic_type]
+
+        )
+
+
+        state = environment.reset()
+
+
+        assert state.shape == (STATE_DIM,)
+
+
+        assert np.isfinite(state).all()
+
+
+        assert np.all(state >= 0.0)
+
+
+        assert np.all(state <= 1.0)
+
+
+        print(
+
+            f"Traffic type {traffic_type} | "
+
+            f"Records: {len(traffic_data[traffic_type])} | "
+
+            f"State shape: {state.shape} | "
+
+            f"Demand: {environment.demand_mbps:.1f} Mbps | "
+
+            f"Latency limit: "
+            f"{environment.latency_limit_ms:.1f} ms"
+
+        )
+
+
+    print("\nAll traffic-type states passed verification.")
+
+
+# ------------------------------------------------------------
+# 5.7: VERIFY ACTION EXECUTION
+# ------------------------------------------------------------
+
+def verify_environment_actions():
+
+    print("\n" + "=" * 72)
+
+    print("BLOCK 5: ACTION EXECUTION VERIFICATION")
+
+    print("=" * 72)
+
+
+    for traffic_type in TRAFFIC_TYPES:
+
+        environment = RadioResourceEnvironment(
+
+            traffic_type=traffic_type,
+
+            dataset=traffic_data[traffic_type]
+
+        )
+
+
+        state = environment.reset()
+
+
+        # Test a valid action.
+
+        test_action = ACTIONS.index(
+            (4, 4)
+        )
+
+
+        result = environment.step(
+            test_action
+        )
+
+
+        assert result.next_state.shape == (
+            STATE_DIM,
+        )
+
+
+        assert np.isfinite(
+            result.reward
+        )
+
+
+        assert np.isfinite(
+            result.info["throughput_mbps"]
+        )
+
+
+        assert np.isfinite(
+            result.info["latency_ms"]
+        )
+
+
+        assert result.info["allocated_rbs"] == 4
+
+
+        assert result.info["allocated_power_w"] == 4
+
+
+        print(
+
+            f"Traffic type {traffic_type} | "
+
+            f"Action: {ACTIONS[test_action]} | "
+
+            f"Throughput: "
+            f"{result.info['throughput_mbps']:.4f} Mbps | "
+
+            f"Latency: "
+            f"{result.info['latency_ms']:.4f} ms | "
+
+            f"Reward: {result.reward:.4f}"
+
+        )
+
+
+    print("\nAll action execution tests passed.")
+
+
+# ------------------------------------------------------------
+# 5.8: EXECUTE BLOCK 5 VALIDATION
+# ------------------------------------------------------------
+
+verify_environment_states()
+
+verify_environment_actions()
+
+
+print("\n" + "=" * 72)
+
+print("BLOCK 5 COMPLETED SUCCESSFULLY")
+
+print("=" * 72)
+
+print("State dimension:", STATE_DIM)
+
+print("Action dimension:", NUM_ACTIONS)
+
+print("Traffic types:", TRAFFIC_TYPES)
+
+print("Models:", MODELS)
+
+print("Radio bandwidth:", TOTAL_BANDWIDTH_MHZ, "MHz")
+
+print("Total RBs:", TOTAL_RBS)
+
+print("Power budget:", TOTAL_POWER_BUDGET, "W")
+
+print("\nNext: BLOCK 6 - Independent model training and")
+print("episode reward/loss history recording.")
+
+
+
+# ============================================================
+# BLOCK 6: INDEPENDENT TRAINING OF FOUR DDQN MODELS
+#           ON THREE DIFFERENT TRAFFIC TYPES
+#
+# Models:
+#   1. RBF-DDQN
+#   2. DDQN
+#   3. GGN-DDQN
+#   4. GCN-DDQN
+#
+# Traffic types:
+#   1, 2, 3
+#
+# Total independent experiments:
+#   4 x 3 = 12
+#
+# Recorded metrics:
+#   - Episode reward
+#   - Average episode reward
+#   - Actual DDQN optimization loss
+#   - Number of optimization updates
+#   - Epsilon
+#   - Average throughput
+#   - Average latency
+#   - QoS success rate
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 6.1: IMPORT REQUIRED LIBRARIES
+# ------------------------------------------------------------
+
+import os
+import random
+import numpy as np
+import pandas as pd
+import torch
+
+from pathlib import Path
+from collections import defaultdict
+
+
+# ------------------------------------------------------------
+# 6.2: TRAINING OUTPUT CONFIGURATION
+# ------------------------------------------------------------
+
+TRAINING_LOG_DIR = (
+    TRAINING_HISTORY_DIR
+    / "independent_training"
+)
+
+TRAINING_LOG_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+
+# ------------------------------------------------------------
+# 6.3: INITIALIZE HISTORY CONTAINERS
+# ------------------------------------------------------------
+
+# One DataFrame will eventually contain the histories
+# of all 12 independent experiments.
+
+all_training_histories = []
+
+# Individual experiment histories.
+
+training_histories = {}
+
+# Retain trained agents for possible later evaluation.
+
+trained_agents = {}
+
+# Retain environments for reference.
+
+training_environments = {}
+
+
+# ------------------------------------------------------------
+# 6.4: REPRODUCIBILITY FUNCTION
+# ------------------------------------------------------------
+
+def set_experiment_seed(seed):
+
+    random.seed(seed)
+
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+
+    if torch.cuda.is_available():
+
+        torch.cuda.manual_seed_all(seed)
+
+
+# ------------------------------------------------------------
+# 6.5: CREATE TRAINING ENVIRONMENT
+# ------------------------------------------------------------
+
+def create_training_environment(
+    traffic_type,
+    experiment_seed
+):
+
+    environment = RadioResourceEnvironment(
+
+        traffic_type=traffic_type,
+
+        dataset=traffic_data[traffic_type],
+
+        seed=experiment_seed
+
+    )
+
+    return environment
+
+
+# ------------------------------------------------------------
+# 6.6: SINGLE-EPISODE TRAINING FUNCTION
+# ------------------------------------------------------------
+
+def train_one_episode(
+    agent,
+    environment,
+    episode_number
+):
+
+    # Reset environment.
+
+    state = environment.reset()
+
+
+    # Episode-specific statistics.
+
+    episode_reward = 0.0
+
+    episode_losses = []
+
+    throughput_values = []
+
+    latency_values = []
+
+    successful_allocations = 0
+
+    total_allocations = 0
+
+    total_allocated_rbs = 0
+
+    total_allocated_power = 0.0
+
+    optimization_updates = 0
+
+
+    done = False
+
+
+    # --------------------------------------------------------
+    # Interact with the environment until termination.
+    # --------------------------------------------------------
+
+    while not done:
+
+        # Select action using epsilon-greedy policy.
+
+        action = agent.select_action(
+            state,
+            evaluate=False
+        )
+
+
+        # Execute selected radio resource allocation.
+
+        result = environment.step(
+            action
+        )
+
+
+        next_state = result.next_state
+
+        reward = result.reward
+
+        done = result.done
+
+
+        # ----------------------------------------------------
+        # Store transition in independent replay buffer.
+        # ----------------------------------------------------
+
+        agent.remember(
+
+            state,
+
+            action,
+
+            reward,
+
+            next_state,
+
+            done
+
+        )
+
+
+        # ----------------------------------------------------
+        # Optimize online network using Double DQN.
+        # ----------------------------------------------------
+
+        loss = agent.learn()
+
+
+        # Record only actual optimization losses.
+
+        if loss is not None:
+
+            if np.isfinite(loss):
+
+                episode_losses.append(loss)
+
+                optimization_updates += 1
+
+
+        # ----------------------------------------------------
+        # Accumulate episode statistics.
+        # ----------------------------------------------------
+
+        episode_reward += reward
+
+        throughput_values.append(
+
+            result.info["throughput_mbps"]
+
+        )
+
+        latency_values.append(
+
+            result.info["latency_ms"]
+
+        )
+
+        successful_allocations += int(
+
+            result.info["qos_success"]
+
+        )
+
+        total_allocations += 1
+
+        total_allocated_rbs += (
+
+            result.info["allocated_rbs"]
+
+        )
+
+        total_allocated_power += (
+
+            result.info["allocated_power_w"]
+
+        )
+
+
+        # Move to the next state.
+
+        state = next_state
+
+
+    # --------------------------------------------------------
+    # Calculate episode-level metrics.
+    # --------------------------------------------------------
+
+    average_reward = (
+
+        episode_reward / max(total_allocations, 1)
+
+    )
+
+
+    average_loss = (
+
+        float(np.mean(episode_losses))
+
+        if len(episode_losses) > 0
+
+        else np.nan
+
+    )
+
+
+    average_throughput = (
+
+        float(np.mean(throughput_values))
+
+        if len(throughput_values) > 0
+
+        else 0.0
+
+    )
+
+
+    average_latency = (
+
+        float(np.mean(latency_values))
+
+        if len(latency_values) > 0
+
+        else 0.0
+
+    )
+
+
+    qos_success_rate = (
+
+        successful_allocations
+        / max(total_allocations, 1)
+
+    )
+
+
+    average_allocated_rbs = (
+
+        total_allocated_rbs
+        / max(total_allocations, 1)
+
+    )
+
+
+    average_allocated_power = (
+
+        total_allocated_power
+        / max(total_allocations, 1)
+
+    )
+
+
+    # --------------------------------------------------------
+    # Return actual episode results.
+    # --------------------------------------------------------
+
+    episode_result = {
+
+        "episode": episode_number,
+
+        "episode_reward": float(episode_reward),
+
+        "average_episode_reward": float(average_reward),
+
+        "episode_loss": average_loss,
+
+        "optimization_updates": optimization_updates,
+
+        "epsilon": float(agent.epsilon),
+
+        "episode_steps": total_allocations,
+
+        "average_throughput_mbps": average_throughput,
+
+        "average_latency_ms": average_latency,
+
+        "qos_success_rate": qos_success_rate,
+
+        "average_allocated_rbs": average_allocated_rbs,
+
+        "average_allocated_power_w": average_allocated_power
+
+    }
+
+
+    return episode_result
+
+
+# ------------------------------------------------------------
+# 6.7: TRAIN ONE MODEL ON ONE TRAFFIC TYPE
+# ------------------------------------------------------------
+
+def train_model_on_traffic(
+    model_name,
+    traffic_type
+):
+
+    print("\n" + "=" * 78)
+
+    print(
+        f"TRAINING MODEL: {model_name} | "
+        f"TRAFFIC TYPE: {traffic_type}"
+    )
+
+    print("=" * 78)
+
+
+    # --------------------------------------------------------
+    # Establish an experiment-specific seed.
+    # --------------------------------------------------------
+
+    model_index = MODELS.index(model_name)
+
+    experiment_seed = (
+
+        SEED
+
+        + 1000 * traffic_type
+
+        + 100 * model_index
+
+    )
+
+    set_experiment_seed(
+        experiment_seed
+    )
+
+
+    # --------------------------------------------------------
+    # Create independent environment.
+    # --------------------------------------------------------
+
+    environment = create_training_environment(
+
+        traffic_type=traffic_type,
+
+        experiment_seed=experiment_seed
+
+    )
+
+
+    # --------------------------------------------------------
+    # Create an independent DDQN agent.
+    # --------------------------------------------------------
+
+    agent = DDQNAgent(
+
+        model_name=model_name,
+
+        state_dim=STATE_DIM,
+
+        num_actions=NUM_ACTIONS,
+
+        learning_rate=LEARNING_RATE,
+
+        gamma=GAMMA,
+
+        batch_size=BATCH_SIZE,
+
+        target_update_frequency=TARGET_UPDATE_FREQUENCY,
+
+        epsilon_start=EPSILON_START,
+
+        epsilon_end=EPSILON_END,
+
+        epsilon_decay=EPSILON_DECAY,
+
+        device=DEVICE
+
+    )
+
+
+    # --------------------------------------------------------
+    # Episode history.
+    # --------------------------------------------------------
+
+    experiment_history = []
+
+
+    # --------------------------------------------------------
+    # Execute training episodes.
+    # --------------------------------------------------------
+
+    for episode in range(
+
+        1,
+
+        NUM_EPISODES + 1
+
+    ):
+
+
+        episode_result = train_one_episode(
+
+            agent=agent,
+
+            environment=environment,
+
+            episode_number=episode
+
+        )
+
+
+        # Attach experiment identifiers.
+
+        episode_result["model"] = model_name
+
+        episode_result["traffic_type"] = traffic_type
+
+
+        # Save episode history.
+
+        experiment_history.append(
+            episode_result
+        )
+
+
+        # ----------------------------------------------------
+        # Decay epsilon once per episode.
+        # ----------------------------------------------------
+
+        agent.decay_epsilon()
+
+
+        # ----------------------------------------------------
+        # Display training progress.
+        # ----------------------------------------------------
+
+        if (
+
+            episode == 1
+
+            or episode % 10 == 0
+
+            or episode == NUM_EPISODES
+
+        ):
+
+            print(
+
+                f"Episode {episode:3d}/{NUM_EPISODES} | "
+
+                f"Reward: "
+                f"{episode_result['episode_reward']:9.4f} | "
+
+                f"Average reward: "
+                f"{episode_result['average_episode_reward']:8.4f} | "
+
+                f"Loss: "
+                f"{episode_result['episode_loss']:.6f} | "
+
+                f"Updates: "
+                f"{episode_result['optimization_updates']:4d} | "
+
+                f"Epsilon: "
+                f"{agent.epsilon:.4f}"
+
+            )
+
+
+    # --------------------------------------------------------
+    # Convert experiment history to DataFrame.
+    # --------------------------------------------------------
+
+    history_df = pd.DataFrame(
+        experiment_history
+    )
+
+
+    # Store histories.
+
+    experiment_key = (
+
+        model_name,
+
+        traffic_type
+
+    )
+
+    training_histories[experiment_key] = history_df
+
+
+    # Store trained agent independently.
+
+    trained_agents[experiment_key] = agent
+
+
+    # Store environment.
+
+    training_environments[experiment_key] = environment
+
+
+    # --------------------------------------------------------
+    # Save individual experiment history.
+    # --------------------------------------------------------
+
+    history_filename = (
+
+        f"{model_name.replace('-', '_')}"
+        f"_traffic_type_{traffic_type}"
+        f"_training_history.csv"
+
+    )
+
+
+    history_path = (
+
+        TRAINING_LOG_DIR
+        / history_filename
+
+    )
+
+
+    history_df.to_csv(
+
+        history_path,
+
+        index=False
+
+    )
+
+
+    # --------------------------------------------------------
+    # Save trained model checkpoint.
+    # --------------------------------------------------------
+
+    checkpoint_filename = (
+
+        f"{model_name.replace('-', '_')}"
+        f"_traffic_type_{traffic_type}"
+        f"_checkpoint.pt"
+
+    )
+
+
+    checkpoint_path = (
+
+        CHECKPOINT_DIR
+        / checkpoint_filename
+
+    )
+
+
+    agent.save_checkpoint(
+        checkpoint_path
+    )
+
+
+    # --------------------------------------------------------
+    # Display experiment completion.
+    # --------------------------------------------------------
+
+    print("\nExperiment completed.")
+
+    print("Model:", model_name)
+
+    print("Traffic type:", traffic_type)
+
+    print("Total episodes:", len(history_df))
+
+    print(
+        "Final episode reward:",
+        history_df["episode_reward"].iloc[-1]
+    )
+
+    print(
+        "Final episode loss:",
+        history_df["episode_loss"].iloc[-1]
+    )
+
+    print(
+        "Checkpoint:",
+        checkpoint_path
+    )
+
+    print(
+        "Training history:",
+        history_path
+    )
+
+
+    return history_df, agent
+
+
+# ------------------------------------------------------------
+# 6.8: EXECUTE ALL 12 INDEPENDENT EXPERIMENTS
+# ------------------------------------------------------------
+
+print("\n" + "=" * 78)
+
+print("STARTING ALL 12 INDEPENDENT TRAINING EXPERIMENTS")
+
+print("=" * 78)
+
+
+for traffic_type in TRAFFIC_TYPES:
+
+    print("\n")
+
+    print("#" * 78)
+
+    print(
+        f"STARTING TRAFFIC TYPE {traffic_type}"
+    )
+
+    print("#" * 78)
+
+
+    for model_name in MODELS:
+
+        history_df, agent = train_model_on_traffic(
+
+            model_name=model_name,
+
+            traffic_type=traffic_type
+
+        )
+
+
+        all_training_histories.append(
+            history_df
+        )
+
+
+# ------------------------------------------------------------
+# 6.9: COMBINE ALL TRAINING HISTORIES
+# ------------------------------------------------------------
+
+combined_training_history = pd.concat(
+
+    all_training_histories,
+
+    ignore_index=True
+
+)
+
+
+# ------------------------------------------------------------
+# 6.10: SAVE COMBINED TRAINING HISTORY
+# ------------------------------------------------------------
+
+combined_history_path = (
+
+    TRAINING_LOG_DIR
+    / "all_models_all_traffic_types_training_history.csv"
+
+)
+
+
+combined_training_history.to_csv(
+
+    combined_history_path,
+
+    index=False
+
+)
+
+
+# ------------------------------------------------------------
+# 6.11: CREATE EXPERIMENT SUMMARY
+# ------------------------------------------------------------
+
+experiment_summary = (
+
+    combined_training_history
+
+    .groupby(
+        ["traffic_type", "model"],
+        sort=True
+    )
+
+    .agg(
+
+        total_episodes=("episode", "count"),
+
+        final_episode_reward=("episode_reward", "last"),
+
+        final_average_reward=("average_episode_reward", "last"),
+
+        final_episode_loss=("episode_loss", "last"),
+
+        mean_episode_reward=("episode_reward", "mean"),
+
+        mean_episode_loss=("episode_loss", "mean"),
+
+        total_optimization_updates=("optimization_updates", "sum"),
+
+        mean_throughput_mbps=("average_throughput_mbps", "mean"),
+
+        mean_latency_ms=("average_latency_ms", "mean"),
+
+        mean_qos_success_rate=("qos_success_rate", "mean")
+
+    )
+
+    .reset_index()
+
+)
+
+
+# ------------------------------------------------------------
+# 6.12: SAVE EXPERIMENT SUMMARY
+# ------------------------------------------------------------
+
+experiment_summary_path = (
+
+    CSV_DIR
+    / "all_models_traffic_types_training_summary.csv"
+
+)
+
+
+experiment_summary.to_csv(
+
+    experiment_summary_path,
+
+    index=False
+
+)
+
+
+# ------------------------------------------------------------
+# 6.13: VALIDATE TRAINING COMPLETION
+# ------------------------------------------------------------
+
+EXPECTED_EXPERIMENTS = (
+
+    len(MODELS)
+    * len(TRAFFIC_TYPES)
+
+)
+
+
+assert len(training_histories) == EXPECTED_EXPERIMENTS
+
+
+assert len(trained_agents) == EXPECTED_EXPERIMENTS
+
+
+assert len(combined_training_history) == (
+
+    EXPECTED_EXPERIMENTS
+    * NUM_EPISODES
+
+)
+
+
+for traffic_type in TRAFFIC_TYPES:
+
+    for model_name in MODELS:
+
+        key = (
+            model_name,
+            traffic_type
+        )
+
+
+        assert key in training_histories
+
+        assert key in trained_agents
+
+
+        history = training_histories[key]
+
+
+        assert len(history) == NUM_EPISODES
+
+
+        assert history["episode_reward"].notna().all()
+
+
+        assert history["episode_loss"].notna().any(), (
+
+            f"No optimization loss was recorded for "
+            f"{model_name}, traffic type {traffic_type}."
+
+        )
+
+
+        assert np.isfinite(
+
+            history["episode_reward"].to_numpy()
+
+        ).all()
+
+
+        assert np.isfinite(
+
+            history["episode_loss"].dropna().to_numpy()
+
+        ).all()
+
+
+# ------------------------------------------------------------
+# 6.14: DISPLAY FINAL EXPERIMENT SUMMARY
+# ------------------------------------------------------------
+
+print("\n" + "=" * 78)
+
+print("ALL TRAINING EXPERIMENTS COMPLETED")
+
+print("=" * 78)
+
+
+print("\nTotal independent experiments:")
+
+print(EXPECTED_EXPERIMENTS)
+
+
+print("\nTotal training episodes:")
+
+print(len(combined_training_history))
+
+
+print("\nTraining summary:")
+
+print(
+
+    experiment_summary.to_string(
+        index=False
+    )
+
+)
+
+
+print("\nCombined history saved to:")
+
+print(combined_history_path)
+
+
+print("\nExperiment summary saved to:")
+
+print(experiment_summary_path)
+
+
+print("\n" + "=" * 78)
+
+print("BLOCK 6 COMPLETED SUCCESSFULLY")
+
+print("=" * 78)
+
+
+print("\nNext:")
+
+print(
+    "BLOCK 7: PLOT EPISODE REWARD "
+    "FOR ALL FOUR MODELS ON TRAFFIC TYPES 1, 2, AND 3."
+)
+
+print(
+    "BLOCK 8: PLOT ACTUAL TRAINING LOSS "
+    "FOR ALL FOUR MODELS ON TRAFFIC TYPES 1, 2, AND 3."
+)
+
+
+
+
+
+
+# ============================================================
+# BLOCK 7: TRAINING REWARD COMPARISON
+# FOUR MODELS AND THREE TRAFFIC TYPES
+# ============================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+
+# ------------------------------------------------------------
+# 7.1. Publication model labels
+# ------------------------------------------------------------
+
+MODEL_LABELS = {
+    "RBF-DDQN": "Ours",
+    "DDQN": "MADDQN",
+    "GGN-DDQN": "GGN-MADDQN",
+    "GCN-DDQN": "GCN-MADDQN",
+}
+
+if set(MODELS) != set(MODEL_LABELS.keys()):
+    raise ValueError("Check MODELS and MODEL_LABELS.")
+
+# ------------------------------------------------------------
+# 7.2. Plot configuration
+# ------------------------------------------------------------
+
+SMOOTHING_WINDOW = 10
+EPISODE_TICK_INTERVAL = 20
+MARKER_INTERVAL = 20
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 16,
+    "axes.labelsize": 17,
+    "xtick.labelsize": 15,
+    "ytick.labelsize": 15,
+    "legend.fontsize": 17,
+    "lines.linewidth": 2.2,
+    "axes.linewidth": 1.2,
+    "savefig.dpi": 600,
+    "ps.fonttype": 42,
+    "pdf.fonttype": 42,
+})
+
+MODEL_STYLES = {
+    "RBF-DDQN": {"linestyle": "-", "marker": "o"},
+    "DDQN": {"linestyle": "--", "marker": "s"},
+    "GGN-DDQN": {"linestyle": "-.", "marker": "^"},
+    "GCN-DDQN": {"linestyle": ":", "marker": "D"},
+}
+
+# ------------------------------------------------------------
+# 7.3. Verify experiment availability
+# ------------------------------------------------------------
+
+expected_experiments = {
+    (model, traffic)
+    for traffic in TRAFFIC_TYPES
+    for model in MODELS
+}
+
+missing_experiments = (
+    expected_experiments - set(training_histories.keys())
+)
+
+if missing_experiments:
+    raise RuntimeError(
+        f"Missing training experiments: {sorted(missing_experiments)}"
+    )
+
+print("All 12 training experiments are available.")
+
+# ------------------------------------------------------------
+# 7.4. Prepare output directories
+# ------------------------------------------------------------
+
+REWARD_FIGURE_DIR = FIGURE_DIR / "Training_Reward"
+REWARD_CSV_DIR = CSV_DIR / "Training_Reward"
+
+REWARD_FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+REWARD_CSV_DIR.mkdir(parents=True, exist_ok=True)
+
+# ------------------------------------------------------------
+# 7.5. Extract and smooth reward histories
+# ------------------------------------------------------------
+
+reward_plot_data = []
+
+for traffic_type in TRAFFIC_TYPES:
+
+    for model_name in MODELS:
+
+        history_df = pd.DataFrame(
+            training_histories[(model_name, traffic_type)]
+        )
+
+        required_columns = [
+            "episode",
+            "average_episode_reward"
+        ]
+
+        missing = [
+            col for col in required_columns
+            if col not in history_df.columns
+        ]
+
+        if missing:
+            raise KeyError(
+                f"{model_name}, traffic {traffic_type}: "
+                f"Missing columns {missing}"
+            )
+
+        history_df = (
+            history_df.sort_values("episode")
+            .reset_index(drop=True)
+        )
+
+        reward = pd.to_numeric(
+            history_df["average_episode_reward"],
+            errors="coerce"
+        )
+
+        if not np.isfinite(reward).all():
+            raise ValueError(
+                f"Invalid reward values: {model_name}, "
+                f"traffic {traffic_type}"
+            )
+
+        smoothed_reward = reward.rolling(
+            window=SMOOTHING_WINDOW,
+            min_periods=1
+        ).mean()
+
+        for i in range(len(history_df)):
+
+            reward_plot_data.append({
+                "traffic_type": traffic_type,
+                "model": model_name,
+                "model_label": MODEL_LABELS[model_name],
+                "episode": int(history_df.loc[i, "episode"]),
+                "average_episode_reward": float(reward.iloc[i]),
+                "smoothed_average_episode_reward": float(
+                    smoothed_reward.iloc[i]
+                )
+            })
+
+reward_plot_df = pd.DataFrame(reward_plot_data)
+
+# Save reward data.
+reward_data_path = (
+    REWARD_CSV_DIR /
+    "all_models_all_traffic_types_reward_data.csv"
+)
+
+reward_plot_df.to_csv(reward_data_path, index=False)
+
+print("Reward data saved:", reward_data_path)
+
+# ------------------------------------------------------------
+# 7.6. Plot reward for each traffic type
+# ------------------------------------------------------------
+
+for traffic_type in TRAFFIC_TYPES:
+
+    fig, ax = plt.subplots(figsize=(9, 5.8))
+
+    traffic_df = reward_plot_df[
+        reward_plot_df["traffic_type"] == traffic_type
+    ]
+
+    for model_name in MODELS:
+
+        model_df = traffic_df[
+            traffic_df["model"] == model_name
+        ].sort_values("episode")
+
+        style = MODEL_STYLES[model_name]
+
+        ax.plot(
+            model_df["episode"],
+            model_df["smoothed_average_episode_reward"],
+            label=MODEL_LABELS[model_name],
+            linestyle=style["linestyle"],
+            marker=style["marker"],
+            markevery=MARKER_INTERVAL,
+            markersize=6,
+            linewidth=2.2
+        )
+
+    # Axis labels.
+    ax.set_xlabel(
+        "Training Episode",
+        fontweight="bold"
+    )
+
+    # Traffic-type-specific y-axis label.
+    traffic_label = f"TP{traffic_type}"
+
+    ax.set_ylabel(
+        f"Average Episode Reward ({traffic_label})",
+        fontweight="bold",
+        labelpad=10
+    )
+
+    # X-axis limits and evenly spaced episode labels.
+    ax.set_xlim(0, NUM_EPISODES)
+
+    ax.xaxis.set_major_locator(
+        MultipleLocator(EPISODE_TICK_INTERVAL)
+    )
+
+    ax.xaxis.set_major_formatter(
+        FormatStrFormatter("%d")
+    )
+
+    # Avoid forcing reward to be positive.
+    ax.grid(
+        True,
+        linestyle="--",
+        linewidth=0.7,
+        alpha=0.4
+    )
+
+    # Legend above the plotting area.
+    ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.02),
+        ncol=4,
+        frameon=False,
+        handlelength=2.5,
+        columnspacing=1.2
+    )
+
+    ax.tick_params(
+        axis="both",
+        direction="in",
+        length=5,
+        width=1.1,
+        pad=7
+    )
+
+    # Keep x-axis labels horizontal and readable.
+    plt.setp(
+        ax.get_xticklabels(),
+        rotation=0,
+        ha="center"
+    )
+
+    fig.tight_layout(
+        rect=[0, 0, 1, 0.92]
+    )
+
+    # Save figures.
+    png_path = (
+        REWARD_FIGURE_DIR /
+        f"reward_traffic_type_{traffic_type}.png"
+    )
+
+    eps_path = (
+        REWARD_FIGURE_DIR /
+        f"reward_traffic_type_{traffic_type}.eps"
+    )
+
+    fig.savefig(
+        png_path,
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    fig.savefig(
+        eps_path,
+        format="eps",
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    plt.show()
+    plt.close(fig)
+
+    print(f"Traffic type {traffic_type} reward figures saved.")
+    print("PNG:", png_path)
+    print("EPS:", eps_path)
+
+# ------------------------------------------------------------
+# 7.7. Final verification
+# ------------------------------------------------------------
+
+print("\n" + "=" * 60)
+print("BLOCK 7 COMPLETED SUCCESSFULLY")
+print("=" * 60)
+
+print("Models:", [MODEL_LABELS[m] for m in MODELS])
+print("Traffic types:", TRAFFIC_TYPES)
+print("Smoothing window:", SMOOTHING_WINDOW)
+print("X-axis tick interval:", EPISODE_TICK_INTERVAL)
+
+print("Reward data:", reward_data_path)
+print("Reward figures:", REWARD_FIGURE_DIR)
+
+# ============================================================
+# BLOCK 8: TRAINING LOSS COMPARISON
+# FOUR MODELS AND THREE TRAFFIC TYPES
+# ============================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+
+# ------------------------------------------------------------
+# 8.1. Publication model labels
+# ------------------------------------------------------------
+
+MODEL_LABELS = {
+    "RBF-DDQN": "Ours",
+    "DDQN": "MADDQN",
+    "GGN-DDQN": "GGN-MADDQN",
+    "GCN-DDQN": "GCN-MADDQN",
+}
+
+if set(MODELS) != set(MODEL_LABELS.keys()):
+    raise ValueError("Check MODELS and MODEL_LABELS.")
+
+# ------------------------------------------------------------
+# 8.2. Plot configuration
+# ------------------------------------------------------------
+
+LOSS_SMOOTHING_WINDOW = 10
+EPISODE_TICK_INTERVAL = 20
+MARKER_INTERVAL = 20
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 16,
+    "axes.labelsize": 17,
+    "xtick.labelsize": 15,
+    "ytick.labelsize": 15,
+    "legend.fontsize": 17,
+    "lines.linewidth": 2.2,
+    "axes.linewidth": 1.2,
+    "savefig.dpi": 600,
+    "ps.fonttype": 42,
+    "pdf.fonttype": 42,
+})
+
+MODEL_STYLES = {
+    "RBF-DDQN": {"linestyle": "-", "marker": "o"},
+    "DDQN": {"linestyle": "--", "marker": "s"},
+    "GGN-DDQN": {"linestyle": "-.", "marker": "^"},
+    "GCN-DDQN": {"linestyle": ":", "marker": "D"},
+}
+
+# ------------------------------------------------------------
+# 8.3. Verify experiment availability
+# ------------------------------------------------------------
+
+expected_experiments = {
+    (model, traffic)
+    for traffic in TRAFFIC_TYPES
+    for model in MODELS
+}
+
+missing_experiments = (
+    expected_experiments - set(training_histories.keys())
+)
+
+if missing_experiments:
+    raise RuntimeError(
+        f"Missing training experiments: {sorted(missing_experiments)}"
+    )
+
+print("All 12 training experiments are available.")
+
+# ------------------------------------------------------------
+# 8.4. Prepare output directories
+# ------------------------------------------------------------
+
+LOSS_FIGURE_DIR = FIGURE_DIR / "Training_Loss"
+LOSS_CSV_DIR = CSV_DIR / "Training_Loss"
+
+LOSS_FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+LOSS_CSV_DIR.mkdir(parents=True, exist_ok=True)
+
+# ------------------------------------------------------------
+# 8.5. Extract and smooth actual optimization losses
+# ------------------------------------------------------------
+
+loss_plot_data = []
+
+for traffic_type in TRAFFIC_TYPES:
+
+    for model_name in MODELS:
+
+        history_df = pd.DataFrame(
+            training_histories[(model_name, traffic_type)]
+        )
+
+        required_columns = [
+            "episode",
+            "episode_loss",
+            "optimization_updates"
+        ]
+
+        missing = [
+            col for col in required_columns
+            if col not in history_df.columns
+        ]
+
+        if missing:
+            raise KeyError(
+                f"{model_name}, traffic {traffic_type}: "
+                f"Missing columns {missing}"
+            )
+
+        history_df = (
+            history_df.sort_values("episode")
+            .reset_index(drop=True)
+        )
+
+        loss = pd.to_numeric(
+            history_df["episode_loss"],
+            errors="coerce"
+        )
+
+        valid_loss = loss.dropna()
+
+        if valid_loss.empty:
+            raise ValueError(
+                f"No valid optimization losses for "
+                f"{model_name}, traffic {traffic_type}."
+            )
+
+        if not np.isfinite(valid_loss).all():
+            raise ValueError(
+                f"Non-finite loss values for "
+                f"{model_name}, traffic {traffic_type}."
+            )
+
+        if (valid_loss < 0).any():
+            raise ValueError(
+                f"Negative loss values for "
+                f"{model_name}, traffic {traffic_type}."
+            )
+
+        # Moving average ignores episodes without updates.
+        smoothed_loss = loss.rolling(
+            window=LOSS_SMOOTHING_WINDOW,
+            min_periods=1
+        ).mean()
+
+        for i in range(len(history_df)):
+
+            current_loss = loss.iloc[i]
+            current_smoothed_loss = smoothed_loss.iloc[i]
+
+            loss_plot_data.append({
+                "traffic_type": traffic_type,
+                "model": model_name,
+                "model_label": MODEL_LABELS[model_name],
+                "episode": int(history_df.loc[i, "episode"]),
+                "episode_loss": (
+                    float(current_loss)
+                    if pd.notna(current_loss)
+                    else np.nan
+                ),
+                "smoothed_episode_loss": (
+                    float(current_smoothed_loss)
+                    if pd.notna(current_smoothed_loss)
+                    else np.nan
+                ),
+                "optimization_updates": int(
+                    history_df.loc[i, "optimization_updates"]
+                )
+            })
+
+loss_plot_df = pd.DataFrame(loss_plot_data)
+
+# Save loss data.
+loss_data_path = (
+    LOSS_CSV_DIR /
+    "all_models_all_traffic_types_loss_data.csv"
+)
+
+loss_plot_df.to_csv(loss_data_path, index=False)
+
+print("Loss data saved:", loss_data_path)
+
+# ------------------------------------------------------------
+# 8.6. Plot loss for each traffic type
+# ------------------------------------------------------------
+
+for traffic_type in TRAFFIC_TYPES:
+
+    fig, ax = plt.subplots(figsize=(9, 5.8))
+
+    traffic_df = loss_plot_df[
+        loss_plot_df["traffic_type"] == traffic_type
+    ]
+
+    for model_name in MODELS:
+
+        model_df = traffic_df[
+            traffic_df["model"] == model_name
+        ].sort_values("episode")
+
+        valid_model_df = model_df.dropna(
+            subset=["smoothed_episode_loss"]
+        )
+
+        if valid_model_df.empty:
+            continue
+
+        style = MODEL_STYLES[model_name]
+
+        ax.plot(
+            valid_model_df["episode"],
+            valid_model_df["smoothed_episode_loss"],
+            label=MODEL_LABELS[model_name],
+            linestyle=style["linestyle"],
+            marker=style["marker"],
+            markevery=MARKER_INTERVAL,
+            markersize=6,
+            linewidth=2.2
+        )
+
+    # Axis labels.
+    ax.set_xlabel(
+        "Training Episode",
+        fontweight="bold"
+    )
+
+    # Traffic-type-specific y-axis label.
+    traffic_label = f"TP{traffic_type}"
+
+    ax.set_ylabel(
+        f"Training Loss ({traffic_label})",
+        fontweight="bold",
+        labelpad=10
+    )
+
+    # X-axis limits and evenly spaced episode labels.
+    ax.set_xlim(0, NUM_EPISODES)
+
+    ax.xaxis.set_major_locator(
+        MultipleLocator(EPISODE_TICK_INTERVAL)
+    )
+
+    ax.xaxis.set_major_formatter(
+        FormatStrFormatter("%d")
+    )
+
+    # Loss is non-negative.
+    ax.set_ylim(bottom=0)
+
+    ax.grid(
+        True,
+        linestyle="--",
+        linewidth=0.7,
+        alpha=0.4
+    )
+
+    # Legend above the plotting area.
+    ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.02),
+        ncol=4,
+        frameon=False,
+        handlelength=2.5,
+        columnspacing=1.2
+    )
+
+    ax.tick_params(
+        axis="both",
+        direction="in",
+        length=5,
+        width=1.1,
+        pad=7
+    )
+
+    plt.setp(
+        ax.get_xticklabels(),
+        rotation=0,
+        ha="center"
+    )
+
+    fig.tight_layout(
+        rect=[0, 0, 1, 0.92]
+    )
+
+    # Save figures.
+    png_path = (
+        LOSS_FIGURE_DIR /
+        f"loss_traffic_type_{traffic_type}.png"
+    )
+
+    eps_path = (
+        LOSS_FIGURE_DIR /
+        f"loss_traffic_type_{traffic_type}.eps"
+    )
+
+    fig.savefig(
+        png_path,
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    fig.savefig(
+        eps_path,
+        format="eps",
+        dpi=600,
+        bbox_inches="tight"
+    )
+
+    plt.show()
+    plt.close(fig)
+
+    print(f"Traffic type {traffic_type} loss figures saved.")
+    print("PNG:", png_path)
+    print("EPS:", eps_path)
+
+# ------------------------------------------------------------
+# 8.7. Generate loss availability summary
+# ------------------------------------------------------------
+
+loss_availability_summary = (
+    loss_plot_df
+    .groupby(["traffic_type", "model", "model_label"])
+    .agg(
+        total_episodes=("episode", "count"),
+        valid_loss_episodes=("episode_loss", "count"),
+        total_optimization_updates=(
+            "optimization_updates",
+            "sum"
+        ),
+        mean_episode_loss=("episode_loss", "mean"),
+        final_episode_loss=("episode_loss", "last")
+    )
+    .reset_index()
+)
+
+loss_summary_path = (
+    LOSS_CSV_DIR /
+    "loss_availability_summary.csv"
+)
+
+loss_availability_summary.to_csv(
+    loss_summary_path,
+    index=False
+)
+
+print("\nLoss availability summary:")
+print(
+    loss_availability_summary.to_string(index=False)
+)
+
+# ------------------------------------------------------------
+# 8.8. Final verification
+# ------------------------------------------------------------
+
+print("\n" + "=" * 60)
+print("BLOCK 8 COMPLETED SUCCESSFULLY")
+print("=" * 60)
+
+print("Models:", [MODEL_LABELS[m] for m in MODELS])
+print("Traffic types:", TRAFFIC_TYPES)
+print("Smoothing window:", LOSS_SMOOTHING_WINDOW)
+print("X-axis tick interval:", EPISODE_TICK_INTERVAL)
+
+print("Loss data:", loss_data_path)
+print("Loss summary:", loss_summary_path)
+print("Loss figures:", LOSS_FIGURE_DIR)
