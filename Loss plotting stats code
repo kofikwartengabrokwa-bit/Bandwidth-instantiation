@@ -1,0 +1,461 @@
+
+# ============================================================
+# COMPLETE CODE: REWARD AND LOSS COMPARISON
+# First 500 episodes | Google Colab | Google Drive
+#
+# Legend replacement:
+# RBF-EdgeCover-DDQN -> Ours
+#
+# Input:  BAND/BIRLv1.txt
+# Output: CSV, PNG (600 DPI), EPS (600 DPI)
+# ============================================================
+
+import os
+import re
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ============================================================
+# BLOCK 1: CONNECT TO GOOGLE DRIVE AND LOCATE THE INPUT FILE
+# ============================================================
+
+from google.colab import drive
+
+MOUNT_POINT = Path("/content/drive")
+MYDRIVE = MOUNT_POINT / "MyDrive"
+TARGET_NAME = "BIRLv11.txt"
+BAND_FOLDER = MYDRIVE / "BAND"
+
+# Reuse an accessible mount; otherwise request authentication.
+if MYDRIVE.is_dir() and os.access(MYDRIVE, os.R_OK):
+    print("Google Drive is already accessible.")
+else:
+    print("Mounting Google Drive...")
+    drive.mount("/content/drive", force_remount=True)
+
+    if not MYDRIVE.is_dir():
+        raise RuntimeError(
+            "Google Drive is not accessible. Reconnect the Colab runtime "
+            "and authorize the correct Google account."
+        )
+
+# Locate the file in BAND first.
+input_file = BAND_FOLDER / TARGET_NAME
+
+if not input_file.is_file():
+    matches = [
+        p for p in MYDRIVE.rglob("*")
+        if p.is_file() and p.name.lower() == TARGET_NAME.lower()
+    ]
+
+    if matches:
+        input_file = matches[0]
+    else:
+        raise FileNotFoundError(
+            f"Cannot find {TARGET_NAME} in Google Drive. "
+            f"Expected location: {BAND_FOLDER}"
+        )
+
+OUTPUT_DIR = input_file.parent
+MAX_EPISODES = 500
+
+print("\nInput file:", input_file)
+print("Output folder:", OUTPUT_DIR)
+
+# ============================================================
+# BLOCK 2: READ THE LOG FILE
+# ============================================================
+
+with open(input_file, "r", encoding="utf-8", errors="ignore") as f:
+    text_content = f.read()
+
+print("Input file size:", round(len(text_content) / 1024, 2), "KB")
+
+# ============================================================
+# BLOCK 3: DEFINE LOG PARSING PATTERNS
+# ============================================================
+
+load_pattern = re.compile(
+    r"TRAINING\s+FOR\s+USER\s+LOAD\s*:\s*(\d+)",
+    re.IGNORECASE
+)
+
+algorithm_pattern = re.compile(
+    r"Algorithm\s*:\s*(.*?)"
+    r"(?:\s*\|\s*Users\s*:\s*(\d+))?\s*$",
+    re.IGNORECASE
+)
+
+number_pattern = (
+    r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)"
+    r"(?:[eE][+-]?\d+)?"
+)
+
+value_pattern = rf"(?:{number_pattern}|nan|[-+]?inf(?:inity)?)"
+
+episode_pattern = re.compile(
+    rf"Episode\s+(\d+)\s*/\s*\d+"
+    rf".*?Mean\s+reward\s*=\s*({value_pattern})"
+    rf".*?Loss\s*=\s*({value_pattern})",
+    re.IGNORECASE
+)
+
+def to_float(value):
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return np.nan
+
+# ============================================================
+# BLOCK 4: EXTRACT THE FIRST 500 EPISODES FOR EACH RUN
+# ============================================================
+
+runs = []
+current_load = None
+current_run = None
+
+for line in text_content.splitlines():
+
+    # Detect user-load heading.
+    load_match = load_pattern.search(line)
+
+    if load_match:
+        current_load = int(load_match.group(1))
+        continue
+
+    # Detect the beginning of an algorithm run.
+    if line.strip().lower().startswith("algorithm:"):
+        match = algorithm_pattern.search(line.strip())
+
+        if match:
+            algorithm_name = match.group(1).strip()
+            users_in_line = match.group(2)
+
+            user_count = (
+                int(users_in_line)
+                if users_in_line is not None
+                else current_load
+            )
+
+            current_run = {
+                "algorithm": algorithm_name,
+                "users": user_count,
+                "episodes": [],
+                "rewards": [],
+                "losses": []
+            }
+
+            runs.append(current_run)
+
+        continue
+
+    # Extract episode, reward, and loss.
+    episode_match = episode_pattern.search(line)
+
+    if episode_match and current_run is not None:
+        episode = int(episode_match.group(1))
+
+        if 1 <= episode <= MAX_EPISODES:
+            current_run["episodes"].append(episode)
+            current_run["rewards"].append(
+                to_float(episode_match.group(2))
+            )
+            current_run["losses"].append(
+                to_float(episode_match.group(3))
+            )
+
+runs = [run for run in runs if run["episodes"]]
+
+if not runs:
+    print("\nNo matching episode records were found.")
+    print("First 40 lines of the input file:\n")
+    print("\n".join(text_content.splitlines()[:40]))
+
+    raise ValueError(
+        "Check the episode-log format. The parser expects lines containing "
+        "'Episode ... Mean reward=... Loss=...'."
+    )
+
+
+# ============================================================
+# REFINED BLOCK 5: FORCE RBF-EDGE-DDQN VARIANTS TO "OURS"
+# ============================================================
+
+import re
+import pandas as pd
+
+def legend_label(algorithm, users):
+
+    # Normalize the name for robust matching.
+    normalized = re.sub(
+        r"[^a-z0-9]",
+        "",
+        str(algorithm).lower()
+    )
+
+    # Match RBF-Edge-DDQN, RBF-EdgeCover-DDQN,
+    # RBF-Edge-Cover-DDQN, and similar variations.
+    if (
+        normalized.startswith("rbf")
+        and "edge" in normalized
+        and "ddqn" in normalized
+    ):
+        display_name = "Ours"
+    else:
+        display_name = str(algorithm).strip()
+
+    if users is not None and pd.notna(users):
+        return f"{display_name} ({int(users)} users)"
+
+    return display_name
+
+
+# Verify the legend labels before plotting.
+print("Legend label verification:")
+for run in runs:
+    print(
+        f"{run['algorithm']}  -->  "
+        f"{legend_label(run['algorithm'], run['users'])}"
+    )
+
+
+# ============================================================
+# BLOCK 6: CREATE AND SAVE THE EXTRACTED CSV
+# ============================================================
+
+records = []
+
+for run in runs:
+    label = legend_label(run["algorithm"], run["users"])
+
+    for episode, reward, loss in zip(
+        run["episodes"],
+        run["rewards"],
+        run["losses"]
+    ):
+        records.append({
+            "algorithm": run["algorithm"],
+            "users": run["users"],
+            "legend_label": label,
+            "episode": episode,
+            "mean_reward": reward,
+            "loss": loss
+        })
+
+df = pd.DataFrame(records)
+
+df = df.sort_values(
+    ["algorithm", "users", "episode"],
+    na_position="last"
+).reset_index(drop=True)
+
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+csv_file = OUTPUT_DIR / "BIRLv1_extracted_stats_first500.csv"
+df.to_csv(csv_file, index=False)
+
+print("\n" + "=" * 75)
+print("EXTRACTION SUMMARY")
+print("=" * 75)
+print("Runs detected:", len(runs))
+print("Records extracted:", len(df))
+print("CSV saved:", csv_file)
+
+print("\nDetected runs and legend labels:")
+
+for run in runs:
+    print(
+        f"Original model: {run['algorithm']} | "
+        f"Users: {run['users']} | "
+        f"Legend: {legend_label(run['algorithm'], run['users'])} | "
+        f"Episodes: {len(run['episodes'])}"
+    )
+
+# ============================================================
+# BLOCK 7: PLOT CONFIGURATION
+# ============================================================
+
+plt.rcParams.update({
+    "font.family": "Times New Roman",
+    "font.size": 19,
+    "axes.labelsize": 20,
+    "xtick.labelsize": 21,
+    "ytick.labelsize": 21,
+    "legend.fontsize": 19,
+    "lines.linewidth": 2.0,
+    "axes.linewidth": 1.2,
+    "savefig.dpi": 600,
+    "ps.fonttype": 42,
+    "pdf.fonttype": 42
+})
+
+markers = ["o", "s", "^", "D", "v", "P", "X", "*"]
+linestyles = ["-", "--", "-.", ":"]
+
+def save_plot(fig, png_path, eps_path):
+    fig.tight_layout()
+    fig.savefig(png_path, dpi=600, bbox_inches="tight")
+    fig.savefig(
+        eps_path,
+        format="eps",
+        dpi=600,
+        bbox_inches="tight"
+    )
+    plt.show()
+    plt.close(fig)
+
+    print("PNG saved:", png_path)
+    print("EPS saved:", eps_path)
+
+# ============================================================
+# BLOCK 8: REWARD PLOT
+# ============================================================
+
+fig, ax = plt.subplots(figsize=(11, 7))
+reward_runs_plotted = 0
+
+for idx, run in enumerate(runs):
+
+    episodes = np.asarray(run["episodes"], dtype=int)
+    rewards = np.asarray(run["rewards"], dtype=float)
+
+    valid = (
+        (episodes >= 1)
+        & (episodes <= MAX_EPISODES)
+        & np.isfinite(rewards)
+    )
+
+    if not np.any(valid):
+        continue
+
+    ax.plot(
+        episodes[valid],
+        rewards[valid],
+        label=legend_label(run["algorithm"], run["users"]),
+        linestyle=linestyles[idx % len(linestyles)],
+        marker=markers[idx % len(markers)],
+        markevery=max(1, int(np.sum(valid) / 12)),
+        markersize=5
+    )
+
+    reward_runs_plotted += 1
+
+if reward_runs_plotted == 0:
+    plt.close(fig)
+    raise ValueError("No valid reward values were available to plot.")
+
+ax.set_xlabel("Episode")
+ax.set_ylabel("Mean Reward")
+ax.set_xlim(0, MAX_EPISODES)
+ax.set_xticks(np.arange(0, MAX_EPISODES + 1, 50))
+ax.grid(True, linestyle="--", linewidth=0.24, alpha=0.6)
+
+ax.legend(
+    loc="lower center",
+    bbox_to_anchor=(0.5, 1.02),
+    ncol=2,
+    frameon=True
+)
+
+reward_png = OUTPUT_DIR / "BIRLv11_Reward_First500.png"
+reward_eps = OUTPUT_DIR / "BIRLv11_Reward_First500.eps"
+
+save_plot(fig, reward_png, reward_eps)
+
+# ============================================================
+# BLOCK 9: LOSS PLOT
+# ============================================================
+
+fig, ax = plt.subplots(figsize=(11, 7))
+loss_runs_plotted = 0
+
+for idx, run in enumerate(runs):
+
+    episodes = np.asarray(run["episodes"], dtype=int)
+    losses = np.asarray(run["losses"], dtype=float)
+
+    valid = (
+        (episodes >= 1)
+        & (episodes <= MAX_EPISODES)
+        & np.isfinite(losses)
+    )
+
+    if not np.any(valid):
+        continue
+
+    ax.plot(
+        episodes[valid],
+        losses[valid],
+        label=legend_label(run["algorithm"], run["users"]),
+        linestyle=linestyles[idx % len(linestyles)],
+        marker=markers[idx % len(markers)],
+        markevery=max(1, int(np.sum(valid) / 12)),
+        markersize=5
+    )
+
+    loss_runs_plotted += 1
+
+if loss_runs_plotted == 0:
+    plt.close(fig)
+    raise ValueError("No valid loss values were available to plot.")
+
+ax.set_xlabel("Episode")
+ax.set_ylabel("Loss")
+ax.set_xlim(0, MAX_EPISODES)
+ax.set_xticks(np.arange(0, MAX_EPISODES + 1, 50))
+
+finite_losses = [
+    loss
+    for run in runs
+    for loss in run["losses"]
+    if np.isfinite(loss)
+]
+
+if finite_losses and min(finite_losses) >= 0:
+    ax.set_ylim(bottom=0)
+
+ax.grid(True, linestyle="--", linewidth=0.26, alpha=0.6)
+
+ax.legend(
+    loc="lower center",
+    bbox_to_anchor=(0.5, 1.02),
+    ncol=2,
+    frameon=True
+)
+
+loss_png = OUTPUT_DIR / "BIRLv11_Loss_First500.png"
+loss_eps = OUTPUT_DIR / "BIRLv11_Loss_First500.eps"
+
+save_plot(fig, loss_png, loss_eps)
+
+# ============================================================
+# BLOCK 10: VERIFY ALL OUTPUTS
+# ============================================================
+
+output_files = [
+    csv_file,
+    reward_png,
+    reward_eps,
+    loss_png,
+    loss_eps
+]
+
+print("\n" + "=" * 75)
+print("FINAL OUTPUT VERIFICATION")
+print("=" * 75)
+
+for file_path in output_files:
+    if file_path.exists():
+        print(
+            f"[OK] {file_path.name} "
+            f"({file_path.stat().st_size / 1024:.2f} KB)"
+        )
+    else:
+        print("[MISSING]", file_path.name)
+
+print("\nAll output files are saved in:")
+print(OUTPUT_DIR)
+print("\nLegend replacement applied to both plots: RBF-EdgeCover-DDQN -> Ours")
