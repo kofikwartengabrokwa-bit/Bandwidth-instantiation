@@ -1,0 +1,661 @@
+E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py 
+======================================================================
+EXPERIMENT CONFIGURATION
+======================================================================
+Project directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Dataset: E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv
+Device: cpu
+Random seed: 1000
+
+======================================================================
+FINAL EXPERIMENT SETTINGS
+======================================================================
+Models: ['RBF-DDQN', 'DDQN', 'GGN-DDQN', 'GCN-DDQN']
+Traffic types: [1, 2, 3]
+Independent training runs: 12
+State dimension: 12
+Number of actions: 20
+Actions: [(1, 1), (1, 2), (1, 4), (1, 8), (2, 1), (2, 2), (2, 4), (2, 8), (4, 1), (4, 2), (4, 4), (4, 8), (8, 1), (8, 2), (8, 4), (8, 8), (16, 1), (16, 2), (16, 4), (16, 8)]
+Total RBs: 100
+Bandwidth: 20.0 MHz
+Power budget: 40.0 W
+Replay buffer: 30000
+Batch size: 128
+Training episodes: 200
+Learning rate: 0.001
+Discount factor: 0.99
+Device: cpu
+
+Output directories:
+Figures: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures
+CSV files: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv
+Checkpoints: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints
+Training histories: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories
+
+BLOCK 1 COMPLETED SUCCESSFULLY.
+
+========================================================================
+BLOCK 2: DATASET LOADING AND TRAFFIC-TYPE EXTRACTION
+========================================================================
+
+Dataset file: E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv
+Dataset directory: E:\Abrokwa\PycharmProjects\pythonProject1
+
+========================================================================
+SELECTED DATASET
+========================================================================
+File: E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv
+Table: None
+Rows: 2,345
+Columns: 18
+Traffic-type column: Traffic Type
+
+Column names:
+ - Network Slice ID
+ - Timestamp
+ - Device ID
+ - Traffic Load (bps)
+ - Traffic Type
+ - Network Utilization (%)
+ - Latency (ms)
+ - Packet Loss Rate (%)
+ - Signal Strength (dBm)
+ - Bandwidth Utilization (%)
+ - Network Slice Failure
+ - QoS Metric (Throughput)
+ - Overload Status
+ - Device Type
+ - Region
+ - Network Failure Count
+ - Time of Day
+ - Weather Conditions
+
+Dataset dimensions validated successfully.
+
+========================================================================
+TRAFFIC-TYPE DISTRIBUTION IN SOURCE DATASET
+========================================================================
+ traffic_type  record_count
+            0           578
+            1           579
+            2           614
+            3           574
+
+Traffic type 1: 579 records
+
+Traffic type 2: 614 records
+
+Traffic type 3: 574 records
+
+========================================================================
+TRAFFIC-TYPE RECORD VALIDATION
+========================================================================
+Traffic type 1: Expected = 579, Actual = 579
+Traffic type 2: Expected = 614, Actual = 614
+Traffic type 3: Expected = 574, Actual = 574
+
+All three traffic types passed validation.
+
+========================================================================
+TRAFFIC-TYPE EXTRACTION SUMMARY
+========================================================================
+ traffic_type  record_count  column_count
+            1           579            18
+            2           614            18
+            3           574            18
+
+Summary saved to:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\traffic_type_dataset_summary.csv
+Traffic type 1 dataset saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\traffic_type_1_dataset.csv
+Traffic type 2 dataset saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\traffic_type_2_dataset.csv
+Traffic type 3 dataset saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\traffic_type_3_dataset.csv
+
+========================================================================
+BLOCK 2 COMPLETED SUCCESSFULLY
+========================================================================
+Total source records: 2345
+Total selected records: 1767
+Excluded traffic type: 0
+
+Available training datasets:
+traffic_data[1] = 579 records
+traffic_data[2] = 614 records
+traffic_data[3] = 574 records
+
+Next step:
+Block 3: Neural network architectures for the four DDQN-based models.
+
+========================================================================
+BLOCK 3: NEURAL NETWORK ARCHITECTURE VERIFICATION
+========================================================================
+RBF-DDQN     | Input: 12 | Actions: 20 | Parameters: 26,069 | Output: (1, 20)
+DDQN         | Input: 12 | Actions: 20 | Parameters: 27,732 | Output: (1, 20)
+GGN-DDQN     | Input: 12 | Actions: 20 | Parameters: 19,284 | Output: (1, 20)
+GCN-DDQN     | Input: 12 | Actions: 20 | Parameters: 19,348 | Output: (1, 20)
+
+All four network architectures passed verification.
+
+BLOCK 3 COMPLETED SUCCESSFULLY.
+
+========================================================================
+BLOCK 4: DDQN AGENT VERIFICATION
+========================================================================
+[transformers] Disabling PyTorch because PyTorch >= 2.4 is required but found 2.1.2+cu118
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+RBF-DDQN     | Action:  3 | Epsilon: 1.000 | Replay:    0 | Device: cpu
+DDQN         | Action:  8 | Epsilon: 1.000 | Replay:    0 | Device: cpu
+GGN-DDQN     | Action:  7 | Epsilon: 1.000 | Replay:    0 | Device: cpu
+GCN-DDQN     | Action:  9 | Epsilon: 1.000 | Replay:    0 | Device: cpu
+
+All four DDQN agents passed verification.
+
+========================================================================
+VERIFYING AGENT INDEPENDENCE
+========================================================================
+Independent online networks: PASSED
+Independent target networks: PASSED
+Independent replay buffers: PASSED
+
+Agent independence verification completed.
+
+BLOCK 4 COMPLETED SUCCESSFULLY.
+
+========================================================================
+BLOCK 5: STATE CONSTRUCTION VERIFICATION
+========================================================================
+Traffic type 1 | Records: 579 | State shape: (12,) | Demand: 2.0 Mbps | Latency limit: 50.0 ms
+Traffic type 2 | Records: 614 | State shape: (12,) | Demand: 5.0 Mbps | Latency limit: 20.0 ms
+Traffic type 3 | Records: 574 | State shape: (12,) | Demand: 10.0 Mbps | Latency limit: 10.0 ms
+
+All traffic-type states passed verification.
+
+========================================================================
+BLOCK 5: ACTION EXECUTION VERIFICATION
+========================================================================
+Traffic type 1 | Action: (4, 4) | Throughput: 9.5473 Mbps | Latency: 1.2987 ms | Reward: 1.8375
+Traffic type 2 | Action: (4, 4) | Throughput: 9.5083 Mbps | Latency: 1.4546 ms | Reward: 1.8375
+Traffic type 3 | Action: (4, 4) | Throughput: 9.5550 Mbps | Latency: 1.7254 ms | Reward: 1.7485
+
+All action execution tests passed.
+
+========================================================================
+BLOCK 5 COMPLETED SUCCESSFULLY
+========================================================================
+State dimension: 12
+Action dimension: 20
+Traffic types: [1, 2, 3]
+Models: ['RBF-DDQN', 'DDQN', 'GGN-DDQN', 'GCN-DDQN']
+Radio bandwidth: 20.0 MHz
+Total RBs: 100
+Power budget: 40.0 W
+
+Next: BLOCK 6 - Independent model training and
+episode reward/loss history recording.
+
+==============================================================================
+STARTING ALL 12 INDEPENDENT TRAINING EXPERIMENTS
+==============================================================================
+
+
+##############################################################################
+STARTING TRAFFIC TYPE 1
+##############################################################################
+
+==============================================================================
+TRAINING MODEL: RBF-DDQN | TRAFFIC TYPE: 1
+==============================================================================
+Episode   1/200 | Reward:   43.0375 | Average reward:   1.6553 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   38.9625 | Average reward:   1.8554 | Loss: 0.249500 | Updates:   21 | Epsilon: 0.8597
+Episode  20/200 | Reward:   23.8875 | Average reward:   1.4051 | Loss: 0.269593 | Updates:   17 | Epsilon: 0.7391
+Episode  30/200 | Reward:   49.4875 | Average reward:   1.7065 | Loss: 0.303755 | Updates:   29 | Epsilon: 0.6355
+Episode  40/200 | Reward:   33.5375 | Average reward:   1.5244 | Loss: 0.389430 | Updates:   22 | Epsilon: 0.5463
+Episode  50/200 | Reward:   48.8125 | Average reward:   1.8774 | Loss: 0.390640 | Updates:   26 | Epsilon: 0.4697
+Episode  60/200 | Reward:   38.9625 | Average reward:   1.5585 | Loss: 0.579545 | Updates:   25 | Epsilon: 0.4038
+Episode  70/200 | Reward:   55.3375 | Average reward:   1.6769 | Loss: 0.532400 | Updates:   33 | Epsilon: 0.3472
+Episode  80/200 | Reward:   42.7125 | Average reward:   1.7797 | Loss: 0.444041 | Updates:   24 | Epsilon: 0.2985
+Episode  90/200 | Reward:  103.2375 | Average reward:   1.9118 | Loss: 0.647057 | Updates:   54 | Epsilon: 0.2566
+Episode 100/200 | Reward:  128.7125 | Average reward:   1.8928 | Loss: 0.591304 | Updates:   68 | Epsilon: 0.2206
+Episode 110/200 | Reward:   87.6125 | Average reward:   1.7880 | Loss: 0.735556 | Updates:   49 | Epsilon: 0.1897
+Episode 120/200 | Reward:   71.9125 | Average reward:   1.7978 | Loss: 0.770395 | Updates:   40 | Epsilon: 0.1631
+Episode 130/200 | Reward:   97.6875 | Average reward:   1.8786 | Loss: 0.692856 | Updates:   52 | Epsilon: 0.1402
+Episode 140/200 | Reward:  130.2125 | Average reward:   1.9149 | Loss: 0.725236 | Updates:   68 | Epsilon: 0.1205
+Episode 150/200 | Reward:  157.3625 | Average reward:   1.9427 | Loss: 0.782777 | Updates:   81 | Epsilon: 0.1036
+Episode 160/200 | Reward:  146.8375 | Average reward:   1.9070 | Loss: 0.857116 | Updates:   77 | Epsilon: 0.0891
+Episode 170/200 | Reward:  111.8375 | Average reward:   1.9282 | Loss: 0.933819 | Updates:   58 | Epsilon: 0.0766
+Episode 180/200 | Reward:  142.7375 | Average reward:   1.9289 | Loss: 0.863467 | Updates:   74 | Epsilon: 0.0658
+Episode 190/200 | Reward:  158.0125 | Average reward:   1.9508 | Loss: 1.038353 | Updates:   81 | Epsilon: 0.0566
+Episode 200/200 | Reward:  179.3125 | Average reward:   1.9281 | Loss: 0.992450 | Updates:   93 | Epsilon: 0.0500
+
+Experiment completed.
+Model: RBF-DDQN
+Traffic type: 1
+Total episodes: 200
+Final episode reward: 179.31249999999972
+Final episode loss: 0.9924502631108607
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\RBF_DDQN_traffic_type_1_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\RBF_DDQN_traffic_type_1_training_history.csv
+
+==============================================================================
+TRAINING MODEL: DDQN | TRAFFIC TYPE: 1
+==============================================================================
+Episode   1/200 | Reward:   28.4375 | Average reward:   1.0937 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   34.4625 | Average reward:   1.4359 | Loss: 0.111076 | Updates:   24 | Epsilon: 0.8597
+Episode  20/200 | Reward:   52.4125 | Average reward:   1.5883 | Loss: 0.080474 | Updates:   33 | Epsilon: 0.7391
+Episode  30/200 | Reward:   49.7375 | Average reward:   1.7763 | Loss: 0.112285 | Updates:   28 | Epsilon: 0.6355
+Episode  40/200 | Reward:   50.1125 | Average reward:   1.7897 | Loss: 0.137887 | Updates:   28 | Epsilon: 0.5463
+Episode  50/200 | Reward:   36.1875 | Average reward:   1.7232 | Loss: 0.158236 | Updates:   21 | Epsilon: 0.4697
+Episode  60/200 | Reward:   57.2625 | Average reward:   1.7352 | Loss: 0.284741 | Updates:   33 | Epsilon: 0.4038
+Episode  70/200 | Reward:   44.0625 | Average reward:   1.7625 | Loss: 0.214199 | Updates:   25 | Epsilon: 0.3472
+Episode  80/200 | Reward:   69.7875 | Average reward:   1.6230 | Loss: 0.167948 | Updates:   43 | Epsilon: 0.2985
+Episode  90/200 | Reward:   54.3875 | Average reward:   1.2361 | Loss: 0.185337 | Updates:   44 | Epsilon: 0.2566
+Episode 100/200 | Reward:   68.9375 | Average reward:   1.3788 | Loss: 0.214302 | Updates:   50 | Epsilon: 0.2206
+Episode 110/200 | Reward:   56.4625 | Average reward:   1.4859 | Loss: 0.212923 | Updates:   38 | Epsilon: 0.1897
+Episode 120/200 | Reward:   62.8625 | Average reward:   1.7961 | Loss: 0.326899 | Updates:   35 | Epsilon: 0.1631
+Episode 130/200 | Reward:   75.8625 | Average reward:   1.3547 | Loss: 0.235556 | Updates:   56 | Epsilon: 0.1402
+Episode 140/200 | Reward:   76.3125 | Average reward:   1.8613 | Loss: 0.198098 | Updates:   41 | Epsilon: 0.1205
+Episode 150/200 | Reward:   68.1375 | Average reward:   1.7931 | Loss: 0.240212 | Updates:   38 | Epsilon: 0.1036
+Episode 160/200 | Reward:   50.4375 | Average reward:   1.0731 | Loss: 0.388331 | Updates:   47 | Epsilon: 0.0891
+Episode 170/200 | Reward:   67.8875 | Average reward:   1.8348 | Loss: 0.222772 | Updates:   37 | Epsilon: 0.0766
+Episode 180/200 | Reward:   66.3875 | Average reward:   1.8968 | Loss: 0.323352 | Updates:   35 | Epsilon: 0.0658
+Episode 190/200 | Reward:   90.2375 | Average reward:   1.9199 | Loss: 0.213448 | Updates:   47 | Epsilon: 0.0566
+Episode 200/200 | Reward:   94.0125 | Average reward:   1.9186 | Loss: 0.223976 | Updates:   49 | Epsilon: 0.0500
+
+Experiment completed.
+Model: DDQN
+Traffic type: 1
+Total episodes: 200
+Final episode reward: 94.01249999999996
+Final episode loss: 0.22397608583679005
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\DDQN_traffic_type_1_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\DDQN_traffic_type_1_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GGN-DDQN | TRAFFIC TYPE: 1
+==============================================================================
+Episode   1/200 | Reward:   28.4625 | Average reward:   1.3554 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   39.7875 | Average reward:   1.4210 | Loss: 0.175591 | Updates:   28 | Epsilon: 0.8597
+Episode  20/200 | Reward:   32.2875 | Average reward:   1.6144 | Loss: 0.202489 | Updates:   20 | Epsilon: 0.7391
+Episode  30/200 | Reward:   50.7625 | Average reward:   1.5863 | Loss: 0.260501 | Updates:   32 | Epsilon: 0.6355
+Episode  40/200 | Reward:   55.3375 | Average reward:   1.7851 | Loss: 0.257736 | Updates:   31 | Epsilon: 0.5463
+Episode  50/200 | Reward:   49.5875 | Average reward:   1.7099 | Loss: 0.272433 | Updates:   29 | Epsilon: 0.4697
+Episode  60/200 | Reward:   71.1125 | Average reward:   1.8234 | Loss: 0.352925 | Updates:   39 | Epsilon: 0.4038
+Episode  70/200 | Reward:   45.4375 | Average reward:   1.6228 | Loss: 0.379947 | Updates:   28 | Epsilon: 0.3472
+Episode  80/200 | Reward:   50.3375 | Average reward:   1.7978 | Loss: 0.456522 | Updates:   28 | Epsilon: 0.2985
+Episode  90/200 | Reward:   64.1875 | Average reward:   1.8879 | Loss: 0.660105 | Updates:   34 | Epsilon: 0.2566
+Episode 100/200 | Reward:   93.2875 | Average reward:   1.8658 | Loss: 0.510941 | Updates:   50 | Epsilon: 0.2206
+Episode 110/200 | Reward:   81.4625 | Average reward:   1.8514 | Loss: 0.620684 | Updates:   44 | Epsilon: 0.1897
+Episode 120/200 | Reward:  103.5125 | Average reward:   1.9169 | Loss: 0.665228 | Updates:   54 | Epsilon: 0.1631
+Episode 130/200 | Reward:   87.9375 | Average reward:   1.9117 | Loss: 0.785680 | Updates:   46 | Epsilon: 0.1402
+Episode 140/200 | Reward:   97.7875 | Average reward:   1.9174 | Loss: 0.805152 | Updates:   51 | Epsilon: 0.1205
+Episode 150/200 | Reward:   79.9875 | Average reward:   1.9045 | Loss: 0.775180 | Updates:   42 | Epsilon: 0.1036
+Episode 160/200 | Reward:   75.5875 | Average reward:   1.8897 | Loss: 0.839721 | Updates:   40 | Epsilon: 0.0891
+Episode 170/200 | Reward:  115.2875 | Average reward:   1.8900 | Loss: 0.853997 | Updates:   61 | Epsilon: 0.0766
+Episode 180/200 | Reward:  118.3375 | Average reward:   1.8784 | Loss: 0.805089 | Updates:   63 | Epsilon: 0.0658
+Episode 190/200 | Reward:   93.3375 | Average reward:   1.9048 | Loss: 0.858051 | Updates:   49 | Epsilon: 0.0566
+Episode 200/200 | Reward:  106.7625 | Average reward:   1.8730 | Loss: 0.844858 | Updates:   57 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GGN-DDQN
+Traffic type: 1
+Total episodes: 200
+Final episode reward: 106.76249999999997
+Final episode loss: 0.8448580731556081
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GGN_DDQN_traffic_type_1_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GGN_DDQN_traffic_type_1_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GCN-DDQN | TRAFFIC TYPE: 1
+==============================================================================
+Episode   1/200 | Reward:   38.0375 | Average reward:   1.4088 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   24.3875 | Average reward:   1.6258 | Loss: 0.212790 | Updates:   15 | Epsilon: 0.8597
+Episode  20/200 | Reward:   30.8125 | Average reward:   1.4006 | Loss: 0.258791 | Updates:   22 | Epsilon: 0.7391
+Episode  30/200 | Reward:   57.3625 | Average reward:   1.5503 | Loss: 0.274321 | Updates:   37 | Epsilon: 0.6355
+Episode  40/200 | Reward:   44.7125 | Average reward:   1.5969 | Loss: 0.240175 | Updates:   28 | Epsilon: 0.5463
+Episode  50/200 | Reward:   38.5625 | Average reward:   1.6766 | Loss: 0.272417 | Updates:   23 | Epsilon: 0.4697
+Episode  60/200 | Reward:   71.3375 | Average reward:   1.8292 | Loss: 0.554577 | Updates:   39 | Epsilon: 0.4038
+Episode  70/200 | Reward:   57.5875 | Average reward:   1.7451 | Loss: 0.414467 | Updates:   33 | Epsilon: 0.3472
+Episode  80/200 | Reward:   95.5625 | Average reward:   1.9113 | Loss: 0.573353 | Updates:   50 | Epsilon: 0.2985
+Episode  90/200 | Reward:   58.2375 | Average reward:   1.8786 | Loss: 0.432514 | Updates:   31 | Epsilon: 0.2566
+Episode 100/200 | Reward:   31.2125 | Average reward:   1.8360 | Loss: 0.710515 | Updates:   17 | Epsilon: 0.2206
+Episode 110/200 | Reward:   89.5375 | Average reward:   1.8654 | Loss: 0.571477 | Updates:   48 | Epsilon: 0.1897
+Episode 120/200 | Reward:   69.9625 | Average reward:   1.8909 | Loss: 0.553925 | Updates:   37 | Epsilon: 0.1631
+Episode 130/200 | Reward:   84.6625 | Average reward:   1.8405 | Loss: 0.692676 | Updates:   46 | Epsilon: 0.1402
+Episode 140/200 | Reward:   83.5875 | Average reward:   1.8997 | Loss: 0.808202 | Updates:   44 | Epsilon: 0.1205
+Episode 150/200 | Reward:   89.8625 | Average reward:   1.8339 | Loss: 0.751133 | Updates:   49 | Epsilon: 0.1036
+Episode 160/200 | Reward:  137.8125 | Average reward:   1.8878 | Loss: 0.965372 | Updates:   73 | Epsilon: 0.0891
+Episode 170/200 | Reward:  107.3125 | Average reward:   1.9163 | Loss: 0.992221 | Updates:   56 | Epsilon: 0.0766
+Episode 180/200 | Reward:   95.9375 | Average reward:   1.8811 | Loss: 1.047954 | Updates:   51 | Epsilon: 0.0658
+Episode 190/200 | Reward:  136.4625 | Average reward:   1.8953 | Loss: 0.951216 | Updates:   72 | Epsilon: 0.0566
+Episode 200/200 | Reward:   98.7875 | Average reward:   1.8639 | Loss: 1.076102 | Updates:   53 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GCN-DDQN
+Traffic type: 1
+Total episodes: 200
+Final episode reward: 98.78750000000001
+Final episode loss: 1.0761024798705894
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GCN_DDQN_traffic_type_1_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GCN_DDQN_traffic_type_1_training_history.csv
+
+
+##############################################################################
+STARTING TRAFFIC TYPE 2
+##############################################################################
+
+==============================================================================
+TRAINING MODEL: RBF-DDQN | TRAFFIC TYPE: 2
+==============================================================================
+Episode   1/200 | Reward:   23.3253 | Average reward:   1.7943 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   29.9189 | Average reward:   1.2466 | Loss: 0.599757 | Updates:   24 | Epsilon: 0.8597
+Episode  20/200 | Reward:   32.6345 | Average reward:   1.3598 | Loss: 0.355422 | Updates:   24 | Epsilon: 0.7391
+Episode  30/200 | Reward:   32.3340 | Average reward:   1.6167 | Loss: 0.444961 | Updates:   20 | Epsilon: 0.6355
+Episode  40/200 | Reward:   30.7653 | Average reward:   0.7889 | Loss: 0.444782 | Updates:   39 | Epsilon: 0.5463
+Episode  50/200 | Reward:   58.4244 | Average reward:   1.6693 | Loss: 0.576014 | Updates:   35 | Epsilon: 0.4697
+Episode  60/200 | Reward:   41.5241 | Average reward:   1.4319 | Loss: 0.620478 | Updates:   29 | Epsilon: 0.4038
+Episode  70/200 | Reward:   35.0295 | Average reward:   1.5230 | Loss: 0.774965 | Updates:   23 | Epsilon: 0.3472
+Episode  80/200 | Reward:   51.4398 | Average reward:   1.3903 | Loss: 0.443485 | Updates:   37 | Epsilon: 0.2985
+Episode  90/200 | Reward:   31.2203 | Average reward:   0.8005 | Loss: 0.498356 | Updates:   39 | Epsilon: 0.2566
+Episode 100/200 | Reward:   61.3588 | Average reward:   1.8047 | Loss: 0.431701 | Updates:   34 | Epsilon: 0.2206
+Episode 110/200 | Reward:   65.3334 | Average reward:   1.1667 | Loss: 0.452882 | Updates:   56 | Epsilon: 0.1897
+Episode 120/200 | Reward:   71.8652 | Average reward:   1.7966 | Loss: 0.502645 | Updates:   40 | Epsilon: 0.1631
+Episode 130/200 | Reward:   63.9262 | Average reward:   0.9004 | Loss: 0.502139 | Updates:   71 | Epsilon: 0.1402
+Episode 140/200 | Reward:   66.9988 | Average reward:   1.2884 | Loss: 0.542328 | Updates:   52 | Epsilon: 0.1205
+Episode 150/200 | Reward:   83.8372 | Average reward:   1.8225 | Loss: 0.519529 | Updates:   46 | Epsilon: 0.1036
+Episode 160/200 | Reward:   73.5855 | Average reward:   1.8396 | Loss: 0.470992 | Updates:   40 | Epsilon: 0.0891
+Episode 170/200 | Reward:   65.6205 | Average reward:   1.8228 | Loss: 0.472484 | Updates:   36 | Epsilon: 0.0766
+Episode 180/200 | Reward:   85.1172 | Average reward:   1.7371 | Loss: 0.479066 | Updates:   49 | Epsilon: 0.0658
+Episode 190/200 | Reward:   76.7506 | Average reward:   1.8274 | Loss: 0.471925 | Updates:   42 | Epsilon: 0.0566
+Episode 200/200 | Reward:   46.3000 | Average reward:   0.4630 | Loss: 0.445050 | Updates:  100 | Epsilon: 0.0500
+
+Experiment completed.
+Model: RBF-DDQN
+Traffic type: 2
+Total episodes: 200
+Final episode reward: 46.2999535078374
+Final episode loss: 0.44505004689097405
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\RBF_DDQN_traffic_type_2_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\RBF_DDQN_traffic_type_2_training_history.csv
+
+==============================================================================
+TRAINING MODEL: DDQN | TRAFFIC TYPE: 2
+==============================================================================
+Episode   1/200 | Reward:   24.3148 | Average reward:   0.9005 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   21.9390 | Average reward:   1.3712 | Loss: 0.177957 | Updates:   16 | Epsilon: 0.8597
+Episode  20/200 | Reward:   25.5483 | Average reward:   0.9462 | Loss: 0.086627 | Updates:   27 | Epsilon: 0.7391
+Episode  30/200 | Reward:   25.8750 | Average reward:   1.4375 | Loss: 0.067521 | Updates:   18 | Epsilon: 0.6355
+Episode  40/200 | Reward:   35.6534 | Average reward:   1.4856 | Loss: 0.051612 | Updates:   24 | Epsilon: 0.5463
+Episode  50/200 | Reward:   32.9251 | Average reward:   1.4315 | Loss: 0.058006 | Updates:   23 | Epsilon: 0.4697
+Episode  60/200 | Reward:   37.6088 | Average reward:   1.6352 | Loss: 0.083064 | Updates:   23 | Epsilon: 0.4038
+Episode  70/200 | Reward:   32.3447 | Average reward:   1.1980 | Loss: 0.149379 | Updates:   27 | Epsilon: 0.3472
+Episode  80/200 | Reward:   34.3706 | Average reward:   1.7185 | Loss: 0.132830 | Updates:   20 | Epsilon: 0.2985
+Episode  90/200 | Reward:   35.8611 | Average reward:   1.6300 | Loss: 0.140179 | Updates:   22 | Epsilon: 0.2566
+Episode 100/200 | Reward:   30.4518 | Average reward:   1.6027 | Loss: 0.113680 | Updates:   19 | Epsilon: 0.2206
+Episode 110/200 | Reward:   28.4929 | Average reward:   1.5829 | Loss: 0.130499 | Updates:   18 | Epsilon: 0.1897
+Episode 120/200 | Reward:   34.9609 | Average reward:   1.2055 | Loss: 0.119107 | Updates:   29 | Epsilon: 0.1631
+Episode 130/200 | Reward:   46.7721 | Average reward:   1.1693 | Loss: 0.099111 | Updates:   40 | Epsilon: 0.1402
+Episode 140/200 | Reward:   36.2172 | Average reward:   1.5747 | Loss: 0.077217 | Updates:   23 | Epsilon: 0.1205
+Episode 150/200 | Reward:   52.7306 | Average reward:   1.7010 | Loss: 0.085094 | Updates:   31 | Epsilon: 0.1036
+Episode 160/200 | Reward:   56.9645 | Average reward:   1.5823 | Loss: 0.087161 | Updates:   36 | Epsilon: 0.0891
+Episode 170/200 | Reward:   52.8642 | Average reward:   1.6520 | Loss: 0.068781 | Updates:   32 | Epsilon: 0.0766
+Episode 180/200 | Reward:   52.0868 | Average reward:   1.3022 | Loss: 0.161028 | Updates:   40 | Epsilon: 0.0658
+Episode 190/200 | Reward:   39.9727 | Average reward:   1.6655 | Loss: 0.054038 | Updates:   24 | Epsilon: 0.0566
+Episode 200/200 | Reward:   67.7999 | Average reward:   1.6950 | Loss: 0.060445 | Updates:   40 | Epsilon: 0.0500
+
+Experiment completed.
+Model: DDQN
+Traffic type: 2
+Total episodes: 200
+Final episode reward: 67.79988536170134
+Final episode loss: 0.06044507646001875
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\DDQN_traffic_type_2_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\DDQN_traffic_type_2_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GGN-DDQN | TRAFFIC TYPE: 2
+==============================================================================
+Episode   1/200 | Reward:   22.8013 | Average reward:   0.9501 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   29.9823 | Average reward:   1.4991 | Loss: 0.186876 | Updates:   20 | Epsilon: 0.8597
+Episode  20/200 | Reward:   41.0821 | Average reward:   0.9554 | Loss: 0.231502 | Updates:   43 | Epsilon: 0.7391
+Episode  30/200 | Reward:   26.7313 | Average reward:   1.7821 | Loss: 0.164035 | Updates:   15 | Epsilon: 0.6355
+Episode  40/200 | Reward:   40.5286 | Average reward:   1.5588 | Loss: 0.157056 | Updates:   26 | Epsilon: 0.5463
+Episode  50/200 | Reward:   50.2432 | Average reward:   1.7325 | Loss: 0.128830 | Updates:   29 | Epsilon: 0.4697
+Episode  60/200 | Reward:   54.7661 | Average reward:   1.2170 | Loss: 0.122594 | Updates:   45 | Epsilon: 0.4038
+Episode  70/200 | Reward:   62.6563 | Average reward:   1.5282 | Loss: 0.186505 | Updates:   41 | Epsilon: 0.3472
+Episode  80/200 | Reward:   47.9541 | Average reward:   0.6754 | Loss: 0.145226 | Updates:   71 | Epsilon: 0.2985
+Episode  90/200 | Reward:   39.9128 | Average reward:   1.3304 | Loss: 0.155203 | Updates:   30 | Epsilon: 0.2566
+Episode 100/200 | Reward:   57.5063 | Average reward:   1.6430 | Loss: 0.161263 | Updates:   35 | Epsilon: 0.2206
+Episode 110/200 | Reward:   51.1748 | Average reward:   1.5508 | Loss: 0.293980 | Updates:   33 | Epsilon: 0.1897
+Episode 120/200 | Reward:   69.4332 | Average reward:   1.6532 | Loss: 0.206818 | Updates:   42 | Epsilon: 0.1631
+Episode 130/200 | Reward:   65.7093 | Average reward:   1.6427 | Loss: 0.307394 | Updates:   40 | Epsilon: 0.1402
+Episode 140/200 | Reward:   74.4916 | Average reward:   1.6194 | Loss: 0.211500 | Updates:   46 | Epsilon: 0.1205
+Episode 150/200 | Reward:   77.7739 | Average reward:   1.7283 | Loss: 0.195734 | Updates:   45 | Epsilon: 0.1036
+Episode 160/200 | Reward:   71.3839 | Average reward:   1.6601 | Loss: 0.267912 | Updates:   43 | Epsilon: 0.0891
+Episode 170/200 | Reward:   69.8960 | Average reward:   1.6255 | Loss: 0.192455 | Updates:   43 | Epsilon: 0.0766
+Episode 180/200 | Reward:   69.6725 | Average reward:   1.7865 | Loss: 0.224328 | Updates:   39 | Epsilon: 0.0658
+Episode 190/200 | Reward:   66.4998 | Average reward:   1.4778 | Loss: 0.182015 | Updates:   45 | Epsilon: 0.0566
+Episode 200/200 | Reward:   74.7073 | Average reward:   1.4096 | Loss: 0.267986 | Updates:   53 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GGN-DDQN
+Traffic type: 2
+Total episodes: 200
+Final episode reward: 74.70730741816766
+Final episode loss: 0.26798626471240566
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GGN_DDQN_traffic_type_2_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GGN_DDQN_traffic_type_2_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GCN-DDQN | TRAFFIC TYPE: 2
+==============================================================================
+Episode   1/200 | Reward:   35.2759 | Average reward:   1.4110 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   30.2259 | Average reward:   0.8890 | Loss: 0.315894 | Updates:   34 | Epsilon: 0.8597
+Episode  20/200 | Reward:   25.9463 | Average reward:   0.9979 | Loss: 0.223398 | Updates:   26 | Epsilon: 0.7391
+Episode  30/200 | Reward:   29.5649 | Average reward:   1.5560 | Loss: 0.136681 | Updates:   19 | Epsilon: 0.6355
+Episode  40/200 | Reward:   37.9209 | Average reward:   1.2640 | Loss: 0.098470 | Updates:   30 | Epsilon: 0.5463
+Episode  50/200 | Reward:   36.0263 | Average reward:   1.5011 | Loss: 0.096484 | Updates:   24 | Epsilon: 0.4697
+Episode  60/200 | Reward:   23.3070 | Average reward:   0.5549 | Loss: 0.215692 | Updates:   42 | Epsilon: 0.4038
+Episode  70/200 | Reward:   49.3045 | Average reward:   1.5905 | Loss: 0.144988 | Updates:   31 | Epsilon: 0.3472
+Episode  80/200 | Reward:   38.1392 | Average reward:   1.7336 | Loss: 0.155576 | Updates:   22 | Epsilon: 0.2985
+Episode  90/200 | Reward:   43.1278 | Average reward:   1.6588 | Loss: 0.324153 | Updates:   26 | Epsilon: 0.2566
+Episode 100/200 | Reward:   51.9970 | Average reward:   1.6773 | Loss: 0.214144 | Updates:   31 | Epsilon: 0.2206
+Episode 110/200 | Reward:   56.1138 | Average reward:   1.7536 | Loss: 0.236188 | Updates:   32 | Epsilon: 0.1897
+Episode 120/200 | Reward:   75.1078 | Average reward:   1.1555 | Loss: 0.323652 | Updates:   65 | Epsilon: 0.1631
+Episode 130/200 | Reward:   64.0132 | Average reward:   1.6846 | Loss: 0.248758 | Updates:   38 | Epsilon: 0.1402
+Episode 140/200 | Reward:   74.1016 | Average reward:   1.6841 | Loss: 0.337063 | Updates:   44 | Epsilon: 0.1205
+Episode 150/200 | Reward:   70.7543 | Average reward:   1.7257 | Loss: 0.252039 | Updates:   41 | Epsilon: 0.1036
+Episode 160/200 | Reward:   70.9200 | Average reward:   1.5089 | Loss: 0.279993 | Updates:   47 | Epsilon: 0.0891
+Episode 170/200 | Reward:   67.9054 | Average reward:   1.0289 | Loss: 0.287788 | Updates:   66 | Epsilon: 0.0766
+Episode 180/200 | Reward:   81.6010 | Average reward:   1.4572 | Loss: 0.269858 | Updates:   56 | Epsilon: 0.0658
+Episode 190/200 | Reward:   74.6446 | Average reward:   1.2652 | Loss: 0.424275 | Updates:   59 | Epsilon: 0.0566
+Episode 200/200 | Reward:   80.4295 | Average reward:   1.4110 | Loss: 0.343462 | Updates:   57 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GCN-DDQN
+Traffic type: 2
+Total episodes: 200
+Final episode reward: 80.42945205026088
+Final episode loss: 0.34346175951915875
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GCN_DDQN_traffic_type_2_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GCN_DDQN_traffic_type_2_training_history.csv
+
+
+##############################################################################
+STARTING TRAFFIC TYPE 3
+##############################################################################
+
+==============================================================================
+TRAINING MODEL: RBF-DDQN | TRAFFIC TYPE: 3
+==============================================================================
+Episode   1/200 | Reward:   11.6451 | Average reward:   0.3529 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   22.0952 | Average reward:   1.1629 | Loss: 0.345806 | Updates:   19 | Epsilon: 0.8597
+Episode  20/200 | Reward:   23.4113 | Average reward:   1.2322 | Loss: 0.391502 | Updates:   19 | Epsilon: 0.7391
+Episode  30/200 | Reward:   20.4532 | Average reward:   1.0227 | Loss: 0.451473 | Updates:   20 | Epsilon: 0.6355
+Episode  40/200 | Reward:   25.3795 | Average reward:   1.3358 | Loss: 0.556073 | Updates:   19 | Epsilon: 0.5463
+Episode  50/200 | Reward:   26.3033 | Average reward:   1.3844 | Loss: 0.558788 | Updates:   19 | Epsilon: 0.4697
+Episode  60/200 | Reward:   35.7382 | Average reward:   1.3745 | Loss: 0.615194 | Updates:   26 | Epsilon: 0.4038
+Episode  70/200 | Reward:   22.8093 | Average reward:   0.7603 | Loss: 0.670385 | Updates:   30 | Epsilon: 0.3472
+Episode  80/200 | Reward:   39.9600 | Average reward:   1.5984 | Loss: 0.633895 | Updates:   25 | Epsilon: 0.2985
+Episode  90/200 | Reward:   42.0565 | Average reward:   1.2744 | Loss: 0.418970 | Updates:   33 | Epsilon: 0.2566
+Episode 100/200 | Reward:    8.9003 | Average reward:   0.1271 | Loss: 0.374158 | Updates:   70 | Epsilon: 0.2206
+Episode 110/200 | Reward:   30.3384 | Average reward:   0.8200 | Loss: 0.333614 | Updates:   37 | Epsilon: 0.1897
+Episode 120/200 | Reward:   34.9764 | Average reward:   1.2954 | Loss: 0.288186 | Updates:   27 | Epsilon: 0.1631
+Episode 130/200 | Reward:   37.4416 | Average reward:   0.8707 | Loss: 0.292970 | Updates:   43 | Epsilon: 0.1402
+Episode 140/200 | Reward:   11.4470 | Average reward:   0.1205 | Loss: 0.258272 | Updates:   95 | Epsilon: 0.1205
+Episode 150/200 | Reward:   36.6902 | Average reward:   1.4112 | Loss: 0.249765 | Updates:   26 | Epsilon: 0.1036
+Episode 160/200 | Reward:   33.8657 | Average reward:   1.6933 | Loss: 0.241570 | Updates:   20 | Epsilon: 0.0891
+Episode 170/200 | Reward:   39.4356 | Average reward:   1.0658 | Loss: 0.166002 | Updates:   37 | Epsilon: 0.0766
+Episode 180/200 | Reward:   25.2700 | Average reward:   0.4143 | Loss: 0.127302 | Updates:   61 | Epsilon: 0.0658
+Episode 190/200 | Reward:   45.2320 | Average reward:   1.8093 | Loss: 0.095115 | Updates:   25 | Epsilon: 0.0566
+Episode 200/200 | Reward:   44.8434 | Average reward:   1.6609 | Loss: 0.084333 | Updates:   27 | Epsilon: 0.0500
+
+Experiment completed.
+Model: RBF-DDQN
+Traffic type: 3
+Total episodes: 200
+Final episode reward: 44.84337075530962
+Final episode loss: 0.08433287232010453
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\RBF_DDQN_traffic_type_3_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\RBF_DDQN_traffic_type_3_training_history.csv
+
+==============================================================================
+TRAINING MODEL: DDQN | TRAFFIC TYPE: 3
+==============================================================================
+Episode   1/200 | Reward:   15.9690 | Average reward:   1.2284 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   24.1811 | Average reward:   1.0075 | Loss: 0.157473 | Updates:   24 | Epsilon: 0.8597
+Episode  20/200 | Reward:   27.1559 | Average reward:   1.5087 | Loss: 0.075711 | Updates:   18 | Epsilon: 0.7391
+Episode  30/200 | Reward:   26.0663 | Average reward:   1.0861 | Loss: 0.124575 | Updates:   24 | Epsilon: 0.6355
+Episode  40/200 | Reward:   20.0985 | Average reward:   1.2562 | Loss: 0.017796 | Updates:   16 | Epsilon: 0.5463
+Episode  50/200 | Reward:   21.7011 | Average reward:   1.0334 | Loss: 0.022471 | Updates:   21 | Epsilon: 0.4697
+Episode  60/200 | Reward:   23.2107 | Average reward:   1.1605 | Loss: 0.030220 | Updates:   20 | Epsilon: 0.4038
+Episode  70/200 | Reward:   29.1453 | Average reward:   1.1658 | Loss: 0.025107 | Updates:   25 | Epsilon: 0.3472
+Episode  80/200 | Reward:   32.4327 | Average reward:   1.1184 | Loss: 0.026840 | Updates:   29 | Epsilon: 0.2985
+Episode  90/200 | Reward:   30.1544 | Average reward:   1.0398 | Loss: 0.029632 | Updates:   29 | Epsilon: 0.2566
+Episode 100/200 | Reward:   33.7288 | Average reward:   1.3492 | Loss: 0.021458 | Updates:   25 | Epsilon: 0.2206
+Episode 110/200 | Reward:   36.8010 | Average reward:   1.2267 | Loss: 0.020118 | Updates:   30 | Epsilon: 0.1897
+Episode 120/200 | Reward:   30.7894 | Average reward:   1.1403 | Loss: 0.014946 | Updates:   27 | Epsilon: 0.1631
+Episode 130/200 | Reward:   38.5512 | Average reward:   1.3294 | Loss: 0.016477 | Updates:   29 | Epsilon: 0.1402
+Episode 140/200 | Reward:   37.6439 | Average reward:   1.4478 | Loss: 0.013728 | Updates:   26 | Epsilon: 0.1205
+Episode 150/200 | Reward:   35.1754 | Average reward:   1.2129 | Loss: 0.015389 | Updates:   29 | Epsilon: 0.1036
+Episode 160/200 | Reward:   31.5255 | Average reward:   0.9852 | Loss: 0.073770 | Updates:   32 | Epsilon: 0.0891
+Episode 170/200 | Reward:   38.3028 | Average reward:   1.1970 | Loss: 0.032968 | Updates:   32 | Epsilon: 0.0766
+Episode 180/200 | Reward:   44.6706 | Average reward:   1.3138 | Loss: 0.015162 | Updates:   34 | Epsilon: 0.0658
+Episode 190/200 | Reward:   43.1105 | Average reward:   1.5397 | Loss: 0.012153 | Updates:   28 | Epsilon: 0.0566
+Episode 200/200 | Reward:   42.0722 | Average reward:   1.3572 | Loss: 0.022083 | Updates:   31 | Epsilon: 0.0500
+
+Experiment completed.
+Model: DDQN
+Traffic type: 3
+Total episodes: 200
+Final episode reward: 42.072220263971495
+Final episode loss: 0.022082801427572005
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\DDQN_traffic_type_3_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\DDQN_traffic_type_3_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GGN-DDQN | TRAFFIC TYPE: 3
+==============================================================================
+Episode   1/200 | Reward:   19.4202 | Average reward:   0.6069 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   21.8305 | Average reward:   1.1490 | Loss: 0.272565 | Updates:   19 | Epsilon: 0.8597
+Episode  20/200 | Reward:   23.4917 | Average reward:   1.1746 | Loss: 0.189562 | Updates:   20 | Epsilon: 0.7391
+Episode  30/200 | Reward:   24.6194 | Average reward:   1.4482 | Loss: 0.192516 | Updates:   17 | Epsilon: 0.6355
+Episode  40/200 | Reward:   21.6330 | Average reward:   0.6009 | Loss: 0.213393 | Updates:   36 | Epsilon: 0.5463
+Episode  50/200 | Reward:   29.3666 | Average reward:   1.3348 | Loss: 0.257867 | Updates:   22 | Epsilon: 0.4697
+Episode  60/200 | Reward:   29.9364 | Average reward:   1.4968 | Loss: 0.270676 | Updates:   20 | Epsilon: 0.4038
+Episode  70/200 | Reward:   38.0408 | Average reward:   1.6539 | Loss: 0.083961 | Updates:   23 | Epsilon: 0.3472
+Episode  80/200 | Reward:   33.5445 | Average reward:   0.9066 | Loss: 0.098351 | Updates:   37 | Epsilon: 0.2985
+Episode  90/200 | Reward:   29.5991 | Average reward:   1.2333 | Loss: 0.237061 | Updates:   24 | Epsilon: 0.2566
+Episode 100/200 | Reward:   32.1357 | Average reward:   1.7853 | Loss: 0.197239 | Updates:   18 | Epsilon: 0.2206
+Episode 110/200 | Reward:   36.6123 | Average reward:   1.5918 | Loss: 0.289251 | Updates:   23 | Epsilon: 0.1897
+Episode 120/200 | Reward:   38.6022 | Average reward:   1.4297 | Loss: 0.204032 | Updates:   27 | Epsilon: 0.1631
+Episode 130/200 | Reward:   39.0932 | Average reward:   1.6289 | Loss: 0.119833 | Updates:   24 | Epsilon: 0.1402
+Episode 140/200 | Reward:   34.9070 | Average reward:   1.4545 | Loss: 0.125334 | Updates:   24 | Epsilon: 0.1205
+Episode 150/200 | Reward:   39.2913 | Average reward:   1.6371 | Loss: 0.105418 | Updates:   24 | Epsilon: 0.1036
+Episode 160/200 | Reward:   39.2597 | Average reward:   1.4541 | Loss: 0.094867 | Updates:   27 | Epsilon: 0.0891
+Episode 170/200 | Reward:   43.3352 | Average reward:   1.2746 | Loss: 0.087438 | Updates:   34 | Epsilon: 0.0766
+Episode 180/200 | Reward:   34.8224 | Average reward:   1.2437 | Loss: 0.083880 | Updates:   28 | Epsilon: 0.0658
+Episode 190/200 | Reward:   42.7910 | Average reward:   1.4264 | Loss: 0.132352 | Updates:   30 | Epsilon: 0.0566
+Episode 200/200 | Reward:   43.6046 | Average reward:   1.5036 | Loss: 0.070937 | Updates:   29 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GGN-DDQN
+Traffic type: 3
+Total episodes: 200
+Final episode reward: 43.60456291800358
+Final episode loss: 0.07093663320973001
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GGN_DDQN_traffic_type_3_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GGN_DDQN_traffic_type_3_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GCN-DDQN | TRAFFIC TYPE: 3
+==============================================================================
+Episode   1/200 | Reward:   16.3887 | Average reward:   0.6555 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/200 | Reward:   18.3978 | Average reward:   0.7076 | Loss: 0.274642 | Updates:   26 | Epsilon: 0.8597
+Episode  20/200 | Reward:   21.0153 | Average reward:   1.0007 | Loss: 0.106184 | Updates:   21 | Epsilon: 0.7391
+Episode  30/200 | Reward:   27.7038 | Average reward:   1.4581 | Loss: 0.084884 | Updates:   19 | Epsilon: 0.6355
+Episode  40/200 | Reward:   32.8496 | Average reward:   1.2167 | Loss: 0.061767 | Updates:   27 | Epsilon: 0.5463
+Episode  50/200 | Reward:   35.2630 | Average reward:   1.1754 | Loss: 0.069042 | Updates:   30 | Epsilon: 0.4697
+Episode  60/200 | Reward:   33.2155 | Average reward:   1.7482 | Loss: 0.087710 | Updates:   19 | Epsilon: 0.4038
+Episode  70/200 | Reward:   24.7145 | Average reward:   1.0745 | Loss: 0.104147 | Updates:   23 | Epsilon: 0.3472
+Episode  80/200 | Reward:   33.1252 | Average reward:   1.5774 | Loss: 0.201717 | Updates:   21 | Epsilon: 0.2985
+Episode  90/200 | Reward:   31.1820 | Average reward:   1.5591 | Loss: 0.187643 | Updates:   20 | Epsilon: 0.2566
+Episode 100/200 | Reward:   33.8568 | Average reward:   1.5389 | Loss: 0.286225 | Updates:   22 | Epsilon: 0.2206
+Episode 110/200 | Reward:   38.4429 | Average reward:   1.4786 | Loss: 0.214492 | Updates:   26 | Epsilon: 0.1897
+Episode 120/200 | Reward:   39.1529 | Average reward:   1.5661 | Loss: 0.274127 | Updates:   25 | Epsilon: 0.1631
+Episode 130/200 | Reward:   39.1592 | Average reward:   1.6316 | Loss: 0.158793 | Updates:   24 | Epsilon: 0.1402
+Episode 140/200 | Reward:   44.4154 | Average reward:   1.5863 | Loss: 0.294444 | Updates:   28 | Epsilon: 0.1205
+Episode 150/200 | Reward:   36.5414 | Average reward:   0.9616 | Loss: 0.144858 | Updates:   38 | Epsilon: 0.1036
+Episode 160/200 | Reward:   42.8539 | Average reward:   1.6482 | Loss: 0.157898 | Updates:   26 | Epsilon: 0.0891
+Episode 170/200 | Reward:   45.0570 | Average reward:   1.6092 | Loss: 0.140227 | Updates:   28 | Epsilon: 0.0766
+Episode 180/200 | Reward:   31.3685 | Average reward:   1.0817 | Loss: 0.163765 | Updates:   29 | Epsilon: 0.0658
+Episode 190/200 | Reward:   32.0652 | Average reward:   0.6680 | Loss: 0.124731 | Updates:   48 | Epsilon: 0.0566
+Episode 200/200 | Reward:   42.7371 | Average reward:   0.9291 | Loss: 0.155854 | Updates:   46 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GCN-DDQN
+Traffic type: 3
+Total episodes: 200
+Final episode reward: 42.73712406234466
+Final episode loss: 0.155853978479686
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GCN_DDQN_traffic_type_3_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GCN_DDQN_traffic_type_3_training_history.csv
+
+==============================================================================
+ALL TRAINING EXPERIMENTS COMPLETED
+==============================================================================
+
+Total independent experiments:
+12
+
+Total training episodes:
+2400
+
+Training summary:
+ traffic_type    model  total_episodes  final_episode_reward  final_average_reward  final_episode_loss  mean_episode_reward  mean_episode_loss  total_optimization_updates  mean_throughput_mbps  mean_latency_ms  mean_qos_success_rate
+            1     DDQN             200             94.012500              1.918622            0.223976            56.436453           0.228521                        7161              7.250972        13.701143               0.885595
+            1 GCN-DDQN             200             98.787500              1.863915            1.076102            76.119250           0.630872                        8258              6.540806         6.725366               0.958647
+            1 GGN-DDQN             200            106.762500              1.873026            0.844858            77.927875           0.561719                        8455              6.234601         6.888341               0.957254
+            1 RBF-DDQN             200            179.312500              1.928091            0.992450            93.457500           0.635576                        9946              5.757899         6.624237               0.961710
+            2     DDQN             200             67.799885              1.694997            0.060445            42.813238           0.116084                        5460              9.108352         8.442029               0.376906
+            2 GCN-DDQN             200             80.429452              1.411043            0.343462            51.572880           0.254282                        7040              7.318853        10.292292               0.247188
+            2 GGN-DDQN             200             74.707307              1.409572            0.267986            53.837506           0.196460                        7035              7.333630         9.336833               0.255885
+            2 RBF-DDQN             200             46.299954              0.463000            0.445050            51.794668           0.495693                        8006              7.127696        17.460615               0.241068
+            3     DDQN             200             42.072220              1.357168            0.022083            31.664693           0.045191                        5038              9.734357         9.069312               0.186760
+            3 GCN-DDQN             200             42.737124              0.929068            0.155854            32.998234           0.143390                        5393              9.411652        11.111569               0.131121
+            3 GGN-DDQN             200             43.604563              1.503606            0.070937            34.274725           0.119932                        5067              9.589644         9.957150               0.124507
+            3 RBF-DDQN             200             44.843371              1.660866            0.084333            27.000416           0.364827                        7160              8.590271        27.733034               0.130740
+
+Combined history saved to:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\all_models_all_traffic_types_training_history.csv
+
+Experiment summary saved to:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\all_models_traffic_types_training_summary.csv
+
+==============================================================================
+BLOCK 6 COMPLETED SUCCESSFULLY
+==============================================================================
+
+Next:
+BLOCK 7: PLOT EPISODE REWARD FOR ALL FOUR MODELS ON TRAFFIC TYPES 1, 2, AND 3.
+BLOCK 8: PLOT ACTUAL TRAINING LOSS FOR ALL FOUR MODELS ON TRAFFIC TYPES 1, 2, AND 3.
+
+Process finished with exit code 0
