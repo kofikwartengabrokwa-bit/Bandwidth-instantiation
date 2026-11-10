@@ -1,0 +1,1120 @@
+E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py 
+======================================================================
+EXPERIMENT CONFIGURATION
+======================================================================
+Project directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Dataset: E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv
+Device: cpu
+Random seed: 1000
+
+======================================================================
+FINAL EXPERIMENT SETTINGS
+======================================================================
+Models: ['RBF-DDQN', 'DDQN', 'GGN-DDQN', 'GCN-DDQN']
+Traffic types: [1, 2, 3]
+Independent training runs: 12
+State dimension: 12
+Number of actions: 20
+Actions: [(1, 1), (1, 2), (1, 4), (1, 8), (2, 1), (2, 2), (2, 4), (2, 8), (4, 1), (4, 2), (4, 4), (4, 8), (8, 1), (8, 2), (8, 4), (8, 8), (16, 1), (16, 2), (16, 4), (16, 8)]
+Total RBs: 100
+Bandwidth: 20.0 MHz
+Power budget: 40.0 W
+Replay buffer: 30000
+Batch size: 128
+Training episodes: 500
+Learning rate: 0.001
+Discount factor: 0.99
+Device: cpu
+
+Output directories:
+Figures: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures
+CSV files: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv
+Checkpoints: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints
+Training histories: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories
+
+BLOCK 1 COMPLETED SUCCESSFULLY.
+
+========================================================================
+BLOCK 2: DATASET LOADING AND TRAFFIC-TYPE EXTRACTION
+========================================================================
+
+Dataset file: E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv
+Dataset directory: E:\Abrokwa\PycharmProjects\pythonProject1
+
+========================================================================
+SELECTED DATASET
+========================================================================
+File: E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv
+Table: None
+Rows: 2,345
+Columns: 18
+Traffic-type column: Traffic Type
+
+Column names:
+ - Network Slice ID
+ - Timestamp
+ - Device ID
+ - Traffic Load (bps)
+ - Traffic Type
+ - Network Utilization (%)
+ - Latency (ms)
+ - Packet Loss Rate (%)
+ - Signal Strength (dBm)
+ - Bandwidth Utilization (%)
+ - Network Slice Failure
+ - QoS Metric (Throughput)
+ - Overload Status
+ - Device Type
+ - Region
+ - Network Failure Count
+ - Time of Day
+ - Weather Conditions
+
+Dataset dimensions validated successfully.
+
+========================================================================
+TRAFFIC-TYPE DISTRIBUTION IN SOURCE DATASET
+========================================================================
+ traffic_type  record_count
+            0           578
+            1           579
+            2           614
+            3           574
+
+Traffic type 1: 579 records
+
+Traffic type 2: 614 records
+
+Traffic type 3: 574 records
+
+========================================================================
+TRAFFIC-TYPE RECORD VALIDATION
+========================================================================
+Traffic type 1: Expected = 579, Actual = 579
+Traffic type 2: Expected = 614, Actual = 614
+Traffic type 3: Expected = 574, Actual = 574
+
+All three traffic types passed validation.
+
+========================================================================
+TRAFFIC-TYPE EXTRACTION SUMMARY
+========================================================================
+ traffic_type  record_count  column_count
+            1           579            18
+            2           614            18
+            3           574            18
+
+Summary saved to:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\traffic_type_dataset_summary.csv
+Traffic type 1 dataset saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\traffic_type_1_dataset.csv
+Traffic type 2 dataset saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\traffic_type_2_dataset.csv
+Traffic type 3 dataset saved: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\traffic_type_3_dataset.csv
+
+========================================================================
+BLOCK 2 COMPLETED SUCCESSFULLY
+========================================================================
+Total source records: 2345
+Total selected records: 1767
+Excluded traffic type: 0
+
+Available training datasets:
+traffic_data[1] = 579 records
+traffic_data[2] = 614 records
+traffic_data[3] = 574 records
+
+Next step:
+Block 3: Neural network architectures for the four DDQN-based models.
+
+========================================================================
+BLOCK 3: NEURAL NETWORK ARCHITECTURE VERIFICATION
+========================================================================
+RBF-DDQN     | Input: 12 | Actions: 20 | Parameters: 26,069 | Output: (1, 20)
+DDQN         | Input: 12 | Actions: 20 | Parameters: 27,732 | Output: (1, 20)
+GGN-DDQN     | Input: 12 | Actions: 20 | Parameters: 19,284 | Output: (1, 20)
+GCN-DDQN     | Input: 12 | Actions: 20 | Parameters: 19,348 | Output: (1, 20)
+
+All four network architectures passed verification.
+
+BLOCK 3 COMPLETED SUCCESSFULLY.
+
+========================================================================
+BLOCK 4: DDQN AGENT VERIFICATION
+========================================================================
+[transformers] Disabling PyTorch because PyTorch >= 2.4 is required but found 2.1.2+cu118
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+RBF-DDQN     | Action:  3 | Epsilon: 1.000 | Replay:    0 | Device: cpu
+DDQN         | Action:  8 | Epsilon: 1.000 | Replay:    0 | Device: cpu
+GGN-DDQN     | Action:  7 | Epsilon: 1.000 | Replay:    0 | Device: cpu
+GCN-DDQN     | Action:  9 | Epsilon: 1.000 | Replay:    0 | Device: cpu
+
+All four DDQN agents passed verification.
+
+========================================================================
+VERIFYING AGENT INDEPENDENCE
+========================================================================
+Independent online networks: PASSED
+Independent target networks: PASSED
+Independent replay buffers: PASSED
+
+Agent independence verification completed.
+
+BLOCK 4 COMPLETED SUCCESSFULLY.
+
+========================================================================
+BLOCK 5: STATE CONSTRUCTION VERIFICATION
+========================================================================
+Traffic type 1 | Records: 579 | State shape: (12,) | Demand: 2.0 Mbps | Latency limit: 50.0 ms
+Traffic type 2 | Records: 614 | State shape: (12,) | Demand: 5.0 Mbps | Latency limit: 20.0 ms
+Traffic type 3 | Records: 574 | State shape: (12,) | Demand: 10.0 Mbps | Latency limit: 10.0 ms
+
+All traffic-type states passed verification.
+
+========================================================================
+BLOCK 5: ACTION EXECUTION VERIFICATION
+========================================================================
+Traffic type 1 | Action: (4, 4) | Throughput: 9.5473 Mbps | Latency: 1.2987 ms | Reward: 1.8375
+Traffic type 2 | Action: (4, 4) | Throughput: 9.5083 Mbps | Latency: 1.4546 ms | Reward: 1.8375
+Traffic type 3 | Action: (4, 4) | Throughput: 9.5550 Mbps | Latency: 1.7254 ms | Reward: 1.7485
+
+All action execution tests passed.
+
+========================================================================
+BLOCK 5 COMPLETED SUCCESSFULLY
+========================================================================
+State dimension: 12
+Action dimension: 20
+Traffic types: [1, 2, 3]
+Models: ['RBF-DDQN', 'DDQN', 'GGN-DDQN', 'GCN-DDQN']
+Radio bandwidth: 20.0 MHz
+Total RBs: 100
+Power budget: 40.0 W
+
+Next: BLOCK 6 - Independent model training and
+episode reward/loss history recording.
+
+==============================================================================
+STARTING ALL 12 INDEPENDENT TRAINING EXPERIMENTS
+==============================================================================
+
+
+##############################################################################
+STARTING TRAFFIC TYPE 1
+##############################################################################
+
+==============================================================================
+TRAINING MODEL: RBF-DDQN | TRAFFIC TYPE: 1
+==============================================================================
+Episode   1/500 | Reward:   43.0375 | Average reward:   1.6553 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   38.9625 | Average reward:   1.8554 | Loss: 0.249500 | Updates:   21 | Epsilon: 0.8597
+Episode  20/500 | Reward:   23.8875 | Average reward:   1.4051 | Loss: 0.269593 | Updates:   17 | Epsilon: 0.7391
+Episode  30/500 | Reward:   49.4875 | Average reward:   1.7065 | Loss: 0.303755 | Updates:   29 | Epsilon: 0.6355
+Episode  40/500 | Reward:   33.5375 | Average reward:   1.5244 | Loss: 0.389430 | Updates:   22 | Epsilon: 0.5463
+Episode  50/500 | Reward:   48.8125 | Average reward:   1.8774 | Loss: 0.390640 | Updates:   26 | Epsilon: 0.4697
+Episode  60/500 | Reward:   38.9625 | Average reward:   1.5585 | Loss: 0.579545 | Updates:   25 | Epsilon: 0.4038
+Episode  70/500 | Reward:   55.3375 | Average reward:   1.6769 | Loss: 0.532400 | Updates:   33 | Epsilon: 0.3472
+Episode  80/500 | Reward:   42.7125 | Average reward:   1.7797 | Loss: 0.444041 | Updates:   24 | Epsilon: 0.2985
+Episode  90/500 | Reward:  103.2375 | Average reward:   1.9118 | Loss: 0.647057 | Updates:   54 | Epsilon: 0.2566
+Episode 100/500 | Reward:  128.7125 | Average reward:   1.8928 | Loss: 0.591304 | Updates:   68 | Epsilon: 0.2206
+Episode 110/500 | Reward:   87.6125 | Average reward:   1.7880 | Loss: 0.735556 | Updates:   49 | Epsilon: 0.1897
+Episode 120/500 | Reward:   71.9125 | Average reward:   1.7978 | Loss: 0.770395 | Updates:   40 | Epsilon: 0.1631
+Episode 130/500 | Reward:   97.6875 | Average reward:   1.8786 | Loss: 0.692856 | Updates:   52 | Epsilon: 0.1402
+Episode 140/500 | Reward:  130.2125 | Average reward:   1.9149 | Loss: 0.725236 | Updates:   68 | Epsilon: 0.1205
+Episode 150/500 | Reward:  157.3625 | Average reward:   1.9427 | Loss: 0.782777 | Updates:   81 | Epsilon: 0.1036
+Episode 160/500 | Reward:  146.8375 | Average reward:   1.9070 | Loss: 0.857116 | Updates:   77 | Epsilon: 0.0891
+Episode 170/500 | Reward:  111.8375 | Average reward:   1.9282 | Loss: 0.933819 | Updates:   58 | Epsilon: 0.0766
+Episode 180/500 | Reward:  142.7375 | Average reward:   1.9289 | Loss: 0.863467 | Updates:   74 | Epsilon: 0.0658
+Episode 190/500 | Reward:  158.0125 | Average reward:   1.9508 | Loss: 1.038353 | Updates:   81 | Epsilon: 0.0566
+Episode 200/500 | Reward:  179.3125 | Average reward:   1.9281 | Loss: 0.992450 | Updates:   93 | Epsilon: 0.0500
+Episode 210/500 | Reward:  141.6375 | Average reward:   1.9402 | Loss: 0.956482 | Updates:   73 | Epsilon: 0.0500
+Episode 220/500 | Reward:  159.3875 | Average reward:   1.9437 | Loss: 1.023074 | Updates:   82 | Epsilon: 0.0500
+Episode 230/500 | Reward:  137.7875 | Average reward:   1.9407 | Loss: 1.039537 | Updates:   71 | Epsilon: 0.0500
+Episode 240/500 | Reward:  167.3625 | Average reward:   1.9461 | Loss: 1.036479 | Updates:   86 | Epsilon: 0.0500
+Episode 250/500 | Reward:  157.7375 | Average reward:   1.9474 | Loss: 1.085972 | Updates:   81 | Epsilon: 0.0500
+Episode 260/500 | Reward:  101.0875 | Average reward:   1.9073 | Loss: 1.101684 | Updates:   53 | Epsilon: 0.0500
+Episode 270/500 | Reward:  172.2125 | Average reward:   1.9135 | Loss: 1.193217 | Updates:   90 | Epsilon: 0.0500
+Episode 280/500 | Reward:  142.9375 | Average reward:   1.9316 | Loss: 1.135896 | Updates:   74 | Epsilon: 0.0500
+Episode 290/500 | Reward:  166.8375 | Average reward:   1.9400 | Loss: 1.189033 | Updates:   86 | Epsilon: 0.0500
+Episode 300/500 | Reward:  186.4375 | Average reward:   1.9421 | Loss: 1.112966 | Updates:   96 | Epsilon: 0.0500
+Episode 310/500 | Reward:  160.4125 | Average reward:   1.9327 | Loss: 1.303330 | Updates:   83 | Epsilon: 0.0500
+Episode 320/500 | Reward:  143.2625 | Average reward:   1.9102 | Loss: 1.127923 | Updates:   75 | Epsilon: 0.0500
+Episode 330/500 | Reward:  144.8625 | Average reward:   1.9315 | Loss: 1.265165 | Updates:   75 | Epsilon: 0.0500
+Episode 340/500 | Reward:  142.7875 | Average reward:   1.9038 | Loss: 1.192494 | Updates:   75 | Epsilon: 0.0500
+Episode 350/500 | Reward:  165.2875 | Average reward:   1.9446 | Loss: 1.503140 | Updates:   85 | Epsilon: 0.0500
+Episode 360/500 | Reward:  132.0625 | Average reward:   1.9421 | Loss: 1.337331 | Updates:   68 | Epsilon: 0.0500
+Episode 370/500 | Reward:  163.5875 | Average reward:   1.9022 | Loss: 1.454491 | Updates:   86 | Epsilon: 0.0500
+Episode 380/500 | Reward:  145.8625 | Average reward:   1.9192 | Loss: 1.372936 | Updates:   76 | Epsilon: 0.0500
+Episode 390/500 | Reward:  158.5375 | Average reward:   1.9334 | Loss: 1.443500 | Updates:   82 | Epsilon: 0.0500
+Episode 400/500 | Reward:  133.3375 | Average reward:   1.9324 | Loss: 1.645001 | Updates:   69 | Epsilon: 0.0500
+Episode 410/500 | Reward:   96.3125 | Average reward:   1.8885 | Loss: 1.422994 | Updates:   51 | Epsilon: 0.0500
+Episode 420/500 | Reward:  171.8375 | Average reward:   1.9308 | Loss: 1.526564 | Updates:   89 | Epsilon: 0.0500
+Episode 430/500 | Reward:  168.4125 | Average reward:   1.9358 | Loss: 1.539454 | Updates:   87 | Epsilon: 0.0500
+Episode 440/500 | Reward:  136.6625 | Average reward:   1.8981 | Loss: 1.664934 | Updates:   72 | Epsilon: 0.0500
+Episode 450/500 | Reward:  123.8375 | Average reward:   1.9052 | Loss: 1.645272 | Updates:   65 | Epsilon: 0.0500
+Episode 460/500 | Reward:  184.6625 | Average reward:   1.9438 | Loss: 1.448772 | Updates:   95 | Epsilon: 0.0500
+Episode 470/500 | Reward:  124.2625 | Average reward:   1.8274 | Loss: 1.477652 | Updates:   68 | Epsilon: 0.0500
+Episode 480/500 | Reward:  174.6125 | Average reward:   1.9401 | Loss: 1.512818 | Updates:   90 | Epsilon: 0.0500
+Episode 490/500 | Reward:  127.5125 | Average reward:   1.9320 | Loss: 1.574511 | Updates:   66 | Epsilon: 0.0500
+Episode 500/500 | Reward:  140.6125 | Average reward:   1.9262 | Loss: 1.363945 | Updates:   73 | Epsilon: 0.0500
+
+Experiment completed.
+Model: RBF-DDQN
+Traffic type: 1
+Total episodes: 500
+Final episode reward: 140.6124999999998
+Final episode loss: 1.3639453200317204
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\RBF_DDQN_traffic_type_1_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\RBF_DDQN_traffic_type_1_training_history.csv
+
+==============================================================================
+TRAINING MODEL: DDQN | TRAFFIC TYPE: 1
+==============================================================================
+Episode   1/500 | Reward:   28.4375 | Average reward:   1.0937 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   34.4625 | Average reward:   1.4359 | Loss: 0.111076 | Updates:   24 | Epsilon: 0.8597
+Episode  20/500 | Reward:   52.4125 | Average reward:   1.5883 | Loss: 0.080474 | Updates:   33 | Epsilon: 0.7391
+Episode  30/500 | Reward:   49.7375 | Average reward:   1.7763 | Loss: 0.112285 | Updates:   28 | Epsilon: 0.6355
+Episode  40/500 | Reward:   50.1125 | Average reward:   1.7897 | Loss: 0.137887 | Updates:   28 | Epsilon: 0.5463
+Episode  50/500 | Reward:   36.1875 | Average reward:   1.7232 | Loss: 0.158236 | Updates:   21 | Epsilon: 0.4697
+Episode  60/500 | Reward:   57.2625 | Average reward:   1.7352 | Loss: 0.284741 | Updates:   33 | Epsilon: 0.4038
+Episode  70/500 | Reward:   44.0625 | Average reward:   1.7625 | Loss: 0.214199 | Updates:   25 | Epsilon: 0.3472
+Episode  80/500 | Reward:   69.7875 | Average reward:   1.6230 | Loss: 0.167948 | Updates:   43 | Epsilon: 0.2985
+Episode  90/500 | Reward:   54.3875 | Average reward:   1.2361 | Loss: 0.185337 | Updates:   44 | Epsilon: 0.2566
+Episode 100/500 | Reward:   68.9375 | Average reward:   1.3788 | Loss: 0.214302 | Updates:   50 | Epsilon: 0.2206
+Episode 110/500 | Reward:   56.4625 | Average reward:   1.4859 | Loss: 0.212923 | Updates:   38 | Epsilon: 0.1897
+Episode 120/500 | Reward:   62.8625 | Average reward:   1.7961 | Loss: 0.326899 | Updates:   35 | Epsilon: 0.1631
+Episode 130/500 | Reward:   75.8625 | Average reward:   1.3547 | Loss: 0.235556 | Updates:   56 | Epsilon: 0.1402
+Episode 140/500 | Reward:   76.3125 | Average reward:   1.8613 | Loss: 0.198098 | Updates:   41 | Epsilon: 0.1205
+Episode 150/500 | Reward:   68.1375 | Average reward:   1.7931 | Loss: 0.240212 | Updates:   38 | Epsilon: 0.1036
+Episode 160/500 | Reward:   50.4375 | Average reward:   1.0731 | Loss: 0.388331 | Updates:   47 | Epsilon: 0.0891
+Episode 170/500 | Reward:   67.8875 | Average reward:   1.8348 | Loss: 0.222772 | Updates:   37 | Epsilon: 0.0766
+Episode 180/500 | Reward:   66.3875 | Average reward:   1.8968 | Loss: 0.323352 | Updates:   35 | Epsilon: 0.0658
+Episode 190/500 | Reward:   90.2375 | Average reward:   1.9199 | Loss: 0.213448 | Updates:   47 | Epsilon: 0.0566
+Episode 200/500 | Reward:   94.0125 | Average reward:   1.9186 | Loss: 0.223976 | Updates:   49 | Epsilon: 0.0500
+Episode 210/500 | Reward:   74.3875 | Average reward:   1.9074 | Loss: 0.129833 | Updates:   39 | Epsilon: 0.0500
+Episode 220/500 | Reward:   89.4875 | Average reward:   1.5700 | Loss: 0.206763 | Updates:   57 | Epsilon: 0.0500
+Episode 230/500 | Reward:   89.3625 | Average reward:   1.5407 | Loss: 0.171462 | Updates:   58 | Epsilon: 0.0500
+Episode 240/500 | Reward:   56.6375 | Average reward:   1.8270 | Loss: 0.098112 | Updates:   31 | Epsilon: 0.0500
+Episode 250/500 | Reward:   99.6875 | Average reward:   1.9171 | Loss: 0.128253 | Updates:   52 | Epsilon: 0.0500
+Episode 260/500 | Reward:   72.9875 | Average reward:   1.8247 | Loss: 0.104084 | Updates:   40 | Epsilon: 0.0500
+Episode 270/500 | Reward:   75.8875 | Average reward:   1.8972 | Loss: 0.130947 | Updates:   40 | Epsilon: 0.0500
+Episode 280/500 | Reward:  105.4625 | Average reward:   1.9175 | Loss: 0.112365 | Updates:   55 | Epsilon: 0.0500
+Episode 290/500 | Reward:   96.7875 | Average reward:   1.8262 | Loss: 0.092718 | Updates:   53 | Epsilon: 0.0500
+Episode 300/500 | Reward:   47.3375 | Average reward:   1.8935 | Loss: 0.170636 | Updates:   25 | Epsilon: 0.0500
+Episode 310/500 | Reward:  110.6875 | Average reward:   1.8761 | Loss: 0.086035 | Updates:   59 | Epsilon: 0.0500
+Episode 320/500 | Reward:  136.7375 | Average reward:   1.9259 | Loss: 0.118843 | Updates:   71 | Epsilon: 0.0500
+Episode 330/500 | Reward:  109.2125 | Average reward:   1.9160 | Loss: 0.075255 | Updates:   57 | Epsilon: 0.0500
+Episode 340/500 | Reward:  125.4875 | Average reward:   1.8454 | Loss: 0.101179 | Updates:   68 | Epsilon: 0.0500
+Episode 350/500 | Reward:  111.4125 | Average reward:   1.8883 | Loss: 0.069152 | Updates:   59 | Epsilon: 0.0500
+Episode 360/500 | Reward:  132.2625 | Average reward:   1.9168 | Loss: 0.095762 | Updates:   69 | Epsilon: 0.0500
+Episode 370/500 | Reward:  129.2875 | Average reward:   1.8737 | Loss: 0.101307 | Updates:   69 | Epsilon: 0.0500
+Episode 380/500 | Reward:   97.7125 | Average reward:   1.8436 | Loss: 0.192033 | Updates:   53 | Epsilon: 0.0500
+Episode 390/500 | Reward:  121.9375 | Average reward:   1.9053 | Loss: 0.094014 | Updates:   64 | Epsilon: 0.0500
+Episode 400/500 | Reward:  138.1625 | Average reward:   1.8926 | Loss: 0.113728 | Updates:   73 | Epsilon: 0.0500
+Episode 410/500 | Reward:  143.2125 | Average reward:   1.9353 | Loss: 0.077414 | Updates:   74 | Epsilon: 0.0500
+Episode 420/500 | Reward:  138.2875 | Average reward:   1.9207 | Loss: 0.276855 | Updates:   72 | Epsilon: 0.0500
+Episode 430/500 | Reward:  152.1625 | Average reward:   1.9261 | Loss: 0.105404 | Updates:   79 | Epsilon: 0.0500
+Episode 440/500 | Reward:  164.8125 | Average reward:   1.8729 | Loss: 0.058439 | Updates:   88 | Epsilon: 0.0500
+Episode 450/500 | Reward:  125.9375 | Average reward:   1.8797 | Loss: 0.122227 | Updates:   67 | Epsilon: 0.0500
+Episode 460/500 | Reward:  133.7125 | Average reward:   1.9102 | Loss: 0.088589 | Updates:   70 | Epsilon: 0.0500
+Episode 470/500 | Reward:  131.6125 | Average reward:   1.8537 | Loss: 0.105290 | Updates:   71 | Epsilon: 0.0500
+Episode 480/500 | Reward:  160.3125 | Average reward:   1.8641 | Loss: 0.160288 | Updates:   86 | Epsilon: 0.0500
+Episode 490/500 | Reward:  170.4625 | Average reward:   1.8940 | Loss: 0.271822 | Updates:   90 | Epsilon: 0.0500
+Episode 500/500 | Reward:  140.3125 | Average reward:   1.8222 | Loss: 0.123418 | Updates:   77 | Epsilon: 0.0500
+
+Experiment completed.
+Model: DDQN
+Traffic type: 1
+Total episodes: 500
+Final episode reward: 140.31249999999991
+Final episode loss: 0.12341799596687417
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\DDQN_traffic_type_1_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\DDQN_traffic_type_1_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GGN-DDQN | TRAFFIC TYPE: 1
+==============================================================================
+Episode   1/500 | Reward:   28.4625 | Average reward:   1.3554 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   39.7875 | Average reward:   1.4210 | Loss: 0.175591 | Updates:   28 | Epsilon: 0.8597
+Episode  20/500 | Reward:   32.2875 | Average reward:   1.6144 | Loss: 0.202489 | Updates:   20 | Epsilon: 0.7391
+Episode  30/500 | Reward:   50.7625 | Average reward:   1.5863 | Loss: 0.260501 | Updates:   32 | Epsilon: 0.6355
+Episode  40/500 | Reward:   55.3375 | Average reward:   1.7851 | Loss: 0.257736 | Updates:   31 | Epsilon: 0.5463
+Episode  50/500 | Reward:   49.5875 | Average reward:   1.7099 | Loss: 0.272433 | Updates:   29 | Epsilon: 0.4697
+Episode  60/500 | Reward:   71.1125 | Average reward:   1.8234 | Loss: 0.352925 | Updates:   39 | Epsilon: 0.4038
+Episode  70/500 | Reward:   45.4375 | Average reward:   1.6228 | Loss: 0.379947 | Updates:   28 | Epsilon: 0.3472
+Episode  80/500 | Reward:   50.3375 | Average reward:   1.7978 | Loss: 0.456522 | Updates:   28 | Epsilon: 0.2985
+Episode  90/500 | Reward:   64.1875 | Average reward:   1.8879 | Loss: 0.660105 | Updates:   34 | Epsilon: 0.2566
+Episode 100/500 | Reward:   93.2875 | Average reward:   1.8658 | Loss: 0.510941 | Updates:   50 | Epsilon: 0.2206
+Episode 110/500 | Reward:   81.4625 | Average reward:   1.8514 | Loss: 0.620684 | Updates:   44 | Epsilon: 0.1897
+Episode 120/500 | Reward:  103.5125 | Average reward:   1.9169 | Loss: 0.665228 | Updates:   54 | Epsilon: 0.1631
+Episode 130/500 | Reward:   87.9375 | Average reward:   1.9117 | Loss: 0.785680 | Updates:   46 | Epsilon: 0.1402
+Episode 140/500 | Reward:   97.7875 | Average reward:   1.9174 | Loss: 0.805152 | Updates:   51 | Epsilon: 0.1205
+Episode 150/500 | Reward:   79.9875 | Average reward:   1.9045 | Loss: 0.775180 | Updates:   42 | Epsilon: 0.1036
+Episode 160/500 | Reward:   75.5875 | Average reward:   1.8897 | Loss: 0.839721 | Updates:   40 | Epsilon: 0.0891
+Episode 170/500 | Reward:  115.2875 | Average reward:   1.8900 | Loss: 0.853997 | Updates:   61 | Epsilon: 0.0766
+Episode 180/500 | Reward:  118.3375 | Average reward:   1.8784 | Loss: 0.805089 | Updates:   63 | Epsilon: 0.0658
+Episode 190/500 | Reward:   93.3375 | Average reward:   1.9048 | Loss: 0.858051 | Updates:   49 | Epsilon: 0.0566
+Episode 200/500 | Reward:  106.7625 | Average reward:   1.8730 | Loss: 0.844858 | Updates:   57 | Epsilon: 0.0500
+Episode 210/500 | Reward:  126.8375 | Average reward:   1.9218 | Loss: 0.977125 | Updates:   66 | Epsilon: 0.0500
+Episode 220/500 | Reward:  126.8625 | Average reward:   1.9222 | Loss: 0.999935 | Updates:   66 | Epsilon: 0.0500
+Episode 230/500 | Reward:  104.9875 | Average reward:   1.9089 | Loss: 0.864939 | Updates:   55 | Epsilon: 0.0500
+Episode 240/500 | Reward:   56.1625 | Average reward:   1.8721 | Loss: 0.962614 | Updates:   30 | Epsilon: 0.0500
+Episode 250/500 | Reward:   87.9875 | Average reward:   1.4913 | Loss: 0.784300 | Updates:   59 | Epsilon: 0.0500
+Episode 260/500 | Reward:  111.6625 | Average reward:   1.8926 | Loss: 0.769078 | Updates:   59 | Epsilon: 0.0500
+Episode 270/500 | Reward:  124.6125 | Average reward:   1.6840 | Loss: 0.860730 | Updates:   74 | Epsilon: 0.0500
+Episode 280/500 | Reward:  102.7875 | Average reward:   1.2384 | Loss: 0.856011 | Updates:   83 | Epsilon: 0.0500
+Episode 290/500 | Reward:   84.8875 | Average reward:   1.1790 | Loss: 0.824180 | Updates:   72 | Epsilon: 0.0500
+Episode 300/500 | Reward:   86.6125 | Average reward:   0.9313 | Loss: 0.630119 | Updates:   93 | Epsilon: 0.0500
+Episode 310/500 | Reward:   89.8281 | Average reward:   0.8983 | Loss: 0.633550 | Updates:  100 | Epsilon: 0.0500
+Episode 320/500 | Reward:  115.0531 | Average reward:   1.1505 | Loss: 0.671543 | Updates:  100 | Epsilon: 0.0500
+Episode 330/500 | Reward:  107.4125 | Average reward:   1.7902 | Loss: 0.628795 | Updates:   60 | Epsilon: 0.0500
+Episode 340/500 | Reward:  117.0875 | Average reward:   1.9195 | Loss: 0.636298 | Updates:   61 | Epsilon: 0.0500
+Episode 350/500 | Reward:   98.9125 | Average reward:   1.8317 | Loss: 0.599798 | Updates:   54 | Epsilon: 0.0500
+Episode 360/500 | Reward:   74.4375 | Average reward:   1.8609 | Loss: 0.599942 | Updates:   40 | Epsilon: 0.0500
+Episode 370/500 | Reward:  134.3875 | Average reward:   1.7683 | Loss: 0.490940 | Updates:   76 | Epsilon: 0.0500
+Episode 380/500 | Reward:  102.8875 | Average reward:   1.4911 | Loss: 0.492528 | Updates:   69 | Epsilon: 0.0500
+Episode 390/500 | Reward:  150.4125 | Average reward:   1.9040 | Loss: 0.458553 | Updates:   79 | Epsilon: 0.0500
+Episode 400/500 | Reward:  106.8375 | Average reward:   1.8743 | Loss: 0.434265 | Updates:   57 | Epsilon: 0.0500
+Episode 410/500 | Reward:  148.7875 | Average reward:   1.8369 | Loss: 0.666029 | Updates:   81 | Epsilon: 0.0500
+Episode 420/500 | Reward:  137.0125 | Average reward:   1.9030 | Loss: 0.497571 | Updates:   72 | Epsilon: 0.0500
+Episode 430/500 | Reward:  157.0625 | Average reward:   1.8923 | Loss: 0.473856 | Updates:   83 | Epsilon: 0.0500
+Episode 440/500 | Reward:  118.5875 | Average reward:   1.8823 | Loss: 0.398486 | Updates:   63 | Epsilon: 0.0500
+Episode 450/500 | Reward:  164.6375 | Average reward:   1.8924 | Loss: 0.372867 | Updates:   87 | Epsilon: 0.0500
+Episode 460/500 | Reward:  130.4375 | Average reward:   1.8904 | Loss: 0.483389 | Updates:   69 | Epsilon: 0.0500
+Episode 470/500 | Reward:  186.6875 | Average reward:   1.9246 | Loss: 0.391344 | Updates:   97 | Epsilon: 0.0500
+Episode 480/500 | Reward:  123.2875 | Average reward:   1.9264 | Loss: 0.310641 | Updates:   64 | Epsilon: 0.0500
+Episode 490/500 | Reward:  181.3375 | Average reward:   1.8889 | Loss: 0.528037 | Updates:   96 | Epsilon: 0.0500
+Episode 500/500 | Reward:  156.6875 | Average reward:   1.9108 | Loss: 0.427085 | Updates:   82 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GGN-DDQN
+Traffic type: 1
+Total episodes: 500
+Final episode reward: 156.68749999999991
+Final episode loss: 0.4270848565530486
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GGN_DDQN_traffic_type_1_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GGN_DDQN_traffic_type_1_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GCN-DDQN | TRAFFIC TYPE: 1
+==============================================================================
+Episode   1/500 | Reward:   38.0375 | Average reward:   1.4088 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   24.3875 | Average reward:   1.6258 | Loss: 0.212790 | Updates:   15 | Epsilon: 0.8597
+Episode  20/500 | Reward:   30.8125 | Average reward:   1.4006 | Loss: 0.258791 | Updates:   22 | Epsilon: 0.7391
+Episode  30/500 | Reward:   57.3625 | Average reward:   1.5503 | Loss: 0.274321 | Updates:   37 | Epsilon: 0.6355
+Episode  40/500 | Reward:   44.7125 | Average reward:   1.5969 | Loss: 0.240175 | Updates:   28 | Epsilon: 0.5463
+Episode  50/500 | Reward:   38.5625 | Average reward:   1.6766 | Loss: 0.272417 | Updates:   23 | Epsilon: 0.4697
+Episode  60/500 | Reward:   71.3375 | Average reward:   1.8292 | Loss: 0.554577 | Updates:   39 | Epsilon: 0.4038
+Episode  70/500 | Reward:   57.5875 | Average reward:   1.7451 | Loss: 0.414467 | Updates:   33 | Epsilon: 0.3472
+Episode  80/500 | Reward:   95.5625 | Average reward:   1.9113 | Loss: 0.573353 | Updates:   50 | Epsilon: 0.2985
+Episode  90/500 | Reward:   58.2375 | Average reward:   1.8786 | Loss: 0.432514 | Updates:   31 | Epsilon: 0.2566
+Episode 100/500 | Reward:   31.2125 | Average reward:   1.8360 | Loss: 0.710515 | Updates:   17 | Epsilon: 0.2206
+Episode 110/500 | Reward:   89.5375 | Average reward:   1.8654 | Loss: 0.571477 | Updates:   48 | Epsilon: 0.1897
+Episode 120/500 | Reward:   69.9625 | Average reward:   1.8909 | Loss: 0.553925 | Updates:   37 | Epsilon: 0.1631
+Episode 130/500 | Reward:   84.6625 | Average reward:   1.8405 | Loss: 0.692676 | Updates:   46 | Epsilon: 0.1402
+Episode 140/500 | Reward:   83.5875 | Average reward:   1.8997 | Loss: 0.808202 | Updates:   44 | Epsilon: 0.1205
+Episode 150/500 | Reward:   89.8625 | Average reward:   1.8339 | Loss: 0.751133 | Updates:   49 | Epsilon: 0.1036
+Episode 160/500 | Reward:  137.8125 | Average reward:   1.8878 | Loss: 0.965372 | Updates:   73 | Epsilon: 0.0891
+Episode 170/500 | Reward:  107.3125 | Average reward:   1.9163 | Loss: 0.992221 | Updates:   56 | Epsilon: 0.0766
+Episode 180/500 | Reward:   95.9375 | Average reward:   1.8811 | Loss: 1.047954 | Updates:   51 | Epsilon: 0.0658
+Episode 190/500 | Reward:  136.4625 | Average reward:   1.8953 | Loss: 0.951216 | Updates:   72 | Epsilon: 0.0566
+Episode 200/500 | Reward:   98.7875 | Average reward:   1.8639 | Loss: 1.076102 | Updates:   53 | Epsilon: 0.0500
+Episode 210/500 | Reward:   98.3875 | Average reward:   1.8921 | Loss: 1.143557 | Updates:   52 | Epsilon: 0.0500
+Episode 220/500 | Reward:  113.9125 | Average reward:   1.9307 | Loss: 1.205330 | Updates:   59 | Epsilon: 0.0500
+Episode 230/500 | Reward:   77.8375 | Average reward:   1.8985 | Loss: 1.588144 | Updates:   41 | Epsilon: 0.0500
+Episode 240/500 | Reward:   50.6875 | Average reward:   1.8773 | Loss: 1.607705 | Updates:   27 | Epsilon: 0.0500
+Episode 250/500 | Reward:   94.3375 | Average reward:   1.8868 | Loss: 1.440609 | Updates:   50 | Epsilon: 0.0500
+Episode 260/500 | Reward:  119.9125 | Average reward:   1.9034 | Loss: 1.410489 | Updates:   63 | Epsilon: 0.0500
+Episode 270/500 | Reward:   77.4125 | Average reward:   1.8881 | Loss: 1.177997 | Updates:   41 | Epsilon: 0.0500
+Episode 280/500 | Reward:  117.9875 | Average reward:   1.9342 | Loss: 1.724007 | Updates:   61 | Epsilon: 0.0500
+Episode 290/500 | Reward:   40.6875 | Average reward:   1.7690 | Loss: 1.683917 | Updates:   23 | Epsilon: 0.0500
+Episode 300/500 | Reward:   54.1875 | Average reward:   1.8685 | Loss: 1.413463 | Updates:   29 | Epsilon: 0.0500
+Episode 310/500 | Reward:  122.5375 | Average reward:   1.8852 | Loss: 1.687818 | Updates:   65 | Epsilon: 0.0500
+Episode 320/500 | Reward:   52.7875 | Average reward:   1.8853 | Loss: 1.781429 | Updates:   28 | Epsilon: 0.0500
+Episode 330/500 | Reward:   77.8875 | Average reward:   1.8997 | Loss: 1.620322 | Updates:   41 | Epsilon: 0.0500
+Episode 340/500 | Reward:  108.6125 | Average reward:   1.9055 | Loss: 1.433116 | Updates:   57 | Epsilon: 0.0500
+Episode 350/500 | Reward:  122.0875 | Average reward:   1.9076 | Loss: 1.625883 | Updates:   64 | Epsilon: 0.0500
+Episode 360/500 | Reward:  120.7625 | Average reward:   1.8024 | Loss: 1.764932 | Updates:   67 | Epsilon: 0.0500
+Episode 370/500 | Reward:   92.4625 | Average reward:   1.8492 | Loss: 1.743676 | Updates:   50 | Epsilon: 0.0500
+Episode 380/500 | Reward:  118.9875 | Average reward:   1.8887 | Loss: 2.008112 | Updates:   63 | Epsilon: 0.0500
+Episode 390/500 | Reward:  116.8625 | Average reward:   1.9158 | Loss: 1.845772 | Updates:   61 | Epsilon: 0.0500
+Episode 400/500 | Reward:  127.0625 | Average reward:   1.8686 | Loss: 1.682052 | Updates:   68 | Epsilon: 0.0500
+Episode 410/500 | Reward:  112.8125 | Average reward:   1.8802 | Loss: 2.009912 | Updates:   60 | Epsilon: 0.0500
+Episode 420/500 | Reward:   75.9125 | Average reward:   1.8074 | Loss: 1.837358 | Updates:   42 | Epsilon: 0.0500
+Episode 430/500 | Reward:  147.3375 | Average reward:   1.8889 | Loss: 1.901122 | Updates:   78 | Epsilon: 0.0500
+Episode 440/500 | Reward:  126.6375 | Average reward:   1.9187 | Loss: 2.008730 | Updates:   66 | Epsilon: 0.0500
+Episode 450/500 | Reward:  107.4875 | Average reward:   1.8532 | Loss: 2.035523 | Updates:   58 | Epsilon: 0.0500
+Episode 460/500 | Reward:  110.9625 | Average reward:   1.9131 | Loss: 2.244767 | Updates:   58 | Epsilon: 0.0500
+Episode 470/500 | Reward:  126.5125 | Average reward:   1.8073 | Loss: 2.004990 | Updates:   70 | Epsilon: 0.0500
+Episode 480/500 | Reward:  122.6875 | Average reward:   1.8589 | Loss: 2.024218 | Updates:   66 | Epsilon: 0.0500
+Episode 490/500 | Reward:   64.9875 | Average reward:   1.8568 | Loss: 1.881164 | Updates:   35 | Epsilon: 0.0500
+Episode 500/500 | Reward:   89.2125 | Average reward:   1.8981 | Loss: 2.027605 | Updates:   47 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GCN-DDQN
+Traffic type: 1
+Total episodes: 500
+Final episode reward: 89.21249999999995
+Final episode loss: 2.027605360492747
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GCN_DDQN_traffic_type_1_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GCN_DDQN_traffic_type_1_training_history.csv
+
+
+##############################################################################
+STARTING TRAFFIC TYPE 2
+##############################################################################
+
+==============================================================================
+TRAINING MODEL: RBF-DDQN | TRAFFIC TYPE: 2
+==============================================================================
+Episode   1/500 | Reward:   23.3253 | Average reward:   1.7943 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   29.9189 | Average reward:   1.2466 | Loss: 0.599757 | Updates:   24 | Epsilon: 0.8597
+Episode  20/500 | Reward:   32.6345 | Average reward:   1.3598 | Loss: 0.355422 | Updates:   24 | Epsilon: 0.7391
+Episode  30/500 | Reward:   32.3340 | Average reward:   1.6167 | Loss: 0.444961 | Updates:   20 | Epsilon: 0.6355
+Episode  40/500 | Reward:   30.7653 | Average reward:   0.7889 | Loss: 0.444782 | Updates:   39 | Epsilon: 0.5463
+Episode  50/500 | Reward:   58.4244 | Average reward:   1.6693 | Loss: 0.576014 | Updates:   35 | Epsilon: 0.4697
+Episode  60/500 | Reward:   41.5241 | Average reward:   1.4319 | Loss: 0.620478 | Updates:   29 | Epsilon: 0.4038
+Episode  70/500 | Reward:   35.0295 | Average reward:   1.5230 | Loss: 0.774965 | Updates:   23 | Epsilon: 0.3472
+Episode  80/500 | Reward:   51.4398 | Average reward:   1.3903 | Loss: 0.443485 | Updates:   37 | Epsilon: 0.2985
+Episode  90/500 | Reward:   31.2203 | Average reward:   0.8005 | Loss: 0.498356 | Updates:   39 | Epsilon: 0.2566
+Episode 100/500 | Reward:   61.3588 | Average reward:   1.8047 | Loss: 0.431701 | Updates:   34 | Epsilon: 0.2206
+Episode 110/500 | Reward:   65.3334 | Average reward:   1.1667 | Loss: 0.452882 | Updates:   56 | Epsilon: 0.1897
+Episode 120/500 | Reward:   71.8652 | Average reward:   1.7966 | Loss: 0.502645 | Updates:   40 | Epsilon: 0.1631
+Episode 130/500 | Reward:   63.9262 | Average reward:   0.9004 | Loss: 0.502139 | Updates:   71 | Epsilon: 0.1402
+Episode 140/500 | Reward:   66.9988 | Average reward:   1.2884 | Loss: 0.542328 | Updates:   52 | Epsilon: 0.1205
+Episode 150/500 | Reward:   83.8372 | Average reward:   1.8225 | Loss: 0.519529 | Updates:   46 | Epsilon: 0.1036
+Episode 160/500 | Reward:   73.5855 | Average reward:   1.8396 | Loss: 0.470992 | Updates:   40 | Epsilon: 0.0891
+Episode 170/500 | Reward:   65.6205 | Average reward:   1.8228 | Loss: 0.472484 | Updates:   36 | Epsilon: 0.0766
+Episode 180/500 | Reward:   85.1172 | Average reward:   1.7371 | Loss: 0.479066 | Updates:   49 | Epsilon: 0.0658
+Episode 190/500 | Reward:   76.7506 | Average reward:   1.8274 | Loss: 0.471925 | Updates:   42 | Epsilon: 0.0566
+Episode 200/500 | Reward:   46.3000 | Average reward:   0.4630 | Loss: 0.445050 | Updates:  100 | Epsilon: 0.0500
+Episode 210/500 | Reward:   37.0683 | Average reward:   0.4361 | Loss: 0.422127 | Updates:   85 | Epsilon: 0.0500
+Episode 220/500 | Reward:   85.0562 | Average reward:   1.8097 | Loss: 0.422411 | Updates:   47 | Epsilon: 0.0500
+Episode 230/500 | Reward:   71.9260 | Average reward:   0.8991 | Loss: 0.387353 | Updates:   80 | Epsilon: 0.0500
+Episode 240/500 | Reward:   90.0395 | Average reward:   1.8375 | Loss: 0.316295 | Updates:   49 | Epsilon: 0.0500
+Episode 250/500 | Reward:   90.9936 | Average reward:   1.8199 | Loss: 0.276062 | Updates:   50 | Epsilon: 0.0500
+Episode 260/500 | Reward:   88.9402 | Average reward:   1.8151 | Loss: 0.239916 | Updates:   49 | Epsilon: 0.0500
+Episode 270/500 | Reward:   83.9980 | Average reward:   1.7500 | Loss: 0.242775 | Updates:   48 | Epsilon: 0.0500
+Episode 280/500 | Reward:   91.5826 | Average reward:   1.7612 | Loss: 0.222524 | Updates:   52 | Epsilon: 0.0500
+Episode 290/500 | Reward:   90.9572 | Average reward:   1.7492 | Loss: 0.196631 | Updates:   52 | Epsilon: 0.0500
+Episode 300/500 | Reward:   85.1998 | Average reward:   1.6385 | Loss: 0.183569 | Updates:   52 | Epsilon: 0.0500
+Episode 310/500 | Reward:   87.4422 | Average reward:   1.7146 | Loss: 0.177889 | Updates:   51 | Epsilon: 0.0500
+Episode 320/500 | Reward:   89.6598 | Average reward:   1.5730 | Loss: 0.190059 | Updates:   57 | Epsilon: 0.0500
+Episode 330/500 | Reward:   90.9249 | Average reward:   1.6838 | Loss: 0.151087 | Updates:   54 | Epsilon: 0.0500
+Episode 340/500 | Reward:   91.6309 | Average reward:   1.7621 | Loss: 0.137486 | Updates:   52 | Epsilon: 0.0500
+Episode 350/500 | Reward:   91.0432 | Average reward:   1.5697 | Loss: 0.175054 | Updates:   58 | Epsilon: 0.0500
+Episode 360/500 | Reward:   83.3483 | Average reward:   1.7364 | Loss: 0.112048 | Updates:   48 | Epsilon: 0.0500
+Episode 370/500 | Reward:   78.3802 | Average reward:   1.6677 | Loss: 0.099462 | Updates:   47 | Epsilon: 0.0500
+Episode 380/500 | Reward:   77.2435 | Average reward:   1.6435 | Loss: 0.105320 | Updates:   47 | Epsilon: 0.0500
+Episode 390/500 | Reward:   85.4120 | Average reward:   1.6115 | Loss: 0.082403 | Updates:   53 | Epsilon: 0.0500
+Episode 400/500 | Reward:   76.8190 | Average reward:   1.7071 | Loss: 0.074224 | Updates:   45 | Epsilon: 0.0500
+Episode 410/500 | Reward:   76.9317 | Average reward:   1.7096 | Loss: 0.091123 | Updates:   45 | Epsilon: 0.0500
+Episode 420/500 | Reward:   78.9229 | Average reward:   1.7538 | Loss: 0.071109 | Updates:   45 | Epsilon: 0.0500
+Episode 430/500 | Reward:   92.1349 | Average reward:   1.7384 | Loss: 0.071152 | Updates:   53 | Epsilon: 0.0500
+Episode 440/500 | Reward:   83.7976 | Average reward:   1.6760 | Loss: 0.062877 | Updates:   50 | Epsilon: 0.0500
+Episode 450/500 | Reward:   90.3786 | Average reward:   1.6432 | Loss: 0.073497 | Updates:   55 | Epsilon: 0.0500
+Episode 460/500 | Reward:   65.7664 | Average reward:   1.7307 | Loss: 0.075962 | Updates:   38 | Epsilon: 0.0500
+Episode 470/500 | Reward:   90.1008 | Average reward:   1.8020 | Loss: 0.054742 | Updates:   50 | Epsilon: 0.0500
+Episode 480/500 | Reward:   91.6062 | Average reward:   1.7962 | Loss: 0.060800 | Updates:   51 | Epsilon: 0.0500
+Episode 490/500 | Reward:   92.0269 | Average reward:   1.7697 | Loss: 0.054810 | Updates:   52 | Epsilon: 0.0500
+Episode 500/500 | Reward:   91.7664 | Average reward:   1.7993 | Loss: 0.053410 | Updates:   51 | Epsilon: 0.0500
+
+Experiment completed.
+Model: RBF-DDQN
+Traffic type: 2
+Total episodes: 500
+Final episode reward: 91.76637743855294
+Final episode loss: 0.05340964129815499
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\RBF_DDQN_traffic_type_2_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\RBF_DDQN_traffic_type_2_training_history.csv
+
+==============================================================================
+TRAINING MODEL: DDQN | TRAFFIC TYPE: 2
+==============================================================================
+Episode   1/500 | Reward:   24.3148 | Average reward:   0.9005 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   21.9390 | Average reward:   1.3712 | Loss: 0.177957 | Updates:   16 | Epsilon: 0.8597
+Episode  20/500 | Reward:   25.5483 | Average reward:   0.9462 | Loss: 0.086627 | Updates:   27 | Epsilon: 0.7391
+Episode  30/500 | Reward:   25.8750 | Average reward:   1.4375 | Loss: 0.067521 | Updates:   18 | Epsilon: 0.6355
+Episode  40/500 | Reward:   35.6534 | Average reward:   1.4856 | Loss: 0.051612 | Updates:   24 | Epsilon: 0.5463
+Episode  50/500 | Reward:   32.9251 | Average reward:   1.4315 | Loss: 0.058006 | Updates:   23 | Epsilon: 0.4697
+Episode  60/500 | Reward:   37.6088 | Average reward:   1.6352 | Loss: 0.083064 | Updates:   23 | Epsilon: 0.4038
+Episode  70/500 | Reward:   32.3447 | Average reward:   1.1980 | Loss: 0.149379 | Updates:   27 | Epsilon: 0.3472
+Episode  80/500 | Reward:   34.3706 | Average reward:   1.7185 | Loss: 0.132830 | Updates:   20 | Epsilon: 0.2985
+Episode  90/500 | Reward:   35.8611 | Average reward:   1.6300 | Loss: 0.140179 | Updates:   22 | Epsilon: 0.2566
+Episode 100/500 | Reward:   30.4518 | Average reward:   1.6027 | Loss: 0.113680 | Updates:   19 | Epsilon: 0.2206
+Episode 110/500 | Reward:   28.4929 | Average reward:   1.5829 | Loss: 0.130499 | Updates:   18 | Epsilon: 0.1897
+Episode 120/500 | Reward:   34.9609 | Average reward:   1.2055 | Loss: 0.119107 | Updates:   29 | Epsilon: 0.1631
+Episode 130/500 | Reward:   46.7721 | Average reward:   1.1693 | Loss: 0.099111 | Updates:   40 | Epsilon: 0.1402
+Episode 140/500 | Reward:   36.2172 | Average reward:   1.5747 | Loss: 0.077217 | Updates:   23 | Epsilon: 0.1205
+Episode 150/500 | Reward:   52.7306 | Average reward:   1.7010 | Loss: 0.085094 | Updates:   31 | Epsilon: 0.1036
+Episode 160/500 | Reward:   56.9645 | Average reward:   1.5823 | Loss: 0.087161 | Updates:   36 | Epsilon: 0.0891
+Episode 170/500 | Reward:   52.8642 | Average reward:   1.6520 | Loss: 0.068781 | Updates:   32 | Epsilon: 0.0766
+Episode 180/500 | Reward:   52.0868 | Average reward:   1.3022 | Loss: 0.161028 | Updates:   40 | Epsilon: 0.0658
+Episode 190/500 | Reward:   39.9727 | Average reward:   1.6655 | Loss: 0.054038 | Updates:   24 | Epsilon: 0.0566
+Episode 200/500 | Reward:   67.7999 | Average reward:   1.6950 | Loss: 0.060445 | Updates:   40 | Epsilon: 0.0500
+Episode 210/500 | Reward:   72.8799 | Average reward:   1.7352 | Loss: 0.048746 | Updates:   42 | Epsilon: 0.0500
+Episode 220/500 | Reward:   65.2268 | Average reward:   1.5909 | Loss: 0.050356 | Updates:   41 | Epsilon: 0.0500
+Episode 230/500 | Reward:   61.8725 | Average reward:   1.5865 | Loss: 0.063194 | Updates:   39 | Epsilon: 0.0500
+Episode 240/500 | Reward:   72.8111 | Average reward:   1.6548 | Loss: 0.050906 | Updates:   44 | Epsilon: 0.0500
+Episode 250/500 | Reward:   63.9579 | Average reward:   1.4536 | Loss: 0.076684 | Updates:   44 | Epsilon: 0.0500
+Episode 260/500 | Reward:   72.2105 | Average reward:   1.8053 | Loss: 0.056613 | Updates:   40 | Epsilon: 0.0500
+Episode 270/500 | Reward:   72.9197 | Average reward:   1.7785 | Loss: 0.059243 | Updates:   41 | Epsilon: 0.0500
+Episode 280/500 | Reward:   69.3782 | Average reward:   1.6134 | Loss: 0.068070 | Updates:   43 | Epsilon: 0.0500
+Episode 290/500 | Reward:   69.0747 | Average reward:   1.5699 | Loss: 0.053727 | Updates:   44 | Epsilon: 0.0500
+Episode 300/500 | Reward:   87.5772 | Average reward:   1.7515 | Loss: 0.041618 | Updates:   50 | Epsilon: 0.0500
+Episode 310/500 | Reward:   85.3942 | Average reward:   1.6744 | Loss: 0.037553 | Updates:   51 | Epsilon: 0.0500
+Episode 320/500 | Reward:   88.5239 | Average reward:   1.7024 | Loss: 0.050487 | Updates:   52 | Epsilon: 0.0500
+Episode 330/500 | Reward:   64.7980 | Average reward:   1.5804 | Loss: 0.083420 | Updates:   41 | Epsilon: 0.0500
+Episode 340/500 | Reward:   88.3036 | Average reward:   1.6353 | Loss: 0.066944 | Updates:   54 | Epsilon: 0.0500
+Episode 350/500 | Reward:   86.4781 | Average reward:   1.7296 | Loss: 0.038086 | Updates:   50 | Epsilon: 0.0500
+Episode 360/500 | Reward:   84.5082 | Average reward:   1.7247 | Loss: 0.109013 | Updates:   49 | Epsilon: 0.0500
+Episode 370/500 | Reward:   90.9741 | Average reward:   1.5960 | Loss: 0.078460 | Updates:   57 | Epsilon: 0.0500
+Episode 380/500 | Reward:   74.8156 | Average reward:   1.4116 | Loss: 0.090702 | Updates:   53 | Epsilon: 0.0500
+Episode 390/500 | Reward:   87.9732 | Average reward:   1.6918 | Loss: 0.048605 | Updates:   52 | Epsilon: 0.0500
+Episode 400/500 | Reward:   78.3856 | Average reward:   1.7419 | Loss: 0.036161 | Updates:   45 | Epsilon: 0.0500
+Episode 410/500 | Reward:   79.7432 | Average reward:   1.5046 | Loss: 0.054383 | Updates:   53 | Epsilon: 0.0500
+Episode 420/500 | Reward:   72.9444 | Average reward:   1.7791 | Loss: 0.034113 | Updates:   41 | Epsilon: 0.0500
+Episode 430/500 | Reward:   86.9497 | Average reward:   1.6102 | Loss: 0.025999 | Updates:   54 | Epsilon: 0.0500
+Episode 440/500 | Reward:   91.2882 | Average reward:   1.6598 | Loss: 0.075610 | Updates:   55 | Epsilon: 0.0500
+Episode 450/500 | Reward:   72.7672 | Average reward:   1.7326 | Loss: 0.028394 | Updates:   42 | Epsilon: 0.0500
+Episode 460/500 | Reward:   81.6624 | Average reward:   1.3841 | Loss: 0.047260 | Updates:   59 | Epsilon: 0.0500
+Episode 470/500 | Reward:   76.8865 | Average reward:   1.7474 | Loss: 0.024231 | Updates:   44 | Epsilon: 0.0500
+Episode 480/500 | Reward:   69.3974 | Average reward:   1.6139 | Loss: 0.055433 | Updates:   43 | Epsilon: 0.0500
+Episode 490/500 | Reward:   90.8453 | Average reward:   1.7470 | Loss: 0.028874 | Updates:   52 | Epsilon: 0.0500
+Episode 500/500 | Reward:   64.1013 | Average reward:   1.7325 | Loss: 0.031158 | Updates:   37 | Epsilon: 0.0500
+
+Experiment completed.
+Model: DDQN
+Traffic type: 2
+Total episodes: 500
+Final episode reward: 64.10134959850375
+Final episode loss: 0.031157871393637883
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\DDQN_traffic_type_2_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\DDQN_traffic_type_2_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GGN-DDQN | TRAFFIC TYPE: 2
+==============================================================================
+Episode   1/500 | Reward:   22.8013 | Average reward:   0.9501 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   29.9823 | Average reward:   1.4991 | Loss: 0.186876 | Updates:   20 | Epsilon: 0.8597
+Episode  20/500 | Reward:   41.0821 | Average reward:   0.9554 | Loss: 0.231502 | Updates:   43 | Epsilon: 0.7391
+Episode  30/500 | Reward:   26.7313 | Average reward:   1.7821 | Loss: 0.164035 | Updates:   15 | Epsilon: 0.6355
+Episode  40/500 | Reward:   40.5286 | Average reward:   1.5588 | Loss: 0.157056 | Updates:   26 | Epsilon: 0.5463
+Episode  50/500 | Reward:   50.2432 | Average reward:   1.7325 | Loss: 0.128830 | Updates:   29 | Epsilon: 0.4697
+Episode  60/500 | Reward:   54.7661 | Average reward:   1.2170 | Loss: 0.122594 | Updates:   45 | Epsilon: 0.4038
+Episode  70/500 | Reward:   62.6563 | Average reward:   1.5282 | Loss: 0.186505 | Updates:   41 | Epsilon: 0.3472
+Episode  80/500 | Reward:   47.9541 | Average reward:   0.6754 | Loss: 0.145226 | Updates:   71 | Epsilon: 0.2985
+Episode  90/500 | Reward:   39.9128 | Average reward:   1.3304 | Loss: 0.155203 | Updates:   30 | Epsilon: 0.2566
+Episode 100/500 | Reward:   57.5063 | Average reward:   1.6430 | Loss: 0.161263 | Updates:   35 | Epsilon: 0.2206
+Episode 110/500 | Reward:   51.1748 | Average reward:   1.5508 | Loss: 0.293980 | Updates:   33 | Epsilon: 0.1897
+Episode 120/500 | Reward:   69.4332 | Average reward:   1.6532 | Loss: 0.206818 | Updates:   42 | Epsilon: 0.1631
+Episode 130/500 | Reward:   65.7093 | Average reward:   1.6427 | Loss: 0.307394 | Updates:   40 | Epsilon: 0.1402
+Episode 140/500 | Reward:   74.4916 | Average reward:   1.6194 | Loss: 0.211500 | Updates:   46 | Epsilon: 0.1205
+Episode 150/500 | Reward:   77.7739 | Average reward:   1.7283 | Loss: 0.195734 | Updates:   45 | Epsilon: 0.1036
+Episode 160/500 | Reward:   71.3839 | Average reward:   1.6601 | Loss: 0.267912 | Updates:   43 | Epsilon: 0.0891
+Episode 170/500 | Reward:   69.8960 | Average reward:   1.6255 | Loss: 0.192455 | Updates:   43 | Epsilon: 0.0766
+Episode 180/500 | Reward:   69.6725 | Average reward:   1.7865 | Loss: 0.224328 | Updates:   39 | Epsilon: 0.0658
+Episode 190/500 | Reward:   66.4998 | Average reward:   1.4778 | Loss: 0.182015 | Updates:   45 | Epsilon: 0.0566
+Episode 200/500 | Reward:   74.7073 | Average reward:   1.4096 | Loss: 0.267986 | Updates:   53 | Epsilon: 0.0500
+Episode 210/500 | Reward:   65.1759 | Average reward:   1.1639 | Loss: 0.241747 | Updates:   56 | Epsilon: 0.0500
+Episode 220/500 | Reward:   74.7100 | Average reward:   1.4942 | Loss: 0.158105 | Updates:   50 | Epsilon: 0.0500
+Episode 230/500 | Reward:   61.1616 | Average reward:   1.3900 | Loss: 0.128505 | Updates:   44 | Epsilon: 0.0500
+Episode 240/500 | Reward:   78.9335 | Average reward:   1.3609 | Loss: 0.223956 | Updates:   58 | Epsilon: 0.0500
+Episode 250/500 | Reward:   79.1956 | Average reward:   1.6162 | Loss: 0.213743 | Updates:   49 | Epsilon: 0.0500
+Episode 260/500 | Reward:   89.6932 | Average reward:   1.4704 | Loss: 0.211606 | Updates:   61 | Epsilon: 0.0500
+Episode 270/500 | Reward:   72.2173 | Average reward:   1.6048 | Loss: 0.172826 | Updates:   45 | Epsilon: 0.0500
+Episode 280/500 | Reward:   85.7299 | Average reward:   1.7496 | Loss: 0.148545 | Updates:   49 | Epsilon: 0.0500
+Episode 290/500 | Reward:   88.6603 | Average reward:   1.4534 | Loss: 0.219806 | Updates:   61 | Epsilon: 0.0500
+Episode 300/500 | Reward:   74.4604 | Average reward:   1.5843 | Loss: 0.147793 | Updates:   47 | Epsilon: 0.0500
+Episode 310/500 | Reward:   88.7863 | Average reward:   1.5855 | Loss: 0.152851 | Updates:   56 | Epsilon: 0.0500
+Episode 320/500 | Reward:   71.0744 | Average reward:   1.3936 | Loss: 0.298228 | Updates:   51 | Epsilon: 0.0500
+Episode 330/500 | Reward:   84.4861 | Average reward:   1.7601 | Loss: 0.134899 | Updates:   48 | Epsilon: 0.0500
+Episode 340/500 | Reward:   72.5617 | Average reward:   1.6125 | Loss: 0.161127 | Updates:   45 | Epsilon: 0.0500
+Episode 350/500 | Reward:   76.1068 | Average reward:   1.7297 | Loss: 0.151653 | Updates:   44 | Epsilon: 0.0500
+Episode 360/500 | Reward:   88.5331 | Average reward:   1.7026 | Loss: 0.098528 | Updates:   52 | Epsilon: 0.0500
+Episode 370/500 | Reward:   91.1475 | Average reward:   1.6879 | Loss: 0.220909 | Updates:   54 | Epsilon: 0.0500
+Episode 380/500 | Reward:   84.7977 | Average reward:   1.6000 | Loss: 0.158991 | Updates:   53 | Epsilon: 0.0500
+Episode 390/500 | Reward:   90.8137 | Average reward:   1.7135 | Loss: 0.102683 | Updates:   53 | Epsilon: 0.0500
+Episode 400/500 | Reward:   84.4397 | Average reward:   1.4559 | Loss: 0.152368 | Updates:   58 | Epsilon: 0.0500
+Episode 410/500 | Reward:   72.0414 | Average reward:   1.6754 | Loss: 0.172105 | Updates:   43 | Epsilon: 0.0500
+Episode 420/500 | Reward:   81.5654 | Average reward:   1.5390 | Loss: 0.145900 | Updates:   53 | Epsilon: 0.0500
+Episode 430/500 | Reward:   77.6017 | Average reward:   1.7245 | Loss: 0.117551 | Updates:   45 | Epsilon: 0.0500
+Episode 440/500 | Reward:   58.2940 | Average reward:   1.5755 | Loss: 0.105226 | Updates:   37 | Epsilon: 0.0500
+Episode 450/500 | Reward:   74.7062 | Average reward:   1.6979 | Loss: 0.112206 | Updates:   44 | Epsilon: 0.0500
+Episode 460/500 | Reward:   68.5281 | Average reward:   1.7132 | Loss: 0.157118 | Updates:   40 | Epsilon: 0.0500
+Episode 470/500 | Reward:   91.0242 | Average reward:   1.5969 | Loss: 0.170024 | Updates:   57 | Epsilon: 0.0500
+Episode 480/500 | Reward:   89.8715 | Average reward:   1.7974 | Loss: 0.118010 | Updates:   50 | Epsilon: 0.0500
+Episode 490/500 | Reward:   76.5878 | Average reward:   1.5630 | Loss: 0.100313 | Updates:   49 | Epsilon: 0.0500
+Episode 500/500 | Reward:   91.2858 | Average reward:   1.7555 | Loss: 0.072197 | Updates:   52 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GGN-DDQN
+Traffic type: 2
+Total episodes: 500
+Final episode reward: 91.28583336064848
+Final episode loss: 0.0721965328288766
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GGN_DDQN_traffic_type_2_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GGN_DDQN_traffic_type_2_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GCN-DDQN | TRAFFIC TYPE: 2
+==============================================================================
+Episode   1/500 | Reward:   35.2759 | Average reward:   1.4110 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   30.2259 | Average reward:   0.8890 | Loss: 0.315894 | Updates:   34 | Epsilon: 0.8597
+Episode  20/500 | Reward:   25.9463 | Average reward:   0.9979 | Loss: 0.223398 | Updates:   26 | Epsilon: 0.7391
+Episode  30/500 | Reward:   29.5649 | Average reward:   1.5560 | Loss: 0.136681 | Updates:   19 | Epsilon: 0.6355
+Episode  40/500 | Reward:   37.9209 | Average reward:   1.2640 | Loss: 0.098470 | Updates:   30 | Epsilon: 0.5463
+Episode  50/500 | Reward:   36.0263 | Average reward:   1.5011 | Loss: 0.096484 | Updates:   24 | Epsilon: 0.4697
+Episode  60/500 | Reward:   23.3070 | Average reward:   0.5549 | Loss: 0.215692 | Updates:   42 | Epsilon: 0.4038
+Episode  70/500 | Reward:   49.3045 | Average reward:   1.5905 | Loss: 0.144988 | Updates:   31 | Epsilon: 0.3472
+Episode  80/500 | Reward:   38.1392 | Average reward:   1.7336 | Loss: 0.155576 | Updates:   22 | Epsilon: 0.2985
+Episode  90/500 | Reward:   43.1278 | Average reward:   1.6588 | Loss: 0.324153 | Updates:   26 | Epsilon: 0.2566
+Episode 100/500 | Reward:   51.9970 | Average reward:   1.6773 | Loss: 0.214144 | Updates:   31 | Epsilon: 0.2206
+Episode 110/500 | Reward:   56.1138 | Average reward:   1.7536 | Loss: 0.236188 | Updates:   32 | Epsilon: 0.1897
+Episode 120/500 | Reward:   75.1078 | Average reward:   1.1555 | Loss: 0.323652 | Updates:   65 | Epsilon: 0.1631
+Episode 130/500 | Reward:   64.0132 | Average reward:   1.6846 | Loss: 0.248758 | Updates:   38 | Epsilon: 0.1402
+Episode 140/500 | Reward:   74.1016 | Average reward:   1.6841 | Loss: 0.337063 | Updates:   44 | Epsilon: 0.1205
+Episode 150/500 | Reward:   70.7543 | Average reward:   1.7257 | Loss: 0.252039 | Updates:   41 | Epsilon: 0.1036
+Episode 160/500 | Reward:   70.9200 | Average reward:   1.5089 | Loss: 0.279993 | Updates:   47 | Epsilon: 0.0891
+Episode 170/500 | Reward:   67.9054 | Average reward:   1.0289 | Loss: 0.287788 | Updates:   66 | Epsilon: 0.0766
+Episode 180/500 | Reward:   81.6010 | Average reward:   1.4572 | Loss: 0.269858 | Updates:   56 | Epsilon: 0.0658
+Episode 190/500 | Reward:   74.6446 | Average reward:   1.2652 | Loss: 0.424275 | Updates:   59 | Epsilon: 0.0566
+Episode 200/500 | Reward:   80.4295 | Average reward:   1.4110 | Loss: 0.343462 | Updates:   57 | Epsilon: 0.0500
+Episode 210/500 | Reward:   74.2444 | Average reward:   1.5797 | Loss: 0.289662 | Updates:   47 | Epsilon: 0.0500
+Episode 220/500 | Reward:   73.3463 | Average reward:   1.4969 | Loss: 0.322116 | Updates:   49 | Epsilon: 0.0500
+Episode 230/500 | Reward:   68.8107 | Average reward:   1.6783 | Loss: 0.339848 | Updates:   41 | Epsilon: 0.0500
+Episode 240/500 | Reward:   85.6357 | Average reward:   1.5292 | Loss: 0.312899 | Updates:   56 | Epsilon: 0.0500
+Episode 250/500 | Reward:   89.3206 | Average reward:   1.7864 | Loss: 0.287489 | Updates:   50 | Epsilon: 0.0500
+Episode 260/500 | Reward:   61.4122 | Average reward:   0.7059 | Loss: 0.723747 | Updates:   87 | Epsilon: 0.0500
+Episode 270/500 | Reward:   77.5000 | Average reward:   1.4091 | Loss: 0.238489 | Updates:   55 | Epsilon: 0.0500
+Episode 280/500 | Reward:   64.4480 | Average reward:   1.3427 | Loss: 0.264053 | Updates:   48 | Epsilon: 0.0500
+Episode 290/500 | Reward:   64.8132 | Average reward:   1.0985 | Loss: 0.272270 | Updates:   59 | Epsilon: 0.0500
+Episode 300/500 | Reward:   58.2363 | Average reward:   1.6639 | Loss: 0.228410 | Updates:   35 | Epsilon: 0.0500
+Episode 310/500 | Reward:   75.7877 | Average reward:   1.3296 | Loss: 0.153495 | Updates:   57 | Epsilon: 0.0500
+Episode 320/500 | Reward:   83.7230 | Average reward:   1.3289 | Loss: 0.383519 | Updates:   63 | Epsilon: 0.0500
+Episode 330/500 | Reward:   89.2049 | Average reward:   1.6831 | Loss: 0.269208 | Updates:   53 | Epsilon: 0.0500
+Episode 340/500 | Reward:   88.4921 | Average reward:   1.4749 | Loss: 0.357031 | Updates:   60 | Epsilon: 0.0500
+Episode 350/500 | Reward:   66.8129 | Average reward:   1.6296 | Loss: 0.209641 | Updates:   41 | Epsilon: 0.0500
+Episode 360/500 | Reward:   84.4229 | Average reward:   1.4811 | Loss: 0.270847 | Updates:   57 | Epsilon: 0.0500
+Episode 370/500 | Reward:   69.1457 | Average reward:   0.6915 | Loss: 0.265536 | Updates:  100 | Epsilon: 0.0500
+Episode 380/500 | Reward:   73.8398 | Average reward:   1.2105 | Loss: 0.401216 | Updates:   61 | Epsilon: 0.0500
+Episode 390/500 | Reward:   75.8987 | Average reward:   1.2864 | Loss: 0.213481 | Updates:   59 | Epsilon: 0.0500
+Episode 400/500 | Reward:   75.5042 | Average reward:   1.1440 | Loss: 0.217591 | Updates:   66 | Epsilon: 0.0500
+Episode 410/500 | Reward:   89.9219 | Average reward:   1.4741 | Loss: 0.230045 | Updates:   61 | Epsilon: 0.0500
+Episode 420/500 | Reward:   84.8216 | Average reward:   1.3049 | Loss: 0.243555 | Updates:   65 | Epsilon: 0.0500
+Episode 430/500 | Reward:   84.9900 | Average reward:   1.4405 | Loss: 0.458906 | Updates:   59 | Epsilon: 0.0500
+Episode 440/500 | Reward:   81.3152 | Average reward:   1.4020 | Loss: 0.273619 | Updates:   58 | Epsilon: 0.0500
+Episode 450/500 | Reward:   73.8255 | Average reward:   1.2304 | Loss: 0.264534 | Updates:   60 | Epsilon: 0.0500
+Episode 460/500 | Reward:   91.0053 | Average reward:   1.5966 | Loss: 0.336042 | Updates:   57 | Epsilon: 0.0500
+Episode 470/500 | Reward:   83.6134 | Average reward:   1.5202 | Loss: 0.399172 | Updates:   55 | Epsilon: 0.0500
+Episode 480/500 | Reward:   83.4525 | Average reward:   1.5746 | Loss: 0.333363 | Updates:   53 | Epsilon: 0.0500
+Episode 490/500 | Reward:   84.5144 | Average reward:   1.4086 | Loss: 0.194454 | Updates:   60 | Epsilon: 0.0500
+Episode 500/500 | Reward:   85.2922 | Average reward:   1.6093 | Loss: 0.218702 | Updates:   53 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GCN-DDQN
+Traffic type: 2
+Total episodes: 500
+Final episode reward: 85.29224022305195
+Final episode loss: 0.2187017466662065
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GCN_DDQN_traffic_type_2_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GCN_DDQN_traffic_type_2_training_history.csv
+
+
+##############################################################################
+STARTING TRAFFIC TYPE 3
+##############################################################################
+
+==============================================================================
+TRAINING MODEL: RBF-DDQN | TRAFFIC TYPE: 3
+==============================================================================
+Episode   1/500 | Reward:   11.6451 | Average reward:   0.3529 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   22.0952 | Average reward:   1.1629 | Loss: 0.345806 | Updates:   19 | Epsilon: 0.8597
+Episode  20/500 | Reward:   23.4113 | Average reward:   1.2322 | Loss: 0.391502 | Updates:   19 | Epsilon: 0.7391
+Episode  30/500 | Reward:   20.4532 | Average reward:   1.0227 | Loss: 0.451473 | Updates:   20 | Epsilon: 0.6355
+Episode  40/500 | Reward:   25.3795 | Average reward:   1.3358 | Loss: 0.556073 | Updates:   19 | Epsilon: 0.5463
+Episode  50/500 | Reward:   26.3033 | Average reward:   1.3844 | Loss: 0.558788 | Updates:   19 | Epsilon: 0.4697
+Episode  60/500 | Reward:   35.7382 | Average reward:   1.3745 | Loss: 0.615194 | Updates:   26 | Epsilon: 0.4038
+Episode  70/500 | Reward:   22.8093 | Average reward:   0.7603 | Loss: 0.670385 | Updates:   30 | Epsilon: 0.3472
+Episode  80/500 | Reward:   39.9600 | Average reward:   1.5984 | Loss: 0.633895 | Updates:   25 | Epsilon: 0.2985
+Episode  90/500 | Reward:   42.0565 | Average reward:   1.2744 | Loss: 0.418970 | Updates:   33 | Epsilon: 0.2566
+Episode 100/500 | Reward:    8.9003 | Average reward:   0.1271 | Loss: 0.374158 | Updates:   70 | Epsilon: 0.2206
+Episode 110/500 | Reward:   30.3384 | Average reward:   0.8200 | Loss: 0.333614 | Updates:   37 | Epsilon: 0.1897
+Episode 120/500 | Reward:   34.9764 | Average reward:   1.2954 | Loss: 0.288186 | Updates:   27 | Epsilon: 0.1631
+Episode 130/500 | Reward:   37.4416 | Average reward:   0.8707 | Loss: 0.292970 | Updates:   43 | Epsilon: 0.1402
+Episode 140/500 | Reward:   11.4470 | Average reward:   0.1205 | Loss: 0.258272 | Updates:   95 | Epsilon: 0.1205
+Episode 150/500 | Reward:   36.6902 | Average reward:   1.4112 | Loss: 0.249765 | Updates:   26 | Epsilon: 0.1036
+Episode 160/500 | Reward:   33.8657 | Average reward:   1.6933 | Loss: 0.241570 | Updates:   20 | Epsilon: 0.0891
+Episode 170/500 | Reward:   39.4356 | Average reward:   1.0658 | Loss: 0.166002 | Updates:   37 | Epsilon: 0.0766
+Episode 180/500 | Reward:   25.2700 | Average reward:   0.4143 | Loss: 0.127302 | Updates:   61 | Epsilon: 0.0658
+Episode 190/500 | Reward:   45.2320 | Average reward:   1.8093 | Loss: 0.095115 | Updates:   25 | Epsilon: 0.0566
+Episode 200/500 | Reward:   44.8434 | Average reward:   1.6609 | Loss: 0.084333 | Updates:   27 | Epsilon: 0.0500
+Episode 210/500 | Reward:   45.1762 | Average reward:   1.4573 | Loss: 0.085229 | Updates:   31 | Epsilon: 0.0500
+Episode 220/500 | Reward:   45.3217 | Average reward:   1.6186 | Loss: 0.076610 | Updates:   28 | Epsilon: 0.0500
+Episode 230/500 | Reward:   44.6709 | Average reward:   1.3960 | Loss: 0.091358 | Updates:   32 | Epsilon: 0.0500
+Episode 240/500 | Reward:   44.1721 | Average reward:   1.4249 | Loss: 0.077364 | Updates:   31 | Epsilon: 0.0500
+Episode 250/500 | Reward:   39.5345 | Average reward:   1.5814 | Loss: 0.056640 | Updates:   25 | Epsilon: 0.0500
+Episode 260/500 | Reward:   45.0372 | Average reward:   1.6085 | Loss: 0.055293 | Updates:   28 | Epsilon: 0.0500
+Episode 270/500 | Reward:   41.3948 | Average reward:   1.5921 | Loss: 0.046894 | Updates:   26 | Epsilon: 0.0500
+Episode 280/500 | Reward:   31.8485 | Average reward:   1.5166 | Loss: 0.040147 | Updates:   21 | Epsilon: 0.0500
+Episode 290/500 | Reward:   44.8430 | Average reward:   1.2120 | Loss: 0.035787 | Updates:   37 | Epsilon: 0.0500
+Episode 300/500 | Reward:   43.1652 | Average reward:   1.4388 | Loss: 0.043755 | Updates:   30 | Epsilon: 0.0500
+Episode 310/500 | Reward:   44.9157 | Average reward:   1.3211 | Loss: 0.037141 | Updates:   34 | Epsilon: 0.0500
+Episode 320/500 | Reward:   45.1152 | Average reward:   1.4099 | Loss: 0.042309 | Updates:   32 | Epsilon: 0.0500
+Episode 330/500 | Reward:   39.5129 | Average reward:   1.5805 | Loss: 0.029437 | Updates:   25 | Epsilon: 0.0500
+Episode 340/500 | Reward:   45.1277 | Average reward:   1.5561 | Loss: 0.025790 | Updates:   29 | Epsilon: 0.0500
+Episode 350/500 | Reward:   39.5201 | Average reward:   1.4637 | Loss: 0.022433 | Updates:   27 | Epsilon: 0.0500
+Episode 360/500 | Reward:   45.2921 | Average reward:   1.6176 | Loss: 0.024256 | Updates:   28 | Epsilon: 0.0500
+Episode 370/500 | Reward:   44.8555 | Average reward:   1.4952 | Loss: 0.019493 | Updates:   30 | Epsilon: 0.0500
+Episode 380/500 | Reward:   43.4579 | Average reward:   1.6096 | Loss: 0.021536 | Updates:   27 | Epsilon: 0.0500
+Episode 390/500 | Reward:   45.1722 | Average reward:   1.6133 | Loss: 0.019691 | Updates:   28 | Epsilon: 0.0500
+Episode 400/500 | Reward:   44.4902 | Average reward:   1.4830 | Loss: 0.017091 | Updates:   30 | Epsilon: 0.0500
+Episode 410/500 | Reward:   45.1696 | Average reward:   1.6132 | Loss: 0.013266 | Updates:   28 | Epsilon: 0.0500
+Episode 420/500 | Reward:   43.4699 | Average reward:   1.5525 | Loss: 0.014531 | Updates:   28 | Epsilon: 0.0500
+Episode 430/500 | Reward:   45.2429 | Average reward:   1.5601 | Loss: 0.013355 | Updates:   29 | Epsilon: 0.0500
+Episode 440/500 | Reward:   44.9729 | Average reward:   1.4991 | Loss: 0.014641 | Updates:   30 | Epsilon: 0.0500
+Episode 450/500 | Reward:   44.4056 | Average reward:   1.4324 | Loss: 0.014354 | Updates:   31 | Epsilon: 0.0500
+Episode 460/500 | Reward:   39.6922 | Average reward:   1.4701 | Loss: 0.011518 | Updates:   27 | Epsilon: 0.0500
+Episode 470/500 | Reward:   39.6352 | Average reward:   1.5244 | Loss: 0.010547 | Updates:   26 | Epsilon: 0.0500
+Episode 480/500 | Reward:   45.2676 | Average reward:   1.5610 | Loss: 0.007843 | Updates:   29 | Epsilon: 0.0500
+Episode 490/500 | Reward:   39.6650 | Average reward:   1.4691 | Loss: 0.009154 | Updates:   27 | Epsilon: 0.0500
+Episode 500/500 | Reward:   38.9589 | Average reward:   1.3434 | Loss: 0.028904 | Updates:   29 | Epsilon: 0.0500
+
+Experiment completed.
+Model: RBF-DDQN
+Traffic type: 3
+Total episodes: 500
+Final episode reward: 38.95892272393992
+Final episode loss: 0.028904145711968685
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\RBF_DDQN_traffic_type_3_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\RBF_DDQN_traffic_type_3_training_history.csv
+
+==============================================================================
+TRAINING MODEL: DDQN | TRAFFIC TYPE: 3
+==============================================================================
+Episode   1/500 | Reward:   15.9690 | Average reward:   1.2284 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   24.1811 | Average reward:   1.0075 | Loss: 0.157473 | Updates:   24 | Epsilon: 0.8597
+Episode  20/500 | Reward:   27.1559 | Average reward:   1.5087 | Loss: 0.075711 | Updates:   18 | Epsilon: 0.7391
+Episode  30/500 | Reward:   26.0663 | Average reward:   1.0861 | Loss: 0.124575 | Updates:   24 | Epsilon: 0.6355
+Episode  40/500 | Reward:   20.0985 | Average reward:   1.2562 | Loss: 0.017796 | Updates:   16 | Epsilon: 0.5463
+Episode  50/500 | Reward:   21.7011 | Average reward:   1.0334 | Loss: 0.022471 | Updates:   21 | Epsilon: 0.4697
+Episode  60/500 | Reward:   23.2107 | Average reward:   1.1605 | Loss: 0.030220 | Updates:   20 | Epsilon: 0.4038
+Episode  70/500 | Reward:   29.1453 | Average reward:   1.1658 | Loss: 0.025107 | Updates:   25 | Epsilon: 0.3472
+Episode  80/500 | Reward:   32.4327 | Average reward:   1.1184 | Loss: 0.026840 | Updates:   29 | Epsilon: 0.2985
+Episode  90/500 | Reward:   30.1544 | Average reward:   1.0398 | Loss: 0.029632 | Updates:   29 | Epsilon: 0.2566
+Episode 100/500 | Reward:   33.7288 | Average reward:   1.3492 | Loss: 0.021458 | Updates:   25 | Epsilon: 0.2206
+Episode 110/500 | Reward:   36.8010 | Average reward:   1.2267 | Loss: 0.020118 | Updates:   30 | Epsilon: 0.1897
+Episode 120/500 | Reward:   30.7894 | Average reward:   1.1403 | Loss: 0.014946 | Updates:   27 | Epsilon: 0.1631
+Episode 130/500 | Reward:   38.5512 | Average reward:   1.3294 | Loss: 0.016477 | Updates:   29 | Epsilon: 0.1402
+Episode 140/500 | Reward:   37.6439 | Average reward:   1.4478 | Loss: 0.013728 | Updates:   26 | Epsilon: 0.1205
+Episode 150/500 | Reward:   35.1754 | Average reward:   1.2129 | Loss: 0.015389 | Updates:   29 | Epsilon: 0.1036
+Episode 160/500 | Reward:   31.5255 | Average reward:   0.9852 | Loss: 0.073770 | Updates:   32 | Epsilon: 0.0891
+Episode 170/500 | Reward:   38.3028 | Average reward:   1.1970 | Loss: 0.032968 | Updates:   32 | Epsilon: 0.0766
+Episode 180/500 | Reward:   44.6706 | Average reward:   1.3138 | Loss: 0.015162 | Updates:   34 | Epsilon: 0.0658
+Episode 190/500 | Reward:   43.1105 | Average reward:   1.5397 | Loss: 0.012153 | Updates:   28 | Epsilon: 0.0566
+Episode 200/500 | Reward:   42.0722 | Average reward:   1.3572 | Loss: 0.022083 | Updates:   31 | Epsilon: 0.0500
+Episode 210/500 | Reward:   44.4899 | Average reward:   1.4352 | Loss: 0.010156 | Updates:   31 | Epsilon: 0.0500
+Episode 220/500 | Reward:   44.4821 | Average reward:   1.2356 | Loss: 0.011026 | Updates:   36 | Epsilon: 0.0500
+Episode 230/500 | Reward:   44.9425 | Average reward:   1.5497 | Loss: 0.010847 | Updates:   29 | Epsilon: 0.0500
+Episode 240/500 | Reward:   45.1605 | Average reward:   1.6129 | Loss: 0.010752 | Updates:   28 | Epsilon: 0.0500
+Episode 250/500 | Reward:   44.4977 | Average reward:   1.2714 | Loss: 0.041583 | Updates:   35 | Epsilon: 0.0500
+Episode 260/500 | Reward:   43.6858 | Average reward:   1.2135 | Loss: 0.019937 | Updates:   36 | Epsilon: 0.0500
+Episode 270/500 | Reward:   34.1067 | Average reward:   1.4829 | Loss: 0.007289 | Updates:   23 | Epsilon: 0.0500
+Episode 280/500 | Reward:   44.3451 | Average reward:   1.3438 | Loss: 0.020024 | Updates:   33 | Epsilon: 0.0500
+Episode 290/500 | Reward:   43.4716 | Average reward:   1.5526 | Loss: 0.005249 | Updates:   28 | Epsilon: 0.0500
+Episode 300/500 | Reward:   45.1956 | Average reward:   1.5585 | Loss: 0.008043 | Updates:   29 | Epsilon: 0.0500
+Episode 310/500 | Reward:   45.2741 | Average reward:   1.5612 | Loss: 0.009131 | Updates:   29 | Epsilon: 0.0500
+Episode 320/500 | Reward:   42.8420 | Average reward:   1.4773 | Loss: 0.008394 | Updates:   29 | Epsilon: 0.0500
+Episode 330/500 | Reward:   38.4764 | Average reward:   1.2825 | Loss: 0.015175 | Updates:   30 | Epsilon: 0.0500
+Episode 340/500 | Reward:   42.9823 | Average reward:   1.4327 | Loss: 0.090245 | Updates:   30 | Epsilon: 0.0500
+Episode 350/500 | Reward:   43.0628 | Average reward:   1.5949 | Loss: 0.009679 | Updates:   27 | Epsilon: 0.0500
+Episode 360/500 | Reward:   44.9968 | Average reward:   1.6665 | Loss: 0.006378 | Updates:   27 | Epsilon: 0.0500
+Episode 370/500 | Reward:   45.0906 | Average reward:   1.6104 | Loss: 0.005494 | Updates:   28 | Epsilon: 0.0500
+Episode 380/500 | Reward:   45.1505 | Average reward:   1.6125 | Loss: 0.003742 | Updates:   28 | Epsilon: 0.0500
+Episode 390/500 | Reward:   39.1975 | Average reward:   1.5679 | Loss: 0.009474 | Updates:   25 | Epsilon: 0.0500
+Episode 400/500 | Reward:   43.5456 | Average reward:   1.6128 | Loss: 0.005203 | Updates:   27 | Epsilon: 0.0500
+Episode 410/500 | Reward:   39.0861 | Average reward:   1.4476 | Loss: 0.004538 | Updates:   27 | Epsilon: 0.0500
+Episode 420/500 | Reward:   44.2922 | Average reward:   1.3841 | Loss: 0.011135 | Updates:   32 | Epsilon: 0.0500
+Episode 430/500 | Reward:   44.4166 | Average reward:   1.3460 | Loss: 0.030932 | Updates:   33 | Epsilon: 0.0500
+Episode 440/500 | Reward:   45.1020 | Average reward:   1.5552 | Loss: 0.005650 | Updates:   29 | Epsilon: 0.0500
+Episode 450/500 | Reward:   44.7703 | Average reward:   1.4442 | Loss: 0.006987 | Updates:   31 | Epsilon: 0.0500
+Episode 460/500 | Reward:   39.7623 | Average reward:   1.5905 | Loss: 0.004072 | Updates:   25 | Epsilon: 0.0500
+Episode 470/500 | Reward:   39.7148 | Average reward:   1.5886 | Loss: 0.003913 | Updates:   25 | Epsilon: 0.0500
+Episode 480/500 | Reward:   42.2011 | Average reward:   1.2788 | Loss: 0.010290 | Updates:   33 | Epsilon: 0.0500
+Episode 490/500 | Reward:   40.5160 | Average reward:   1.2661 | Loss: 0.032750 | Updates:   32 | Epsilon: 0.0500
+Episode 500/500 | Reward:   45.0538 | Average reward:   1.5018 | Loss: 0.006088 | Updates:   30 | Epsilon: 0.0500
+
+Experiment completed.
+Model: DDQN
+Traffic type: 3
+Total episodes: 500
+Final episode reward: 45.053771076559876
+Final episode loss: 0.006088032371674975
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\DDQN_traffic_type_3_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\DDQN_traffic_type_3_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GGN-DDQN | TRAFFIC TYPE: 3
+==============================================================================
+Episode   1/500 | Reward:   19.4202 | Average reward:   0.6069 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   21.8305 | Average reward:   1.1490 | Loss: 0.272565 | Updates:   19 | Epsilon: 0.8597
+Episode  20/500 | Reward:   23.4917 | Average reward:   1.1746 | Loss: 0.189562 | Updates:   20 | Epsilon: 0.7391
+Episode  30/500 | Reward:   24.6194 | Average reward:   1.4482 | Loss: 0.192516 | Updates:   17 | Epsilon: 0.6355
+Episode  40/500 | Reward:   21.6330 | Average reward:   0.6009 | Loss: 0.213393 | Updates:   36 | Epsilon: 0.5463
+Episode  50/500 | Reward:   29.3666 | Average reward:   1.3348 | Loss: 0.257867 | Updates:   22 | Epsilon: 0.4697
+Episode  60/500 | Reward:   29.9364 | Average reward:   1.4968 | Loss: 0.270676 | Updates:   20 | Epsilon: 0.4038
+Episode  70/500 | Reward:   38.0408 | Average reward:   1.6539 | Loss: 0.083961 | Updates:   23 | Epsilon: 0.3472
+Episode  80/500 | Reward:   33.5445 | Average reward:   0.9066 | Loss: 0.098351 | Updates:   37 | Epsilon: 0.2985
+Episode  90/500 | Reward:   29.5991 | Average reward:   1.2333 | Loss: 0.237061 | Updates:   24 | Epsilon: 0.2566
+Episode 100/500 | Reward:   32.1357 | Average reward:   1.7853 | Loss: 0.197239 | Updates:   18 | Epsilon: 0.2206
+Episode 110/500 | Reward:   36.6123 | Average reward:   1.5918 | Loss: 0.289251 | Updates:   23 | Epsilon: 0.1897
+Episode 120/500 | Reward:   38.6022 | Average reward:   1.4297 | Loss: 0.204032 | Updates:   27 | Epsilon: 0.1631
+Episode 130/500 | Reward:   39.0932 | Average reward:   1.6289 | Loss: 0.119833 | Updates:   24 | Epsilon: 0.1402
+Episode 140/500 | Reward:   34.9070 | Average reward:   1.4545 | Loss: 0.125334 | Updates:   24 | Epsilon: 0.1205
+Episode 150/500 | Reward:   39.2913 | Average reward:   1.6371 | Loss: 0.105418 | Updates:   24 | Epsilon: 0.1036
+Episode 160/500 | Reward:   39.2597 | Average reward:   1.4541 | Loss: 0.094867 | Updates:   27 | Epsilon: 0.0891
+Episode 170/500 | Reward:   43.3352 | Average reward:   1.2746 | Loss: 0.087438 | Updates:   34 | Epsilon: 0.0766
+Episode 180/500 | Reward:   34.8224 | Average reward:   1.2437 | Loss: 0.083880 | Updates:   28 | Epsilon: 0.0658
+Episode 190/500 | Reward:   42.7910 | Average reward:   1.4264 | Loss: 0.132352 | Updates:   30 | Epsilon: 0.0566
+Episode 200/500 | Reward:   43.6046 | Average reward:   1.5036 | Loss: 0.070937 | Updates:   29 | Epsilon: 0.0500
+Episode 210/500 | Reward:   44.2994 | Average reward:   1.5821 | Loss: 0.066764 | Updates:   28 | Epsilon: 0.0500
+Episode 220/500 | Reward:   44.7295 | Average reward:   1.0910 | Loss: 0.066101 | Updates:   41 | Epsilon: 0.0500
+Episode 230/500 | Reward:   39.3746 | Average reward:   0.7875 | Loss: 0.113244 | Updates:   50 | Epsilon: 0.0500
+Episode 240/500 | Reward:   44.2953 | Average reward:   1.5274 | Loss: 0.070602 | Updates:   29 | Epsilon: 0.0500
+Episode 250/500 | Reward:   38.8167 | Average reward:   1.0491 | Loss: 0.063753 | Updates:   37 | Epsilon: 0.0500
+Episode 260/500 | Reward:   42.6021 | Average reward:   1.3743 | Loss: 0.064709 | Updates:   31 | Epsilon: 0.0500
+Episode 270/500 | Reward:   44.6087 | Average reward:   1.4390 | Loss: 0.065645 | Updates:   31 | Epsilon: 0.0500
+Episode 280/500 | Reward:   33.4950 | Average reward:   1.5950 | Loss: 0.056493 | Updates:   21 | Epsilon: 0.0500
+Episode 290/500 | Reward:   43.8888 | Average reward:   1.4158 | Loss: 0.060094 | Updates:   31 | Epsilon: 0.0500
+Episode 300/500 | Reward:   44.9201 | Average reward:   1.3212 | Loss: 0.059804 | Updates:   34 | Epsilon: 0.0500
+Episode 310/500 | Reward:   38.7990 | Average reward:   1.3379 | Loss: 0.099888 | Updates:   29 | Epsilon: 0.0500
+Episode 320/500 | Reward:   39.8309 | Average reward:   0.8851 | Loss: 0.068256 | Updates:   45 | Epsilon: 0.0500
+Episode 330/500 | Reward:   42.3576 | Average reward:   1.3664 | Loss: 0.043972 | Updates:   31 | Epsilon: 0.0500
+Episode 340/500 | Reward:   44.3515 | Average reward:   1.3440 | Loss: 0.056827 | Updates:   33 | Epsilon: 0.0500
+Episode 350/500 | Reward:   44.3751 | Average reward:   1.3867 | Loss: 0.041342 | Updates:   32 | Epsilon: 0.0500
+Episode 360/500 | Reward:   43.9898 | Average reward:   1.3330 | Loss: 0.052484 | Updates:   33 | Epsilon: 0.0500
+Episode 370/500 | Reward:   44.3379 | Average reward:   1.1668 | Loss: 0.040939 | Updates:   38 | Epsilon: 0.0500
+Episode 380/500 | Reward:   43.2631 | Average reward:   1.4421 | Loss: 0.043822 | Updates:   30 | Epsilon: 0.0500
+Episode 390/500 | Reward:   36.9976 | Average reward:   0.8043 | Loss: 0.077035 | Updates:   46 | Epsilon: 0.0500
+Episode 400/500 | Reward:   44.7731 | Average reward:   1.4443 | Loss: 0.043875 | Updates:   31 | Epsilon: 0.0500
+Episode 410/500 | Reward:   42.8696 | Average reward:   1.3397 | Loss: 0.050494 | Updates:   32 | Epsilon: 0.0500
+Episode 420/500 | Reward:   44.0790 | Average reward:   1.2964 | Loss: 0.041592 | Updates:   34 | Epsilon: 0.0500
+Episode 430/500 | Reward:   44.5801 | Average reward:   1.3931 | Loss: 0.039238 | Updates:   32 | Epsilon: 0.0500
+Episode 440/500 | Reward:   39.1461 | Average reward:   1.3499 | Loss: 0.042292 | Updates:   29 | Epsilon: 0.0500
+Episode 450/500 | Reward:   44.7335 | Average reward:   1.3157 | Loss: 0.035037 | Updates:   34 | Epsilon: 0.0500
+Episode 460/500 | Reward:   39.4290 | Average reward:   1.2719 | Loss: 0.041188 | Updates:   31 | Epsilon: 0.0500
+Episode 470/500 | Reward:   44.4860 | Average reward:   1.2357 | Loss: 0.034689 | Updates:   36 | Epsilon: 0.0500
+Episode 480/500 | Reward:   44.7488 | Average reward:   1.4435 | Loss: 0.032437 | Updates:   31 | Epsilon: 0.0500
+Episode 490/500 | Reward:   40.8767 | Average reward:   1.3626 | Loss: 0.029234 | Updates:   30 | Epsilon: 0.0500
+Episode 500/500 | Reward:   44.8313 | Average reward:   1.4462 | Loss: 0.038015 | Updates:   31 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GGN-DDQN
+Traffic type: 3
+Total episodes: 500
+Final episode reward: 44.83131671877934
+Final episode loss: 0.03801494554406212
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GGN_DDQN_traffic_type_3_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GGN_DDQN_traffic_type_3_training_history.csv
+
+==============================================================================
+TRAINING MODEL: GCN-DDQN | TRAFFIC TYPE: 3
+==============================================================================
+Episode   1/500 | Reward:   16.3887 | Average reward:   0.6555 | Loss: nan | Updates:    0 | Epsilon: 0.9850
+Episode  10/500 | Reward:   18.3978 | Average reward:   0.7076 | Loss: 0.274642 | Updates:   26 | Epsilon: 0.8597
+Episode  20/500 | Reward:   21.0153 | Average reward:   1.0007 | Loss: 0.106184 | Updates:   21 | Epsilon: 0.7391
+Episode  30/500 | Reward:   27.7038 | Average reward:   1.4581 | Loss: 0.084884 | Updates:   19 | Epsilon: 0.6355
+Episode  40/500 | Reward:   32.8496 | Average reward:   1.2167 | Loss: 0.061767 | Updates:   27 | Epsilon: 0.5463
+Episode  50/500 | Reward:   35.2630 | Average reward:   1.1754 | Loss: 0.069042 | Updates:   30 | Epsilon: 0.4697
+Episode  60/500 | Reward:   33.2155 | Average reward:   1.7482 | Loss: 0.087710 | Updates:   19 | Epsilon: 0.4038
+Episode  70/500 | Reward:   24.7145 | Average reward:   1.0745 | Loss: 0.104147 | Updates:   23 | Epsilon: 0.3472
+Episode  80/500 | Reward:   33.1252 | Average reward:   1.5774 | Loss: 0.201717 | Updates:   21 | Epsilon: 0.2985
+Episode  90/500 | Reward:   31.1820 | Average reward:   1.5591 | Loss: 0.187643 | Updates:   20 | Epsilon: 0.2566
+Episode 100/500 | Reward:   33.8568 | Average reward:   1.5389 | Loss: 0.286225 | Updates:   22 | Epsilon: 0.2206
+Episode 110/500 | Reward:   38.4429 | Average reward:   1.4786 | Loss: 0.214492 | Updates:   26 | Epsilon: 0.1897
+Episode 120/500 | Reward:   39.1529 | Average reward:   1.5661 | Loss: 0.274127 | Updates:   25 | Epsilon: 0.1631
+Episode 130/500 | Reward:   39.1592 | Average reward:   1.6316 | Loss: 0.158793 | Updates:   24 | Epsilon: 0.1402
+Episode 140/500 | Reward:   44.4154 | Average reward:   1.5863 | Loss: 0.294444 | Updates:   28 | Epsilon: 0.1205
+Episode 150/500 | Reward:   36.5414 | Average reward:   0.9616 | Loss: 0.144858 | Updates:   38 | Epsilon: 0.1036
+Episode 160/500 | Reward:   42.8539 | Average reward:   1.6482 | Loss: 0.157898 | Updates:   26 | Epsilon: 0.0891
+Episode 170/500 | Reward:   45.0570 | Average reward:   1.6092 | Loss: 0.140227 | Updates:   28 | Epsilon: 0.0766
+Episode 180/500 | Reward:   31.3685 | Average reward:   1.0817 | Loss: 0.163765 | Updates:   29 | Epsilon: 0.0658
+Episode 190/500 | Reward:   32.0652 | Average reward:   0.6680 | Loss: 0.124731 | Updates:   48 | Epsilon: 0.0566
+Episode 200/500 | Reward:   42.7371 | Average reward:   0.9291 | Loss: 0.155854 | Updates:   46 | Epsilon: 0.0500
+Episode 210/500 | Reward:   43.3128 | Average reward:   0.9416 | Loss: 0.162216 | Updates:   46 | Epsilon: 0.0500
+Episode 220/500 | Reward:   41.4991 | Average reward:   1.1528 | Loss: 0.111148 | Updates:   36 | Epsilon: 0.0500
+Episode 230/500 | Reward:   43.1253 | Average reward:   1.0029 | Loss: 0.094633 | Updates:   43 | Epsilon: 0.0500
+Episode 240/500 | Reward:   38.7105 | Average reward:   1.1730 | Loss: 0.289423 | Updates:   33 | Epsilon: 0.0500
+Episode 250/500 | Reward:   37.8269 | Average reward:   0.9006 | Loss: 0.215673 | Updates:   42 | Epsilon: 0.0500
+Episode 260/500 | Reward:   44.4314 | Average reward:   1.1108 | Loss: 0.452487 | Updates:   40 | Epsilon: 0.0500
+Episode 270/500 | Reward:   43.7321 | Average reward:   0.9111 | Loss: 0.272171 | Updates:   48 | Epsilon: 0.0500
+Episode 280/500 | Reward:   40.4951 | Average reward:   0.8264 | Loss: 0.169637 | Updates:   49 | Epsilon: 0.0500
+Episode 290/500 | Reward:   37.1983 | Average reward:   0.9300 | Loss: 0.129032 | Updates:   40 | Epsilon: 0.0500
+Episode 300/500 | Reward:   43.7594 | Average reward:   0.9311 | Loss: 0.222036 | Updates:   47 | Epsilon: 0.0500
+Episode 310/500 | Reward:   34.9609 | Average reward:   0.6474 | Loss: 0.193043 | Updates:   54 | Epsilon: 0.0500
+Episode 320/500 | Reward:   34.8867 | Average reward:   0.7268 | Loss: 0.202888 | Updates:   48 | Epsilon: 0.0500
+Episode 330/500 | Reward:   42.2071 | Average reward:   0.8793 | Loss: 0.135523 | Updates:   48 | Epsilon: 0.0500
+Episode 340/500 | Reward:   41.0500 | Average reward:   0.8924 | Loss: 0.139170 | Updates:   46 | Epsilon: 0.0500
+Episode 350/500 | Reward:   44.1047 | Average reward:   1.0257 | Loss: 0.186329 | Updates:   43 | Epsilon: 0.0500
+Episode 360/500 | Reward:   42.6452 | Average reward:   1.1222 | Loss: 0.148133 | Updates:   38 | Epsilon: 0.0500
+Episode 370/500 | Reward:   36.2109 | Average reward:   0.7704 | Loss: 0.134774 | Updates:   47 | Epsilon: 0.0500
+Episode 380/500 | Reward:   42.4726 | Average reward:   1.0618 | Loss: 0.106554 | Updates:   40 | Epsilon: 0.0500
+Episode 390/500 | Reward:   39.1853 | Average reward:   1.5674 | Loss: 0.083034 | Updates:   25 | Epsilon: 0.0500
+Episode 400/500 | Reward:   42.2155 | Average reward:   1.0051 | Loss: 0.096934 | Updates:   42 | Epsilon: 0.0500
+Episode 410/500 | Reward:   44.0447 | Average reward:   1.0487 | Loss: 0.147105 | Updates:   42 | Epsilon: 0.0500
+Episode 420/500 | Reward:   44.4762 | Average reward:   1.3899 | Loss: 0.077338 | Updates:   32 | Epsilon: 0.0500
+Episode 430/500 | Reward:   44.2507 | Average reward:   1.3409 | Loss: 0.115534 | Updates:   33 | Epsilon: 0.0500
+Episode 440/500 | Reward:   44.9512 | Average reward:   1.5500 | Loss: 0.056004 | Updates:   29 | Epsilon: 0.0500
+Episode 450/500 | Reward:   39.4768 | Average reward:   1.6449 | Loss: 0.154827 | Updates:   24 | Epsilon: 0.0500
+Episode 460/500 | Reward:   39.2125 | Average reward:   1.5685 | Loss: 0.083396 | Updates:   25 | Epsilon: 0.0500
+Episode 470/500 | Reward:   39.0211 | Average reward:   1.6966 | Loss: 0.184489 | Updates:   23 | Epsilon: 0.0500
+Episode 480/500 | Reward:   37.7570 | Average reward:   1.3485 | Loss: 0.099023 | Updates:   28 | Epsilon: 0.0500
+Episode 490/500 | Reward:   45.0465 | Average reward:   1.3249 | Loss: 0.067872 | Updates:   34 | Epsilon: 0.0500
+Episode 500/500 | Reward:   42.1962 | Average reward:   1.3186 | Loss: 0.063977 | Updates:   32 | Epsilon: 0.0500
+
+Experiment completed.
+Model: GCN-DDQN
+Traffic type: 3
+Total episodes: 500
+Final episode reward: 42.1961679579488
+Final episode loss: 0.06397706863936037
+Checkpoint: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\checkpoints\GCN_DDQN_traffic_type_3_checkpoint.pt
+Training history: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\GCN_DDQN_traffic_type_3_training_history.csv
+
+==============================================================================
+ALL TRAINING EXPERIMENTS COMPLETED
+==============================================================================
+
+Total independent experiments:
+12
+
+Total training episodes:
+6000
+
+Training summary:
+ traffic_type    model  total_episodes  final_episode_reward  final_average_reward  final_episode_loss  mean_episode_reward  mean_episode_loss  total_optimization_updates  mean_throughput_mbps  mean_latency_ms  mean_qos_success_rate
+            1     DDQN             500            140.312500              1.822240            0.123418            92.946794           0.164879                       26018              5.358304         8.463692               0.942799
+            1 GCN-DDQN             500             89.212500              1.898138            2.027605            97.117300           1.273624                       26017              5.201111         5.040740               0.977477
+            1 GGN-DDQN             500            156.687500              1.910823            0.427085           104.024262           0.598312                       30305              4.565195         9.677609               0.930734
+            1 RBF-DDQN             500            140.612500              1.926199            1.363945           126.496200           1.072884                       33080              4.201834         4.792658               0.982611
+            2     DDQN             500             64.101350              1.732469            0.031158            63.839580           0.080178                       19959              6.666551         6.147289               0.186053
+            2 GCN-DDQN             500             85.292240              1.609288            0.218702            67.230935           0.288130                       23945              5.539363         8.771227               0.124058
+            2 GGN-DDQN             500             91.285833              1.755497            0.072197            69.070177           0.169327                       22567              5.755066         7.092744               0.124700
+            2 RBF-DDQN             500             91.766377              1.799341            0.053410            70.366681           0.297065                       23532              5.703753        10.629731               0.111091
+            3     DDQN             500             45.053771              1.501792            0.006088            38.442038           0.026530                       13871              8.809094         5.852924               0.085307
+            3 GCN-DDQN             500             42.196168              1.318630            0.063977            37.717738           0.146753                       17109              7.582857         9.077941               0.063596
+            3 GGN-DDQN             500             44.831317              1.446172            0.038015            39.083663           0.082381                       15089              8.207234         7.660277               0.059394
+            3 RBF-DDQN             500             38.958923              1.343411            0.028904            36.780593           0.163585                       15789              8.436503        13.191637               0.062497
+
+Combined history saved to:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\training_histories\independent_training\all_models_all_traffic_types_training_history.csv
+
+Experiment summary saved to:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\all_models_traffic_types_training_summary.csv
+
+==============================================================================
+BLOCK 6 COMPLETED SUCCESSFULLY
+==============================================================================
+
+Next:
+BLOCK 7: PLOT EPISODE REWARD FOR ALL FOUR MODELS ON TRAFFIC TYPES 1, 2, AND 3.
+BLOCK 8: PLOT ACTUAL TRAINING LOSS FOR ALL FOUR MODELS ON TRAFFIC TYPES 1, 2, AND 3.
+
+All 12 training experiments are available.
+
+Reward data saved:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\Training_Reward\all_models_all_traffic_types_reward_data.csv
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+
+Traffic type 1 reward figures saved:
+PNG: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_1.png
+EPS: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_1.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+
+Traffic type 2 reward figures saved:
+PNG: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_2.png
+EPS: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_2.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+
+Traffic type 3 reward figures saved:
+PNG: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_3.png
+EPS: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_3.eps
+
+=================================================================
+BLOCK 7 COMPLETED SUCCESSFULLY
+=================================================================
+Traffic types: [1, 2, 3]
+
+Publication model labels:
+RBF-DDQN --> Ours
+DDQN --> MADDQN
+GGN-DDQN --> GGN-MADDQN
+GCN-DDQN --> GCN-MADDQN
+
+Reward figures generated:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_1.png
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_2.png
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Reward\reward_traffic_type_3.png
+
+Reward data:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\Training_Reward\all_models_all_traffic_types_reward_data.csv
+
+All reward plots have been generated.
+
+All 12 training experiments are available.
+
+Loss data saved:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\Training_Loss\all_models_all_traffic_types_loss_data.csv
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+
+Traffic type 1 loss figures saved:
+PNG: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_1.png
+EPS: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_1.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+
+Traffic type 2 loss figures saved:
+PNG: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_2.png
+EPS: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_2.eps
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+
+Traffic type 3 loss figures saved:
+PNG: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_3.png
+EPS: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_3.eps
+
+Loss availability summary:
+ traffic_type    model model_label  total_episodes  valid_loss_episodes  total_optimization_updates  mean_episode_loss  final_episode_loss
+            1     DDQN      MADDQN             500                  496                       26018           0.164879            0.123418
+            1 GCN-DDQN  GCN-MADDQN             500                  494                       26017           1.273624            2.027605
+            1 GGN-DDQN  GGN-MADDQN             500                  494                       30305           0.598312            0.427085
+            1 RBF-DDQN        Ours             500                  496                       33080           1.072884            1.363945
+            2     DDQN      MADDQN             500                  495                       19959           0.080178            0.031158
+            2 GCN-DDQN  GCN-MADDQN             500                  495                       23945           0.288130            0.218702
+            2 GGN-DDQN  GGN-MADDQN             500                  495                       22567           0.169327            0.072197
+            2 RBF-DDQN        Ours             500                  494                       23532           0.297065            0.053410
+            3     DDQN      MADDQN             500                  494                       13871           0.026530            0.006088
+            3 GCN-DDQN  GCN-MADDQN             500                  495                       17109           0.146753            0.063977
+            3 GGN-DDQN  GGN-MADDQN             500                  495                       15089           0.082381            0.038015
+            3 RBF-DDQN        Ours             500                  494                       15789           0.163585            0.028904
+
+=================================================================
+BLOCK 8 COMPLETED SUCCESSFULLY
+=================================================================
+
+Publication model labels:
+RBF-DDQN --> Ours
+DDQN --> MADDQN
+GGN-DDQN --> GGN-MADDQN
+GCN-DDQN --> GCN-MADDQN
+
+Loss figures generated:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_1.png
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_2.png
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\figures\Training_Loss\loss_traffic_type_3.png
+
+Loss data:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\Training_Loss\all_models_all_traffic_types_loss_data.csv
+
+Loss availability summary:
+E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\Traffic_1_2_3_Radio_Performance\csv\Training_Loss\loss_availability_summary.csv
+
+All loss plots have been generated.
+
+Process finished with exit code 0
