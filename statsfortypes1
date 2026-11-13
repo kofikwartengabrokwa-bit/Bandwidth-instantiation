@@ -1,0 +1,4401 @@
+E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py 
+
+===========================================================================
+LOADING 6G NETWORK SLICING DATASET
+===========================================================================
+
+Original dataset successfully loaded.
+Dataset path: E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv
+Original shape: (2345, 18)
+
+Dataset columns:
+ - Network Slice ID
+ - Timestamp
+ - Device ID
+ - Traffic Load (bps)
+ - Traffic Type
+ - Network Utilization (%)
+ - Latency (ms)
+ - Packet Loss Rate (%)
+ - Signal Strength (dBm)
+ - Bandwidth Utilization (%)
+ - Network Slice Failure
+ - QoS Metric (Throughput)
+ - Overload Status
+ - Device Type
+ - Region
+ - Network Failure Count
+ - Time of Day
+ - Weather Conditions
+
+Selected traffic distribution:
+TP1 (Class 1): 579 observations
+TP2 (Class 2): 614 observations
+TP3 (Class 3): 574 observations
+TP1 dataset shape: (579, 18)
+TP2 dataset shape: (614, 18)
+TP3 dataset shape: (574, 18)
+
+Dataset quality inspection
+---------------------------------------------------------------------------
+Duplicate rows: 0
+
+Missing values per column:
+Network Slice ID             0
+Timestamp                    0
+Device ID                    0
+Traffic Load (bps)           0
+Traffic Type                 0
+Network Utilization (%)      0
+Latency (ms)                 0
+Packet Loss Rate (%)         0
+Signal Strength (dBm)        0
+Bandwidth Utilization (%)    0
+Network Slice Failure        0
+QoS Metric (Throughput)      0
+Overload Status              0
+Device Type                  0
+Region                       0
+Network Failure Count        0
+Time of Day                  0
+Weather Conditions           0
+dtype: int64
+
+Numeric column summary:
+                            count        mean  ...         75%         max
+Network Slice ID           1767.0    2.457838  ...    3.500000    4.000000
+Device ID                  1767.0  149.002264  ...  173.500000  199.000000
+Traffic Load (bps)         1767.0    0.505754  ...    0.754714    1.000000
+Traffic Type               1767.0    1.997170  ...    3.000000    3.000000
+Network Utilization (%)    1767.0    0.489659  ...    0.733218    1.000000
+Latency (ms)               1767.0    0.492276  ...    0.730685    1.000000
+Packet Loss Rate (%)       1767.0    0.509255  ...    0.763456    1.000000
+Signal Strength (dBm)      1767.0    0.492497  ...    0.752920    1.000000
+Bandwidth Utilization (%)  1767.0    0.499915  ...    0.750113    1.000000
+Network Slice Failure      1767.0    0.510470  ...    1.000000    1.000000
+QoS Metric (Throughput)    1767.0    0.505426  ...    0.758970    0.997922
+Overload Status            1767.0    0.486135  ...    1.000000    1.000000
+Device Type                1767.0    0.988681  ...    2.000000    2.000000
+Region                     1767.0    1.516129  ...    3.000000    3.000000
+Network Failure Count      1767.0    2.056593  ...    3.000000    4.000000
+Time of Day                1767.0    1.005093  ...    2.000000    2.000000
+Weather Conditions         1767.0    1.027731  ...    2.000000    2.000000
+
+[17 rows x 8 columns]
+
+Dataset validation:
+Expected original rows: 2345
+Actual original rows: 2345
+Expected original columns: 18
+Actual original columns: 18
+Selected traffic classes: [1, 2, 3]
+Selected observations: 1767
+
+===========================================================================
+EXPERIMENT INITIALIZATION COMPLETED
+===========================================================================
+Python executable: E:\Abrokwa\Pychartsim\pythonProject1\oran_zenodo_data\Scripts\python.exe
+Python version: 3.11.5 (tags/v3.11.5:cce6ba9, Aug 24 2023, 14:38:34) [MSC v.1936 64 bit (AMD64)]
+PyTorch version: 2.1.2+cu118
+CUDA available: False
+Execution device: cpu
+Project directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3
+Dataset directory: E:\Abrokwa\PycharmProjects\pythonProject1\6G_network_slicing_qos_dataset_2345.csv
+Selected dataset: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_DDQN_6G_Three_Traffic_Comparison\csv\selected_6G_traffic_types_1_2_3.csv
+Number of models: 4
+Models: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+Traffic types: ['TP1', 'TP2', 'TP3']
+Total RBs: 100
+Total bandwidth: 20.0 MHz
+Power budget: 40.0 W
+Evaluation repetitions: 10
+Training episodes: 500
+Debug mode: True
+Results directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_DDQN_6G_Three_Traffic_Comparison
+===========================================================================
+
+===========================================================================
+BLOCK 2: DATASET-DRIVEN RADIO ENVIRONMENT
+===========================================================================
+
+Identified dataset features:
+traffic_type             : Traffic Type
+traffic_load             : Traffic Load (bps)
+latency                  : Latency (ms)
+packet_loss              : Packet Loss Rate (%)
+signal_strength          : Signal Strength (dBm)
+bandwidth_utilization    : Bandwidth Utilization (%)
+throughput               : QoS Metric (Throughput)
+failure                  : None
+overload                 : Overload Status
+device                   : Device Type
+
+Testing O-DU resource allocation...
+
+O-DU allocation test completed.
+ user_id  demand_mbps  requested_rbs  allocated_rbs  allocated_power_w
+       0 9.324392e-08              1              1                0.0
+       1 5.565121e-07              1              1                0.0
+       2 8.379700e-07              1              1                0.0
+       3 5.826637e-07              1              1                0.0
+       4 9.426387e-07              1              1                0.0
+       5 6.279258e-07              1              1                0.0
+       6 7.584156e-07              1              1                0.0
+       7 3.262413e-07              1              1                0.0
+       8 3.853943e-07              1              1                0.0
+       9 2.169674e-07              1              1                0.0
+
+===========================================================================
+BLOCK 2 COMPLETED SUCCESSFULLY
+===========================================================================
+Traffic environments: ['TP1', 'TP2', 'TP3']
+Dataset-derived user generation: ENABLED
+O-RU interface: INITIALIZED
+O-DU controller: INITIALIZED
+RB resource constraints: VERIFIED
+Power resource constraints: VERIFIED
+Results directory: E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\results\RBF_DDQN_6G_Three_Traffic_Comparison
+===========================================================================
+TP1: 579 processed observations
+TP2: 614 processed observations
+TP3: 574 processed observations
+Traffic datasets refreshed successfully.
+
+Dataset-derived state normalization scales:
+demand              : 0.000001
+throughput          : 0.988487
+latency             : 0.987268
+
+Validating state construction...
+TP1: State shape = (10, 12), Range = [0.0000, 1.0000]
+TP2: State shape = (10, 12), Range = [0.0000, 1.0000]
+TP3: State shape = (10, 12), Range = [0.0000, 1.0000]
+
+Traffic encoding verification:
+TP1: [1.0, 0.0, 0.0]
+TP2: [0.0, 1.0, 0.0]
+TP3: [0.0, 0.0, 1.0]
+
+State representation:
+State[00] : TP1_indicator
+State[01] : TP2_indicator
+State[02] : TP3_indicator
+State[03] : traffic_demand
+State[04] : observed_throughput
+State[05] : observed_latency
+State[06] : packet_loss
+State[07] : channel_quality
+State[08] : bandwidth_utilization
+State[09] : remaining_rb_fraction
+State[10] : remaining_power_fraction
+State[11] : remaining_bandwidth_fraction
+
+===========================================================================
+BLOCK 3 COMPLETED SUCCESSFULLY
+===========================================================================
+State dimension: 12
+Traffic types: ['TP1', 'TP2', 'TP3']
+State representation: Dataset-driven
+Normalization: Dataset-derived 99th percentile
+Data type: float32
+All state values: Finite and normalized
+Common observation space: ENABLED
+===========================================================================
+Reward configuration loaded successfully.
+Reward weights: {'throughput': 0.3, 'service_success': 0.3, 'resource_efficiency': 0.15, 'latency': 0.15, 'energy': 0.05, 'packet_loss': 0.05}
+Total reward weight: 1.0
+
+Traffic-specific QoS normalization values:
+
+TP1
+  throughput_mbps: 0.931787
+  latency_ms: 0.929064
+  packet_loss: 0.950044
+
+TP2
+  throughput_mbps: 0.961297
+  latency_ms: 0.948587
+  packet_loss: 0.953707
+
+TP3
+  throughput_mbps: 0.945529
+  latency_ms: 0.942625
+  packet_loss: 0.947158
+Individual user reward function defined successfully.
+Episode reward aggregation function defined successfully.
+
+============================================================
+REWARD VALIDATION: TP1
+============================================================
+
+Number of test users: 10
+Users processed: 10
+
+Episode results:
+episode_reward: 0.250000
+mean_throughput_satisfaction: 0.000000
+service_success_probability: 0.000000
+mean_resource_efficiency: 0.000000
+mean_latency_score: 1.000000
+mean_energy_score: 1.000000
+mean_packet_loss_score: 1.000000
+num_users: 10.000000
+
+============================================================
+REWARD VALIDATION: TP2
+============================================================
+
+Number of test users: 10
+Users processed: 10
+
+Episode results:
+episode_reward: 0.250000
+mean_throughput_satisfaction: 0.000000
+service_success_probability: 0.000000
+mean_resource_efficiency: 0.000000
+mean_latency_score: 1.000000
+mean_energy_score: 1.000000
+mean_packet_loss_score: 1.000000
+num_users: 10.000000
+
+============================================================
+REWARD VALIDATION: TP3
+============================================================
+
+Number of test users: 10
+Users processed: 10
+
+Episode results:
+episode_reward: 0.250000
+mean_throughput_satisfaction: 0.000000
+service_success_probability: 0.000000
+mean_resource_efficiency: 0.000000
+mean_latency_score: 1.000000
+mean_energy_score: 1.000000
+mean_packet_loss_score: 1.000000
+num_users: 10.000000
+
+============================================================
+REWARD VALIDATION COMPLETED SUCCESSFULLY.
+============================================================
+Common environment episode function defined successfully.
+
+Testing common environment execution...
+
+=================================================================
+ENVIRONMENT TEST: TP1
+=================================================================
+
+Episode Reward:
+episode_reward                          : 0.250000
+mean_throughput_satisfaction            : 0.000000
+service_success_probability             : 0.000000
+mean_resource_efficiency                : 0.000000
+mean_latency_score                      : 1.000000
+mean_energy_score                       : 1.000000
+mean_packet_loss_score                  : 1.000000
+num_users                               : 10.000000
+
+O-DU Resource Allocation Summary:
+allocated_rbs                           : 10
+remaining_rbs                           : 90
+allocated_bandwidth_mhz                 : 1.9999999999999998
+requested_bandwidth_mhz                 : 1.9999999999999998
+bandwidth_acceptance_ratio              : 1.0
+total_power                             : 40.0
+throughput_mbps                         : 5.130211587139969
+transmission_latency_ms                 : 5.582814050043577e-07
+energy_proxy_joules                     : 0.04000000000000001
+users_requested                         : 10
+users_served                            : 10
+service_success_probability             : 1.0
+rb_utilization                          : 0.1
+
+First five user allocation records:
+
+First five user allocation records:
+
+User 1:
+  user_id                       : 0
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 8.161419057878758e-07
+  observed_throughput_mbps      : 0.6521358407913627
+  observed_latency_ms           : 0.186379758404745
+  packet_loss                   : 0.9581258288881024
+  channel                       : 0.9703273117302392
+  original_signal_strength      : 0.9703273117302392
+  bandwidth_utilization         : 0.5282653132730581
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 8.161419057878758e-10
+  source_dataset_index          : 530
+
+User 2:
+  user_id                       : 1
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 1.43369227481949e-07
+  observed_throughput_mbps      : 0.5388479458854137
+  observed_latency_ms           : 0.8736641398106219
+  packet_loss                   : 0.3768604201358329
+  channel                       : 0.4723709372406794
+  original_signal_strength      : 0.4723709372406794
+  bandwidth_utilization         : 0.6790977741231834
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 1.4336922748194902e-10
+  source_dataset_index          : 328
+
+User 3:
+  user_id                       : 2
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 8.318858450334309e-07
+  observed_throughput_mbps      : 0.5206056644044662
+  observed_latency_ms           : 0.3815954699408174
+  packet_loss                   : 0.9180896461790424
+  channel                       : 0.0338581236998316
+  original_signal_strength      : 0.0338581236998316
+  bandwidth_utilization         : 0.3684449521041091
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 8.318858450334309e-10
+  source_dataset_index          : 419
+
+User 4:
+  user_id                       : 3
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 4.929231844445829e-07
+  observed_throughput_mbps      : 0.919045335838941
+  observed_latency_ms           : 0.2033096185244484
+  packet_loss                   : 0.3098321528152071
+  channel                       : 0.2253146208890379
+  original_signal_strength      : 0.2253146208890379
+  bandwidth_utilization         : 0.5891414713134062
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 4.92923184444583e-10
+  source_dataset_index          : 303
+
+User 5:
+  user_id                       : 4
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 2.228935372726382e-07
+  observed_throughput_mbps      : 0.599059074507978
+  observed_latency_ms           : 0.0723994869296409
+  packet_loss                   : 0.4858982510982758
+  channel                       : 0.7310634403252851
+  original_signal_strength      : 0.7310634403252851
+  bandwidth_utilization         : 0.0237512728834057
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 2.228935372726382e-10
+  source_dataset_index          : 305
+
+=================================================================
+ENVIRONMENT TEST: TP2
+=================================================================
+
+Episode Reward:
+episode_reward                          : 0.250000
+mean_throughput_satisfaction            : 0.000000
+service_success_probability             : 0.000000
+mean_resource_efficiency                : 0.000000
+mean_latency_score                      : 1.000000
+mean_energy_score                       : 1.000000
+mean_packet_loss_score                  : 1.000000
+num_users                               : 10.000000
+
+O-DU Resource Allocation Summary:
+allocated_rbs                           : 10
+remaining_rbs                           : 90
+allocated_bandwidth_mhz                 : 1.9999999999999998
+requested_bandwidth_mhz                 : 1.9999999999999998
+bandwidth_acceptance_ratio              : 1.0
+total_power                             : 40.0
+throughput_mbps                         : 6.087242806073839
+transmission_latency_ms                 : 1.6784805736566626e-06
+energy_proxy_joules                     : 0.04000000000000001
+users_requested                         : 10
+users_served                            : 10
+service_success_probability             : 1.0
+rb_utilization                          : 0.1
+
+First five user allocation records:
+
+First five user allocation records:
+
+User 1:
+  user_id                       : 0
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 8.161419057878758e-07
+  observed_throughput_mbps      : 0.6521358407913627
+  observed_latency_ms           : 0.186379758404745
+  packet_loss                   : 0.9581258288881024
+  channel                       : 0.9703273117302392
+  original_signal_strength      : 0.9703273117302392
+  bandwidth_utilization         : 0.5282653132730581
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 8.161419057878758e-10
+  source_dataset_index          : 530
+
+User 2:
+  user_id                       : 1
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 1.43369227481949e-07
+  observed_throughput_mbps      : 0.5388479458854137
+  observed_latency_ms           : 0.8736641398106219
+  packet_loss                   : 0.3768604201358329
+  channel                       : 0.4723709372406794
+  original_signal_strength      : 0.4723709372406794
+  bandwidth_utilization         : 0.6790977741231834
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 1.4336922748194902e-10
+  source_dataset_index          : 328
+
+User 3:
+  user_id                       : 2
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 8.318858450334309e-07
+  observed_throughput_mbps      : 0.5206056644044662
+  observed_latency_ms           : 0.3815954699408174
+  packet_loss                   : 0.9180896461790424
+  channel                       : 0.0338581236998316
+  original_signal_strength      : 0.0338581236998316
+  bandwidth_utilization         : 0.3684449521041091
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 8.318858450334309e-10
+  source_dataset_index          : 419
+
+User 4:
+  user_id                       : 3
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 4.929231844445829e-07
+  observed_throughput_mbps      : 0.919045335838941
+  observed_latency_ms           : 0.2033096185244484
+  packet_loss                   : 0.3098321528152071
+  channel                       : 0.2253146208890379
+  original_signal_strength      : 0.2253146208890379
+  bandwidth_utilization         : 0.5891414713134062
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 4.92923184444583e-10
+  source_dataset_index          : 303
+
+User 5:
+  user_id                       : 4
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 2.228935372726382e-07
+  observed_throughput_mbps      : 0.599059074507978
+  observed_latency_ms           : 0.0723994869296409
+  packet_loss                   : 0.4858982510982758
+  channel                       : 0.7310634403252851
+  original_signal_strength      : 0.7310634403252851
+  bandwidth_utilization         : 0.0237512728834057
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 2.228935372726382e-10
+  source_dataset_index          : 305
+
+=================================================================
+ENVIRONMENT TEST: TP3
+=================================================================
+
+Episode Reward:
+episode_reward                          : 0.250000
+mean_throughput_satisfaction            : 0.000000
+service_success_probability             : 0.000000
+mean_resource_efficiency                : 0.000000
+mean_latency_score                      : 1.000000
+mean_energy_score                       : 1.000000
+mean_packet_loss_score                  : 1.000000
+num_users                               : 10.000000
+
+O-DU Resource Allocation Summary:
+allocated_rbs                           : 10
+remaining_rbs                           : 90
+allocated_bandwidth_mhz                 : 1.9999999999999998
+requested_bandwidth_mhz                 : 1.9999999999999998
+bandwidth_acceptance_ratio              : 1.0
+total_power                             : 40.0
+throughput_mbps                         : 4.775545410348407
+transmission_latency_ms                 : 1.7406278562217631e-06
+energy_proxy_joules                     : 0.04000000000000001
+users_requested                         : 10
+users_served                            : 10
+service_success_probability             : 1.0
+rb_utilization                          : 0.1
+
+First five user allocation records:
+
+First five user allocation records:
+
+User 1:
+  user_id                       : 0
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 8.161419057878758e-07
+  observed_throughput_mbps      : 0.6521358407913627
+  observed_latency_ms           : 0.186379758404745
+  packet_loss                   : 0.9581258288881024
+  channel                       : 0.9703273117302392
+  original_signal_strength      : 0.9703273117302392
+  bandwidth_utilization         : 0.5282653132730581
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 8.161419057878758e-10
+  source_dataset_index          : 530
+
+User 2:
+  user_id                       : 1
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 1.43369227481949e-07
+  observed_throughput_mbps      : 0.5388479458854137
+  observed_latency_ms           : 0.8736641398106219
+  packet_loss                   : 0.3768604201358329
+  channel                       : 0.4723709372406794
+  original_signal_strength      : 0.4723709372406794
+  bandwidth_utilization         : 0.6790977741231834
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 1.4336922748194902e-10
+  source_dataset_index          : 328
+
+User 3:
+  user_id                       : 2
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 8.318858450334309e-07
+  observed_throughput_mbps      : 0.5206056644044662
+  observed_latency_ms           : 0.3815954699408174
+  packet_loss                   : 0.9180896461790424
+  channel                       : 0.0338581236998316
+  original_signal_strength      : 0.0338581236998316
+  bandwidth_utilization         : 0.3684449521041091
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 8.318858450334309e-10
+  source_dataset_index          : 419
+
+User 4:
+  user_id                       : 3
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 4.929231844445829e-07
+  observed_throughput_mbps      : 0.919045335838941
+  observed_latency_ms           : 0.2033096185244484
+  packet_loss                   : 0.3098321528152071
+  channel                       : 0.2253146208890379
+  original_signal_strength      : 0.2253146208890379
+  bandwidth_utilization         : 0.5891414713134062
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 4.92923184444583e-10
+  source_dataset_index          : 303
+
+User 5:
+  user_id                       : 4
+  traffic_type                  : 3
+  traffic_name                  : TP3
+  priority                      : Low
+  demand_mbps                   : 2.228935372726382e-07
+  observed_throughput_mbps      : 0.599059074507978
+  observed_latency_ms           : 0.0723994869296409
+  packet_loss                   : 0.4858982510982758
+  channel                       : 0.7310634403252851
+  original_signal_strength      : 0.7310634403252851
+  bandwidth_utilization         : 0.0237512728834057
+  requested_rbs                 : 1
+  requested_power               : 4.0
+  data_volume_mbits             : 2.228935372726382e-10
+  source_dataset_index          : 305
+
+Environment execution tests completed.
+
+Validating environment outputs...
+TP1: 10 users | State dimension: 12 | Mean reward: 0.250000
+TP2: 10 users | State dimension: 12 | Mean reward: 0.250000
+TP3: 10 users | State dimension: 12 | Mean reward: 0.250000
+
+All environment validation checks passed.
+Action space initialized successfully.
+RB allocation levels: 5
+Power allocation levels: 4
+Total discrete actions: 20
+
+Available actions:
+Action 00: RB ratio = 0.00, Power = 1.0 W
+Action 01: RB ratio = 0.00, Power = 2.0 W
+Action 02: RB ratio = 0.00, Power = 3.0 W
+Action 03: RB ratio = 0.00, Power = 4.0 W
+Action 04: RB ratio = 0.25, Power = 1.0 W
+Action 05: RB ratio = 0.25, Power = 2.0 W
+Action 06: RB ratio = 0.25, Power = 3.0 W
+Action 07: RB ratio = 0.25, Power = 4.0 W
+Action 08: RB ratio = 0.50, Power = 1.0 W
+Action 09: RB ratio = 0.50, Power = 2.0 W
+Action 10: RB ratio = 0.50, Power = 3.0 W
+Action 11: RB ratio = 0.50, Power = 4.0 W
+Action 12: RB ratio = 0.75, Power = 1.0 W
+Action 13: RB ratio = 0.75, Power = 2.0 W
+Action 14: RB ratio = 0.75, Power = 3.0 W
+Action 15: RB ratio = 0.75, Power = 4.0 W
+Action 16: RB ratio = 1.00, Power = 1.0 W
+Action 17: RB ratio = 1.00, Power = 2.0 W
+Action 18: RB ratio = 1.00, Power = 3.0 W
+Action 19: RB ratio = 1.00, Power = 4.0 W
+
+Action decoder defined successfully.
+{'action_id': 0, 'rb_ratio': 0.0, 'power_w': 1.0}
+{'action_id': 5, 'rb_ratio': 0.25, 'power_w': 2.0}
+{'action_id': 10, 'rb_ratio': 0.5, 'power_w': 3.0}
+{'action_id': 15, 'rb_ratio': 0.75, 'power_w': 4.0}
+{'action_id': 19, 'rb_ratio': 1.0, 'power_w': 4.0}
+
+Action-based allocation function defined successfully.
+
+Testing action-space configuration...
+
+Test user information:
+Traffic type: TP1
+Requested throughput: 0.0000 Mbps
+Original requested RBs: 1
+
+Action allocation results:
+-----------------------------------------------------------------
+Action 00 | RBs:    0 | RB ratio: 0.00 | Power: 1.0 W
+Action 01 | RBs:    0 | RB ratio: 0.00 | Power: 2.0 W
+Action 02 | RBs:    0 | RB ratio: 0.00 | Power: 3.0 W
+Action 03 | RBs:    0 | RB ratio: 0.00 | Power: 4.0 W
+Action 04 | RBs:    1 | RB ratio: 0.25 | Power: 1.0 W
+Action 05 | RBs:    1 | RB ratio: 0.25 | Power: 2.0 W
+Action 06 | RBs:    1 | RB ratio: 0.25 | Power: 3.0 W
+Action 07 | RBs:    1 | RB ratio: 0.25 | Power: 4.0 W
+Action 08 | RBs:    1 | RB ratio: 0.50 | Power: 1.0 W
+Action 09 | RBs:    1 | RB ratio: 0.50 | Power: 2.0 W
+Action 10 | RBs:    1 | RB ratio: 0.50 | Power: 3.0 W
+Action 11 | RBs:    1 | RB ratio: 0.50 | Power: 4.0 W
+Action 12 | RBs:    1 | RB ratio: 0.75 | Power: 1.0 W
+Action 13 | RBs:    1 | RB ratio: 0.75 | Power: 2.0 W
+Action 14 | RBs:    1 | RB ratio: 0.75 | Power: 3.0 W
+Action 15 | RBs:    1 | RB ratio: 0.75 | Power: 4.0 W
+Action 16 | RBs:    1 | RB ratio: 1.00 | Power: 1.0 W
+Action 17 | RBs:    1 | RB ratio: 1.00 | Power: 2.0 W
+Action 18 | RBs:    1 | RB ratio: 1.00 | Power: 3.0 W
+Action 19 | RBs:    1 | RB ratio: 1.00 | Power: 4.0 W
+
+Action-space validation completed successfully.
+
+Action-space validation passed.
+State dimension: 12
+Action dimension: 20
+Number of discrete actions: 20
+Action-controlled O-DU allocation function defined.
+Common agent interaction function defined.
+
+Testing action-controlled O-DU allocation...
+
+Action-controlled allocation results:
+
+Action-controlled allocation results:
+ action_id  action_rb_ratio  action_power_w  requested_rbs  allocated_rbs  allocated_power_w  achieved_rate_mbps  latency_ms  energy_j  served  reward
+         0             0.00             1.0              0              0                0.0                 0.0         0.0       0.0   False    0.25
+         5             0.25             2.0              1              0                0.0                 0.0         0.0       0.0   False    0.25
+        10             0.50             3.0              1              0                0.0                 0.0         0.0       0.0   False    0.25
+        15             0.75             4.0              1              0                0.0                 0.0         0.0       0.0   False    0.25
+        19             1.00             4.0              1              0                0.0                 0.0         0.0       0.0   False    0.25
+
+Action-controlled allocation test completed.
+
+Validating action-controlled allocation...
+Action execution validation passed.
+
+Initializing experience replay memory...
+
+Replay memory initialized successfully.
+Ours: Capacity=50000, Stored experiences=0
+GGN-MADDQN: Capacity=50000, Stored experiences=0
+GCN-MADDQN: Capacity=50000, Stored experiences=0
+MADDQN: Capacity=50000, Stored experiences=0
+
+BLOCK 8 COMPLETED SUCCESSFULLY.
+
+Inspecting experience-generation interfaces...
+
+ACTION TEST DATA
+-----------------------------------------------------------------
+Number of records: 5
+
+Available columns:
+ - action_id
+ - action_rb_ratio
+ - action_power_w
+ - requested_rbs
+ - allocated_rbs
+ - allocated_power_w
+ - achieved_rate_mbps
+ - latency_ms
+ - energy_j
+ - served
+ - reward
+
+TRANSITION DATA CHECK
+-----------------------------------------------------------------
+Available transition fields:
+['action_id', 'reward']
+
+Missing transition fields:
+['state', 'next_state', 'done']
+
+ENVIRONMENT INTERFACE CHECK
+-----------------------------------------------------------------
+initialize_environment: (traffic_name, num_users, seed=42)
+make_state: (user, odu)
+generate_users: (num_users, traffic_name, seed=42)
+execute_agent_action: (odu, user, action_id)
+calculate_reward: Not defined
+
+ODU.allocate signature: (self, user, requested_rbs=None, requested_power=None)
+ODU.reset available: True
+
+REPLAY BUFFER CONFIGURATION
+-----------------------------------------------------------------
+Ours: 0/50000
+GGN-MADDQN: 0/50000
+GCN-MADDQN: 0/50000
+MADDQN: 0/50000
+
+TRANSITION READINESS
+-----------------------------------------------------------------
+Transition generation requires the existing state and action-execution interfaces.
+No synthetic transitions have been inserted.
+
+BLOCK 9 INTERFACE INSPECTION COMPLETED.
+
+Starting replay-memory population...
+Transition validation function defined.
+
+=================================================================
+BLOCK 10.1: ENVIRONMENT TRANSITION GENERATION
+=================================================================
+
+Generating transitions: Ours
+  TP1: 10 transitions generated
+  TP2: 10 transitions generated
+  TP3: 10 transitions generated
+
+Generating transitions: GGN-MADDQN
+  TP1: 10 transitions generated
+  TP2: 10 transitions generated
+  TP3: 10 transitions generated
+
+Generating transitions: GCN-MADDQN
+  TP1: 10 transitions generated
+  TP2: 10 transitions generated
+  TP3: 10 transitions generated
+
+Generating transitions: MADDQN
+  TP1: 10 transitions generated
+  TP2: 10 transitions generated
+  TP3: 10 transitions generated
+
+Transition generation summary:
+Total transitions: 120
+algorithm   traffic_type
+GCN-MADDQN  TP1             10
+            TP2             10
+            TP3             10
+GGN-MADDQN  TP1             10
+            TP2             10
+            TP3             10
+MADDQN      TP1             10
+            TP2             10
+            TP3             10
+Ours        TP1             10
+            TP2             10
+            TP3             10
+
+BLOCK 10.1 COMPLETED SUCCESSFULLY.
+
+=================================================================
+BLOCK 10.2: TRANSITION AVAILABILITY CHECK
+=================================================================
+Available records: 120
+Available columns: 7
+
+Required transition fields:
+state               : AVAILABLE
+action_id           : AVAILABLE
+reward              : AVAILABLE
+next_state          : AVAILABLE
+done                : AVAILABLE
+
+All required transition fields are available.
+
+Algorithm transition counts:
+Ours           : 30
+GGN-MADDQN     : 30
+GCN-MADDQN     : 30
+MADDQN         : 30
+
+BLOCK 10.2 COMPLETED SUCCESSFULLY.
+
+=================================================================
+BLOCK 10.3: TRANSITION VALIDATION
+=================================================================
+Total transitions: 120
+State dimension: 12
+Action dimension: 20
+
+Transition validation passed.
+
+=================================================================
+BLOCK 10.4: REPLAY MEMORY POPULATION
+=================================================================
+Ours           : 30 transitions submitted
+GGN-MADDQN     : 30 transitions submitted
+GCN-MADDQN     : 30 transitions submitted
+MADDQN         : 30 transitions submitted
+
+Replay-memory population summary:
+-----------------------------------------------------------------
+Ours           : 30/50,000
+GGN-MADDQN     : 30/50,000
+GCN-MADDQN     : 30/50,000
+MADDQN         : 30/50,000
+
+BLOCK 10.4 COMPLETED.
+
+TRANSITION STRUCTURE INSPECTION
+======================================================================
+Container type: <class 'list'>
+Number of transitions: 120
+First transition type: <class 'dict'>
+First transition: {'algorithm': 'Ours', 'traffic_type': 'TP1', 'transition': (array([1.        , 0.        , 0.        , 0.2230987 , 0.61936736,
+       0.21777298, 0.36828348, 0.9607895 , 0.55171835, 1.        ,
+       1.        , 1.        ], dtype=float32), 10, 0.25, array([1.        , 0.        , 0.        , 0.3663479 , 0.6960396 ,
+       0.46759683, 0.90536904, 0.4734433 , 0.35453454, 0.99      ,
+       0.9       , 0.99      ], dtype=float32), False)}
+Available keys: ['algorithm', 'traffic_type', 'transition']
+======================================================================
+
+POPULATING INDEPENDENT REPLAY BUFFERS
+======================================================================
+Ours           :     30 transitions stored.
+GGN-MADDQN     :     30 transitions stored.
+GCN-MADDQN     :     30 transitions stored.
+MADDQN         :     30 transitions stored.
+
+REPLAY MEMORY SUMMARY
+======================================================================
+Ours            Experiences:     30/30
+GGN-MADDQN      Experiences:     30/30
+GCN-MADDQN      Experiences:     30/30
+MADDQN          Experiences:     30/30
+
+REPLAY SAMPLE VALIDATION
+======================================================================
+Ours           : 30 samples validated.
+GGN-MADDQN     : 30 samples validated.
+GCN-MADDQN     : 30 samples validated.
+MADDQN         : 30 samples validated.
+
+======================================================================
+BLOCK 10 COMPLETED SUCCESSFULLY.
+======================================================================
+
+======================================================================
+BLOCK 10 COMPLETED SUCCESSFULLY.
+======================================================================
+
+Initializing independent model training...
+
+MODEL ARCHITECTURE VALIDATION
+======================================================================
+Ours           : RBFQNetwork        Input=12, Output=20
+GGN-MADDQN     : GGNQNetwork        Input=12, Output=20
+GCN-MADDQN     : GCNQNetwork        Input=12, Output=20
+MADDQN         : DDQNQNetwork       Input=12, Output=20
+
+All four network architectures validated.
+[transformers] Disabling PyTorch because PyTorch >= 2.4 is required but found 2.1.2+cu118
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+
+INDEPENDENT AGENT INITIALIZATION
+======================================================================
+Ours           : Online=RBFQNetwork, Target=Initialized, Memory=30
+GGN-MADDQN     : Online=GGNQNetwork, Target=Initialized, Memory=30
+GCN-MADDQN     : Online=GCNQNetwork, Target=Initialized, Memory=30
+MADDQN         : Online=DDQNQNetwork, Target=Initialized, Memory=30
+
+TRAINING FRAMEWORK INITIALIZED SUCCESSFULLY.
+Agents: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+Training device: cpu
+State dimension: 12
+Action dimension: 20
+Batch size: 64
+Learning rate: 0.001
+Discount factor: 0.99
+
+TRAINING CONFIGURATION
+-----------------------------------------------------------------
+Device: cpu
+Episodes: 500
+Batch size: 64
+Learning rate: 0.001
+Discount factor: 0.99
+-----------------------------------------------------------------
+Ours: Model class not found.
+GGN-MADDQN: Model class not found.
+GCN-MADDQN: Model class not found.
+MADDQN: Model class not found.
+
+TRAINING READINESS
+-----------------------------------------------------------------
+Available models: 0 / 4
+Replay buffers ready: False
+Training framework initialized: True
+
+Training is pending verified model classes and sufficient replay experiences.
+
+BLOCK 11 FRAMEWORK INITIALIZATION COMPLETED.
+
+======================================================================
+BLOCK 11.1: TRAINING READINESS VALIDATION
+======================================================================
+
+AVAILABLE GLOBAL MODEL REGISTRIES
+MODEL_DISPLAY_NAMES: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+REPLAY_BUFFERS: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+NETWORK_FACTORIES: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+agents: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+MODEL_CLASS_CANDIDATES: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+TRAINING_HISTORY: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+
+MODEL CLASS VALIDATION
+------------------------------------------------------------
+RBFQNetwork         : AVAILABLE
+GGNQNetwork         : AVAILABLE
+GCNQNetwork         : AVAILABLE
+DDQNQNetwork        : AVAILABLE
+
+AGENT AND MODEL OBJECT INSPECTION
+------------------------------------------------------------
+
+agents:
+Ours           : DDQNAgent
+GGN-MADDQN     : DDQNAgent
+GCN-MADDQN     : DDQNAgent
+MADDQN         : DDQNAgent
+
+REPLAY MEMORY VALIDATION
+------------------------------------------------------------
+Ours           : 30 experiences
+GGN-MADDQN     : 30 experiences
+GCN-MADDQN     : 30 experiences
+MADDQN         : 30 experiences
+
+TRAINING CONFIGURATION
+------------------------------------------------------------
+Episodes: 500
+Batch size: 64
+Learning rate: 0.001
+Device: cpu
+State dimension: 12
+Action dimension: 20
+
+TRANSITION DATA VALIDATION
+------------------------------------------------------------
+Total transitions: 0
+
+======================================================================
+TRAINING READINESS REPORT
+======================================================================
+Resolved model classes: 4 / 4
+Transition records: 0
+
+No models or replay buffers were modified.
+
+BLOCK 11.1 COMPLETED.
+======================================================================
+
+======================================================================
+BLOCK 11.2: TRAINING INTERFACE AUDIT
+======================================================================
+
+1. SEARCHING FOR GENERATED TRANSITIONS
+----------------------------------------------------------------------
+validated_transitions: 120 records
+
+Selected transition collection: validated_transitions
+Ours           : 30 transitions
+GGN-MADDQN     : 30 transitions
+GCN-MADDQN     : 30 transitions
+MADDQN         : 30 transitions
+
+Transition fields:
+[array([1.        , 0.        , 0.        , 0.2230987 , 0.61936736,
+       0.21777298, 0.36828348, 0.9607895 , 0.55171835, 1.        ,
+       1.        , 1.        ], dtype=float32), 10, 0.25, array([1.        , 0.        , 0.        , 0.3663479 , 0.6960396 ,
+       0.46759683, 0.90536904, 0.4734433 , 0.35453454, 0.99      ,
+       0.9       , 0.99      ], dtype=float32), False]
+
+2. NETWORK FACTORY INSPECTION
+----------------------------------------------------------------------
+
+Ours
+Factory: <class '__main__.RBFQNetwork'>
+Signature: ()
+
+GGN-MADDQN
+Factory: <class '__main__.GGNQNetwork'>
+Signature: ()
+
+GCN-MADDQN
+Factory: <class '__main__.GCNQNetwork'>
+Signature: ()
+
+MADDQN
+Factory: <class '__main__.DDQNQNetwork'>
+Signature: ()
+
+3. MODEL CLASS CANDIDATES
+----------------------------------------------------------------------
+Ours           : list
+GGN-MADDQN     : list
+GCN-MADDQN     : list
+MADDQN         : list
+
+4. AGENT INTERFACE INSPECTION
+----------------------------------------------------------------------
+
+Ours: DDQNAgent
+Attributes:
+  memory: ExperienceReplayBuffer
+  optimizer: Adam
+  epsilon: float
+  learn: ()
+  select_action: (state, explore=True)
+
+GGN-MADDQN: DDQNAgent
+Attributes:
+  memory: ExperienceReplayBuffer
+  optimizer: Adam
+  epsilon: float
+  learn: ()
+  select_action: (state, explore=True)
+
+GCN-MADDQN: DDQNAgent
+Attributes:
+  memory: ExperienceReplayBuffer
+  optimizer: Adam
+  epsilon: float
+  learn: ()
+  select_action: (state, explore=True)
+
+MADDQN: DDQNAgent
+Attributes:
+  memory: ExperienceReplayBuffer
+  optimizer: Adam
+  epsilon: float
+  learn: ()
+  select_action: (state, explore=True)
+
+5. REPLAY BUFFER INTERFACE INSPECTION
+----------------------------------------------------------------------
+
+Ours: ExperienceReplayBuffer
+  add(state, action, reward, next_state, done)
+  sample(batch_size)
+  clear()
+
+GGN-MADDQN: ExperienceReplayBuffer
+  add(state, action, reward, next_state, done)
+  sample(batch_size)
+  clear()
+
+GCN-MADDQN: ExperienceReplayBuffer
+  add(state, action, reward, next_state, done)
+  sample(batch_size)
+  clear()
+
+MADDQN: ExperienceReplayBuffer
+  add(state, action, reward, next_state, done)
+  sample(batch_size)
+  clear()
+
+6. REPLAY BUFFER COUNTS
+----------------------------------------------------------------------
+Ours           : 30 experiences
+GGN-MADDQN     : 30 experiences
+GCN-MADDQN     : 30 experiences
+MADDQN         : 30 experiences
+
+======================================================================
+BLOCK 11.2 AUDIT SUMMARY
+======================================================================
+Transition collections found: 1
+Network factories found: 4
+Initialized agents: 4
+Replay buffers: 4
+
+No training or replay-buffer modification performed.
+
+BLOCK 11.2 COMPLETED.
+======================================================================
+
+======================================================================
+BLOCK 11.3: DETAILED INTERFACE INSPECTION
+======================================================================
+
+NETWORK FACTORIES
+----------------------------------------------------------------------
+
+Ours
+Signature: ()
+Factory type: <class 'type'>
+
+GGN-MADDQN
+Signature: ()
+Factory type: <class 'type'>
+
+GCN-MADDQN
+Signature: ()
+Factory type: <class 'type'>
+
+MADDQN
+Signature: ()
+Factory type: <class 'type'>
+
+AGENT METHODS
+----------------------------------------------------------------------
+
+Ours: DDQNAgent
+decay_epsilon()
+learn()
+loss_fn(*args, **kwargs)
+online(*args, **kwargs)
+select_action(state, explore=True)
+target(*args, **kwargs)
+
+GGN-MADDQN: DDQNAgent
+decay_epsilon()
+learn()
+loss_fn(*args, **kwargs)
+online(*args, **kwargs)
+select_action(state, explore=True)
+target(*args, **kwargs)
+
+GCN-MADDQN: DDQNAgent
+decay_epsilon()
+learn()
+loss_fn(*args, **kwargs)
+online(*args, **kwargs)
+select_action(state, explore=True)
+target(*args, **kwargs)
+
+MADDQN: DDQNAgent
+decay_epsilon()
+learn()
+loss_fn(*args, **kwargs)
+online(*args, **kwargs)
+select_action(state, explore=True)
+target(*args, **kwargs)
+
+REPLAY BUFFER METHODS
+----------------------------------------------------------------------
+
+Ours: ExperienceReplayBuffer
+add(state, action, reward, next_state, done)
+clear()
+sample(batch_size)
+
+GGN-MADDQN: ExperienceReplayBuffer
+add(state, action, reward, next_state, done)
+clear()
+sample(batch_size)
+
+GCN-MADDQN: ExperienceReplayBuffer
+add(state, action, reward, next_state, done)
+clear()
+sample(batch_size)
+
+MADDQN: ExperienceReplayBuffer
+add(state, action, reward, next_state, done)
+clear()
+sample(batch_size)
+
+NETWORK CONSTRUCTORS
+----------------------------------------------------------------------
+
+RBFQNetwork
+()
+
+GGNQNetwork
+()
+
+GCNQNetwork
+()
+
+DDQNQNetwork
+()
+
+TRAINING HISTORY
+----------------------------------------------------------------------
+
+Ours
+Type: dict
+Keys: ['episode', 'reward', 'loss', 'epsilon', 'q_value', 'updates']
+
+GGN-MADDQN
+Type: dict
+Keys: ['episode', 'reward', 'loss', 'epsilon', 'q_value', 'updates']
+
+GCN-MADDQN
+Type: dict
+Keys: ['episode', 'reward', 'loss', 'epsilon', 'q_value', 'updates']
+
+MADDQN
+Type: dict
+Keys: ['episode', 'reward', 'loss', 'epsilon', 'q_value', 'updates']
+
+======================================================================
+BLOCK 11.3 COMPLETED
+======================================================================
+
+======================================================================
+BLOCK 11.4: INDEPENDENT MODEL TRAINING
+======================================================================
+
+TRAINING CONFIGURATION
+------------------------------------------------------------
+Episodes: 500
+Configured batch size: 64
+Effective batch size: 30
+Device: cpu
+
+LEARNING METHOD VALIDATION
+------------------------------------------------------------
+Ours: learn ()
+GGN-MADDQN: learn ()
+GCN-MADDQN: learn ()
+MADDQN: learn ()
+
+STARTING TRAINING
+======================================================================
+
+TRAINING: Ours
+------------------------------------------------------------
+Episode  50/500 | Updates with reported loss: 0
+Episode 100/500 | Updates with reported loss: 0
+Episode 150/500 | Updates with reported loss: 0
+Episode 200/500 | Updates with reported loss: 0
+Episode 250/500 | Updates with reported loss: 0
+Episode 300/500 | Updates with reported loss: 0
+Episode 350/500 | Updates with reported loss: 0
+Episode 400/500 | Updates with reported loss: 0
+Episode 450/500 | Updates with reported loss: 0
+Episode 500/500 | Updates with reported loss: 0
+
+Ours training loop completed.
+Updates with reported loss: 0
+
+TRAINING: GGN-MADDQN
+------------------------------------------------------------
+Episode  50/500 | Updates with reported loss: 0
+Episode 100/500 | Updates with reported loss: 0
+Episode 150/500 | Updates with reported loss: 0
+Episode 200/500 | Updates with reported loss: 0
+Episode 250/500 | Updates with reported loss: 0
+Episode 300/500 | Updates with reported loss: 0
+Episode 350/500 | Updates with reported loss: 0
+Episode 400/500 | Updates with reported loss: 0
+Episode 450/500 | Updates with reported loss: 0
+Episode 500/500 | Updates with reported loss: 0
+
+GGN-MADDQN training loop completed.
+Updates with reported loss: 0
+
+TRAINING: GCN-MADDQN
+------------------------------------------------------------
+Episode  50/500 | Updates with reported loss: 0
+Episode 100/500 | Updates with reported loss: 0
+Episode 150/500 | Updates with reported loss: 0
+Episode 200/500 | Updates with reported loss: 0
+Episode 250/500 | Updates with reported loss: 0
+Episode 300/500 | Updates with reported loss: 0
+Episode 350/500 | Updates with reported loss: 0
+Episode 400/500 | Updates with reported loss: 0
+Episode 450/500 | Updates with reported loss: 0
+Episode 500/500 | Updates with reported loss: 0
+
+GCN-MADDQN training loop completed.
+Updates with reported loss: 0
+
+TRAINING: MADDQN
+------------------------------------------------------------
+Episode  50/500 | Updates with reported loss: 0
+Episode 100/500 | Updates with reported loss: 0
+Episode 150/500 | Updates with reported loss: 0
+Episode 200/500 | Updates with reported loss: 0
+Episode 250/500 | Updates with reported loss: 0
+Episode 300/500 | Updates with reported loss: 0
+Episode 350/500 | Updates with reported loss: 0
+Episode 400/500 | Updates with reported loss: 0
+Episode 450/500 | Updates with reported loss: 0
+Episode 500/500 | Updates with reported loss: 0
+
+MADDQN training loop completed.
+Updates with reported loss: 0
+
+======================================================================
+TRAINING SUMMARY
+======================================================================
+Total training time: 0.011 seconds
+
+Ours
+Recorded episodes: 500
+Valid loss observations: 0
+No numerical loss returned by learning method.
+
+GGN-MADDQN
+Recorded episodes: 500
+Valid loss observations: 0
+No numerical loss returned by learning method.
+
+GCN-MADDQN
+Recorded episodes: 500
+Valid loss observations: 0
+No numerical loss returned by learning method.
+
+MADDQN
+Recorded episodes: 500
+Valid loss observations: 0
+No numerical loss returned by learning method.
+
+BLOCK 11.4 COMPLETED.
+======================================================================
+
+======================================================================
+BLOCK 11.5: LEARNING FAILURE DIAGNOSTICS
+======================================================================
+
+1. DDQN AGENT LEARNING IMPLEMENTATION
+----------------------------------------------------------------------
+
+Ours
+    def learn(self):
+
+        if len(self.memory) < BATCH_SIZE:
+
+            return None
+
+        sample = self.memory.sample(
+            BATCH_SIZE
+        )
+
+        states, actions, rewards, next_states, dones = sample
+
+        states = torch.as_tensor(
+            states,
+            dtype=torch.float32,
+            device=DEVICE
+        )
+
+        actions = torch.as_tensor(
+            actions,
+            dtype=torch.long,
+            device=DEVICE
+        ).reshape(-1, 1)
+
+        rewards = torch.as_tensor(
+            rewards,
+            dtype=torch.float32,
+            device=DEVICE
+        ).reshape(-1)
+
+        next_states = torch.as_tensor(
+            next_states,
+            dtype=torch.float32,
+            device=DEVICE
+        )
+
+        dones = torch.as_tensor(
+            dones,
+            dtype=torch.float32,
+            device=DEVICE
+        ).reshape(-1)
+
+        # Current Q-values
+        current_q = self.online(
+            states
+        ).gather(
+            1,
+            actions
+        ).squeeze(1)
+
+        # Double DQN target calculation
+        with torch.no_grad():
+
+            next_actions = self.online(
+                next_states
+            ).argmax(
+                dim=1,
+                keepdim=True
+            )
+
+            next_q = self.target(
+                next_states
+            ).gather(
+                1,
+                next_actions
+            ).squeeze(1)
+
+            target_q = (
+                rewards +
+                GAMMA * (1.0 - dones) * next_q
+            )
+
+        # Calculate loss
+        loss = self.loss_fn(
+            current_q,
+            target_q
+        )
+
+        self.optimizer.zero_grad()
+
+        loss.backward()
+
+        nn.utils.clip_grad_norm_(
+            self.online.parameters(),
+            max_norm=1.0
+        )
+
+        self.optimizer.step()
+
+        self.steps += 1
+
+        # Synchronize target network
+        if self.steps % TARGET_UPDATE_STEPS == 0:
+
+            self.target.load_state_dict(
+                self.online.state_dict()
+            )
+
+        return float(loss.item())
+
+
+GGN-MADDQN
+    def learn(self):
+
+        if len(self.memory) < BATCH_SIZE:
+
+            return None
+
+        sample = self.memory.sample(
+            BATCH_SIZE
+        )
+
+        states, actions, rewards, next_states, dones = sample
+
+        states = torch.as_tensor(
+            states,
+            dtype=torch.float32,
+            device=DEVICE
+        )
+
+        actions = torch.as_tensor(
+            actions,
+            dtype=torch.long,
+            device=DEVICE
+        ).reshape(-1, 1)
+
+        rewards = torch.as_tensor(
+            rewards,
+            dtype=torch.float32,
+            device=DEVICE
+        ).reshape(-1)
+
+        next_states = torch.as_tensor(
+            next_states,
+            dtype=torch.float32,
+            device=DEVICE
+        )
+
+        dones = torch.as_tensor(
+            dones,
+            dtype=torch.float32,
+            device=DEVICE
+        ).reshape(-1)
+
+        # Current Q-values
+        current_q = self.online(
+            states
+        ).gather(
+            1,
+            actions
+        ).squeeze(1)
+
+        # Double DQN target calculation
+        with torch.no_grad():
+
+            next_actions = self.online(
+                next_states
+            ).argmax(
+                dim=1,
+                keepdim=True
+            )
+
+            next_q = self.target(
+                next_states
+            ).gather(
+                1,
+                next_actions
+            ).squeeze(1)
+
+            target_q = (
+                rewards +
+                GAMMA * (1.0 - dones) * next_q
+            )
+
+        # Calculate loss
+        loss = self.loss_fn(
+            current_q,
+            target_q
+        )
+
+        self.optimizer.zero_grad()
+
+        loss.backward()
+
+        nn.utils.clip_grad_norm_(
+            self.online.parameters(),
+            max_norm=1.0
+        )
+
+        self.optimizer.step()
+
+        self.steps += 1
+
+        # Synchronize target network
+        if self.steps % TARGET_UPDATE_STEPS == 0:
+
+            self.target.load_state_dict(
+                self.online.state_dict()
+            )
+
+        return float(loss.item())
+
+
+GCN-MADDQN
+    def learn(self):
+
+        if len(self.memory) < BATCH_SIZE:
+
+            return None
+
+        sample = self.memory.sample(
+            BATCH_SIZE
+        )
+
+        states, actions, rewards, next_states, dones = sample
+
+        states = torch.as_tensor(
+            states,
+            dtype=torch.float32,
+            device=DEVICE
+        )
+
+        actions = torch.as_tensor(
+            actions,
+            dtype=torch.long,
+            device=DEVICE
+        ).reshape(-1, 1)
+
+        rewards = torch.as_tensor(
+            rewards,
+            dtype=torch.float32,
+            device=DEVICE
+        ).reshape(-1)
+
+        next_states = torch.as_tensor(
+            next_states,
+            dtype=torch.float32,
+            device=DEVICE
+        )
+
+        dones = torch.as_tensor(
+            dones,
+            dtype=torch.float32,
+            device=DEVICE
+        ).reshape(-1)
+
+        # Current Q-values
+        current_q = self.online(
+            states
+        ).gather(
+            1,
+            actions
+        ).squeeze(1)
+
+        # Double DQN target calculation
+        with torch.no_grad():
+
+            next_actions = self.online(
+                next_states
+            ).argmax(
+                dim=1,
+                keepdim=True
+            )
+
+            next_q = self.target(
+                next_states
+            ).gather(
+                1,
+                next_actions
+            ).squeeze(1)
+
+            target_q = (
+                rewards +
+                GAMMA * (1.0 - dones) * next_q
+            )
+
+        # Calculate loss
+        loss = self.loss_fn(
+            current_q,
+            target_q
+        )
+
+        self.optimizer.zero_grad()
+
+        loss.backward()
+
+        nn.utils.clip_grad_norm_(
+            self.online.parameters(),
+            max_norm=1.0
+        )
+
+        self.optimizer.step()
+
+        self.steps += 1
+
+        # Synchronize target network
+        if self.steps % TARGET_UPDATE_STEPS == 0:
+
+            self.target.load_state_dict(
+                self.online.state_dict()
+            )
+
+        return float(loss.item())
+
+
+MADDQN
+    def learn(self):
+
+        if len(self.memory) < BATCH_SIZE:
+
+            return None
+
+        sample = self.memory.sample(
+            BATCH_SIZE
+        )
+
+        states, actions, rewards, next_states, dones = sample
+
+        states = torch.as_tensor(
+            states,
+            dtype=torch.float32,
+            device=DEVICE
+        )
+
+        actions = torch.as_tensor(
+            actions,
+            dtype=torch.long,
+            device=DEVICE
+        ).reshape(-1, 1)
+
+        rewards = torch.as_tensor(
+            rewards,
+            dtype=torch.float32,
+            device=DEVICE
+        ).reshape(-1)
+
+        next_states = torch.as_tensor(
+            next_states,
+            dtype=torch.float32,
+            device=DEVICE
+        )
+
+        dones = torch.as_tensor(
+            dones,
+            dtype=torch.float32,
+            device=DEVICE
+        ).reshape(-1)
+
+        # Current Q-values
+        current_q = self.online(
+            states
+        ).gather(
+            1,
+            actions
+        ).squeeze(1)
+
+        # Double DQN target calculation
+        with torch.no_grad():
+
+            next_actions = self.online(
+                next_states
+            ).argmax(
+                dim=1,
+                keepdim=True
+            )
+
+            next_q = self.target(
+                next_states
+            ).gather(
+                1,
+                next_actions
+            ).squeeze(1)
+
+            target_q = (
+                rewards +
+                GAMMA * (1.0 - dones) * next_q
+            )
+
+        # Calculate loss
+        loss = self.loss_fn(
+            current_q,
+            target_q
+        )
+
+        self.optimizer.zero_grad()
+
+        loss.backward()
+
+        nn.utils.clip_grad_norm_(
+            self.online.parameters(),
+            max_norm=1.0
+        )
+
+        self.optimizer.step()
+
+        self.steps += 1
+
+        # Synchronize target network
+        if self.steps % TARGET_UPDATE_STEPS == 0:
+
+            self.target.load_state_dict(
+                self.online.state_dict()
+            )
+
+        return float(loss.item())
+
+
+2. AGENT INTERNAL ATTRIBUTES
+----------------------------------------------------------------------
+
+Ours
+epsilon           : 1.0
+optimizer         : Adam
+online            : RBFQNetwork
+target            : RBFQNetwork
+memory            : <__main__.ExperienceReplayBuffer object at 0x00000257C6CB1D10>
+steps             : 0
+
+GGN-MADDQN
+epsilon           : 1.0
+optimizer         : Adam
+online            : GGNQNetwork
+target            : GGNQNetwork
+memory            : <__main__.ExperienceReplayBuffer object at 0x00000257C6DB7F50>
+steps             : 0
+
+GCN-MADDQN
+epsilon           : 1.0
+optimizer         : Adam
+online            : GCNQNetwork
+target            : GCNQNetwork
+memory            : <__main__.ExperienceReplayBuffer object at 0x00000257C6DB7DD0>
+steps             : 0
+
+MADDQN
+epsilon           : 1.0
+optimizer         : Adam
+online            : DDQNQNetwork
+target            : DDQNQNetwork
+memory            : <__main__.ExperienceReplayBuffer object at 0x00000257C6DB5050>
+steps             : 0
+
+3. REPLAY BUFFER SAMPLE IMPLEMENTATION
+----------------------------------------------------------------------
+
+Ours
+    def sample(self, batch_size):
+
+        if len(self.memory) < batch_size:
+            raise ValueError(
+                "Insufficient experiences for sampling."
+            )
+
+        batch = random.sample(
+            self.memory,
+            batch_size
+        )
+
+        states, actions, rewards, next_states, dones = zip(
+            *batch
+        )
+
+        return (
+            np.asarray(states, dtype=np.float32),
+            np.asarray(actions, dtype=np.int64),
+            np.asarray(rewards, dtype=np.float32),
+            np.asarray(next_states, dtype=np.float32),
+            np.asarray(dones, dtype=np.float32)
+        )
+
+
+GGN-MADDQN
+    def sample(self, batch_size):
+
+        if len(self.memory) < batch_size:
+            raise ValueError(
+                "Insufficient experiences for sampling."
+            )
+
+        batch = random.sample(
+            self.memory,
+            batch_size
+        )
+
+        states, actions, rewards, next_states, dones = zip(
+            *batch
+        )
+
+        return (
+            np.asarray(states, dtype=np.float32),
+            np.asarray(actions, dtype=np.int64),
+            np.asarray(rewards, dtype=np.float32),
+            np.asarray(next_states, dtype=np.float32),
+            np.asarray(dones, dtype=np.float32)
+        )
+
+
+GCN-MADDQN
+    def sample(self, batch_size):
+
+        if len(self.memory) < batch_size:
+            raise ValueError(
+                "Insufficient experiences for sampling."
+            )
+
+        batch = random.sample(
+            self.memory,
+            batch_size
+        )
+
+        states, actions, rewards, next_states, dones = zip(
+            *batch
+        )
+
+        return (
+            np.asarray(states, dtype=np.float32),
+            np.asarray(actions, dtype=np.int64),
+            np.asarray(rewards, dtype=np.float32),
+            np.asarray(next_states, dtype=np.float32),
+            np.asarray(dones, dtype=np.float32)
+        )
+
+
+MADDQN
+    def sample(self, batch_size):
+
+        if len(self.memory) < batch_size:
+            raise ValueError(
+                "Insufficient experiences for sampling."
+            )
+
+        batch = random.sample(
+            self.memory,
+            batch_size
+        )
+
+        states, actions, rewards, next_states, dones = zip(
+            *batch
+        )
+
+        return (
+            np.asarray(states, dtype=np.float32),
+            np.asarray(actions, dtype=np.int64),
+            np.asarray(rewards, dtype=np.float32),
+            np.asarray(next_states, dtype=np.float32),
+            np.asarray(dones, dtype=np.float32)
+        )
+
+
+4. REPLAY BUFFER CAPACITY
+----------------------------------------------------------------------
+Ours           : 30 experiences
+GGN-MADDQN     : 30 experiences
+GCN-MADDQN     : 30 experiences
+MADDQN         : 30 experiences
+
+5. NETWORK AND OPTIMIZER VALIDATION
+----------------------------------------------------------------------
+
+Ours
+online: RBFQNetwork, parameters=17876
+target: RBFQNetwork, parameters=17876
+Optimizer: Adam
+Learning rate: 0.001
+
+GGN-MADDQN
+online: GGNQNetwork, parameters=23444
+target: GGNQNetwork, parameters=23444
+Optimizer: Adam
+Learning rate: 0.001
+
+GCN-MADDQN
+online: GCNQNetwork, parameters=19348
+target: GCNQNetwork, parameters=19348
+Optimizer: Adam
+Learning rate: 0.001
+
+MADDQN
+online: DDQNQNetwork, parameters=27732
+target: DDQNQNetwork, parameters=27732
+Optimizer: Adam
+Learning rate: 0.001
+
+6. TRAINING HISTORY VALIDATION
+----------------------------------------------------------------------
+Ours           : Invalid placeholder records removed=True
+Remaining genuine episode records: 0
+GGN-MADDQN     : Invalid placeholder records removed=True
+Remaining genuine episode records: 0
+GCN-MADDQN     : Invalid placeholder records removed=True
+Remaining genuine episode records: 0
+MADDQN         : Invalid placeholder records removed=True
+Remaining genuine episode records: 0
+
+======================================================================
+BLOCK 11.5 DIAGNOSTIC SUMMARY
+======================================================================
+Agents: 4
+Replay buffers: 4
+Model factories: 4
+
+Training history has been checked.
+No new training updates were executed.
+
+BLOCK 11.5 COMPLETED.
+======================================================================
+
+======================================================================
+BLOCK 12: TRAINING INTERFACE VALIDATION
+======================================================================
+
+1. ENVIRONMENT FUNCTIONS
+-----------------------------------------------------------------
+initialize_environment: (traffic_name, num_users, seed=42)
+generate_users: (num_users, traffic_name, seed=42)
+make_state: (user, odu)
+execute_agent_action: (odu, user, action_id)
+calculate_user_reward: (user)
+run_environment_episode: (traffic_name, num_users, seed=42)
+
+2. AGENT ACTION SELECTION
+-----------------------------------------------------------------
+
+Ours
+select_action: (state, explore=True)
+learn: ()
+decay_epsilon: ()
+
+GGN-MADDQN
+select_action: (state, explore=True)
+learn: ()
+decay_epsilon: ()
+
+GCN-MADDQN
+select_action: (state, explore=True)
+learn: ()
+decay_epsilon: ()
+
+MADDQN
+select_action: (state, explore=True)
+learn: ()
+decay_epsilon: ()
+
+3. REPLAY BUFFER INTERFACES
+-----------------------------------------------------------------
+
+Ours
+add: (state, action, reward, next_state, done)
+sample: (batch_size)
+Current transitions: 30
+
+GGN-MADDQN
+add: (state, action, reward, next_state, done)
+sample: (batch_size)
+Current transitions: 30
+
+GCN-MADDQN
+add: (state, action, reward, next_state, done)
+sample: (batch_size)
+Current transitions: 30
+
+MADDQN
+add: (state, action, reward, next_state, done)
+sample: (batch_size)
+Current transitions: 30
+
+4. ENVIRONMENT EPISODE RETURN STRUCTURE
+-----------------------------------------------------------------
+Returned fields:
+traffic_name: str
+num_users: int
+episode_reward: dictionary (['episode_reward', 'mean_throughput_satisfaction', 'service_success_probability', 'mean_resource_efficiency', 'mean_latency_score', 'mean_energy_score', 'mean_packet_loss_score', 'num_users'])
+odu_summary: dictionary (['allocated_rbs', 'remaining_rbs', 'allocated_bandwidth_mhz', 'requested_bandwidth_mhz', 'bandwidth_acceptance_ratio', 'total_power', 'throughput_mbps', 'transmission_latency_ms', 'energy_proxy_joules', 'users_requested', 'users_served', 'service_success_probability', 'rb_utilization'])
+user_results: DataFrame
+states: list, length=10
+users: list, length=10
+odu: ODU
+
+O-DU METRIC VALIDATION
+allocated_rbs                      : 10
+remaining_rbs                      : 90
+allocated_bandwidth_mhz            : 1.9999999999999998
+requested_bandwidth_mhz            : 1.9999999999999998
+bandwidth_acceptance_ratio         : 1.0
+total_power                        : 40.0
+throughput_mbps                    : 6.047164049240222
+transmission_latency_ms            : 9.584350546340807e-07
+energy_proxy_joules                : 0.04000000000000001
+users_requested                    : 10
+users_served                       : 10
+rb_utilization                     : 0.1
+
+Episode reward: {'episode_reward': 0.25, 'mean_throughput_satisfaction': 0.0, 'service_success_probability': 0.0, 'mean_resource_efficiency': 0.0, 'mean_latency_score': 1.0, 'mean_energy_score': 1.0, 'mean_packet_loss_score': 1.0, 'num_users': 10}
+
+5. TRAINING DATA CONFIGURATION
+-----------------------------------------------------------------
+Algorithms: 4
+Episodes: 500
+State dimension: 12
+Action dimension: 20
+Batch size: 64
+Learning rate: 0.001
+
+======================================================================
+BLOCK 12 VALIDATION COMPLETED
+======================================================================
+No agent weights modified.
+No replay-buffer entries added.
+No training updates executed.
+======================================================================
+
+===========================================================================
+BLOCK 13A: TRAINING INTERFACE INSPECTION
+===========================================================================
+
+----------------------------------------------------------------------
+FUNCTION: execute_agent_action
+----------------------------------------------------------------------
+Signature: (odu, user, action_id)
+def execute_agent_action(odu, user, action_id):
+
+    """
+    Execute one agent-selected action and return the
+    resulting reward and resource-allocation information.
+    """
+
+    # State before resource allocation.
+    state = make_state(user, odu)
+
+    # Execute the selected action.
+    allocation_results = allocate_user_with_action(
+        odu=odu,
+        user=user,
+        action_id=action_id
+    )
+
+    # Retrieve reward.
+    reward = allocation_results["reward"]
+
+    # State after allocation, using the updated O-DU resources.
+    next_state = make_state(user, odu)
+
+    # Determine whether the current allocation failed.
+    allocation_failed = (
+        allocation_results["allocated_rbs"] <= 0
+    )
+
+    return {
+
+        "state": state,
+
+        "action": int(action_id),
+
+        "reward": float(reward),
+
+        "next_state": next_state,
+
+        "allocation_results": allocation_results,
+
+        "allocation_failed": allocation_failed
+    }
+
+
+----------------------------------------------------------------------
+FUNCTION: calculate_user_reward
+----------------------------------------------------------------------
+Signature: (user)
+def calculate_user_reward(user):
+
+    traffic_name = user["traffic_name"]
+
+    # --------------------------------------------------------
+    # 1. Retrieve user and allocation information
+    # --------------------------------------------------------
+
+    demand_mbps = max(
+        float(user.get("demand_mbps", 0.0)),
+        REWARD_EPSILON
+    )
+
+    achieved_rate = max(
+        float(user.get("achieved_rate_mbps", 0.0)),
+        0.0
+    )
+
+    allocated_rbs = max(
+        float(user.get("allocated_rbs", 0.0)),
+        0.0
+    )
+
+    allocated_power = max(
+        float(user.get("allocated_power_w", 0.0)),
+        0.0
+    )
+
+    transmission_latency = max(
+        float(user.get("transmission_latency_ms", 0.0)),
+        0.0
+    )
+
+    energy = max(
+        float(user.get("energy_j", 0.0)),
+        0.0
+    )
+
+    packet_loss = np.clip(
+        float(user.get("packet_loss_fraction", 0.0)),
+        0.0,
+        1.0
+    )
+
+    served = bool(user.get("served", False))
+
+    # --------------------------------------------------------
+    # 2. Throughput satisfaction
+    # --------------------------------------------------------
+
+    throughput_satisfaction = np.clip(
+        achieved_rate / demand_mbps,
+        0.0,
+        1.0
+    )
+
+    # --------------------------------------------------------
+    # 3. Successful service delivery
+    # --------------------------------------------------------
+
+    service_success = float(
+        served and achieved_rate >= demand_mbps
+    )
+
+    # --------------------------------------------------------
+    # 4. Radio resource efficiency
+    # --------------------------------------------------------
+
+    # A user receiving no RBs has zero resource efficiency.
+    # Otherwise, efficiency is based on achieved throughput
+    # relative to the user's requested throughput per RB.
+
+    if allocated_rbs > 0:
+
+        requested_rate_per_rb = demand_mbps / max(
+            float(user.get("requested_rbs", allocated_rbs)),
+            1.0
+        )
+
+        achieved_rate_per_rb = achieved_rate / allocated_rbs
+
+        resource_efficiency = np.clip(
+            achieved_rate_per_rb /
+            max(requested_rate_per_rb, REWARD_EPSILON),
+            0.0,
+            1.0
+        )
+
+    else:
+        resource_efficiency = 0.0
+
+    # --------------------------------------------------------
+    # --------------------------------------------------------
+    # 5. Latency penalty
+    # --------------------------------------------------------
+
+    # Resolve traffic ID and label
+    if isinstance(traffic_name, (int, np.integer)):
+
+        traffic_id = int(traffic_name)
+
+    else:
+
+        traffic_label_input = str(traffic_name).strip().upper()
+
+        traffic_id = next(
+            (
+                tid
+                for tid, config in TRAFFIC_TYPES.items()
+                if config["name"].upper() == traffic_label_input
+            ),
+            None
+        )
+
+        if traffic_id is None:
+            raise ValueError(
+                f"Unknown traffic type: {traffic_name}"
+            )
+
+    if traffic_id not in TRAFFIC_TYPES:
+        raise ValueError(
+            f"Invalid traffic ID: {traffic_id}"
+        )
+
+    traffic_label = TRAFFIC_TYPES[traffic_id]["name"]
+
+    # Retrieve latency reference
+    latency_reference = QOS_NORMALIZATION[
+        traffic_label
+    ]["latency_ms"]
+
+    normalized_latency = np.clip(
+        transmission_latency /
+        max(float(latency_reference), REWARD_EPSILON),
+        0.0,
+        1.0
+    )
+
+    latency_score = 1.0 - normalized_latency
+    # --------------------------------------------------------
+    # 6. Energy penalty
+    # --------------------------------------------------------
+
+    # Maximum reference energy assumes maximum transmission
+    # power is consumed throughout one radio slot.
+
+    maximum_slot_energy = (
+        float(MAX_TX_POWER_W) *
+        float(SLOT_DURATION_SECONDS)
+    )
+
+    normalized_energy = np.clip(
+        energy /
+        max(maximum_slot_energy, REWARD_EPSILON),
+        0.0,
+        1.0
+    )
+
+    energy_score = float(
+        1.0 - normalized_energy
+    )
+    # --------------------------------------------------------
+    # 7. Packet loss penalty
+    # --------------------------------------------------------
+
+    packet_loss_reference = QOS_NORMALIZATION[
+        traffic_label
+    ]["packet_loss"]
+
+    normalized_packet_loss = np.clip(
+        packet_loss /
+        max(float(packet_loss_reference), REWARD_EPSILON),
+        0.0,
+        1.0
+    )
+
+    packet_loss_score = 1.0 - normalized_packet_loss
+
+    # --------------------------------------------------------
+    # 8. Calculate weighted reward
+    # --------------------------------------------------------
+
+    # --------------------------------------------------------
+    # 8. Calculate weighted reward
+    # --------------------------------------------------------
+
+    reward = (
+
+            REWARD_WEIGHTS["throughput"]
+            * throughput_satisfaction
+
+            + REWARD_WEIGHTS["service_success"]
+            * service_success
+
+            + REWARD_WEIGHTS["resource_efficiency"]
+            * resource_efficiency
+
+            + REWARD_WEIGHTS["latency"]
+            * latency_score
+
+            + REWARD_WEIGHTS["energy"]
+            * energy_score
+
+            + REWARD_WEIGHTS["packet_loss"]
+            * packet_loss_score
+    )
+
+    # --------------------------------------------------------
+    # 9. Return reward and its individual components
+    # --------------------------------------------------------
+
+    reward_details = {
+
+        "reward": reward,
+
+        "throughput_satisfaction": float(
+            throughput_satisfaction
+        ),
+
+        "service_success": float(
+            service_success
+        ),
+
+        "resource_efficiency": float(
+            resource_efficiency
+        ),
+
+        "latency_score": float(
+            latency_score
+        ),
+
+        "energy_score": float(
+            energy_score
+        ),
+
+        "packet_loss_score": float(
+            packet_loss_score
+        )
+    }
+
+    return reward_details
+
+
+----------------------------------------------------------------------
+FUNCTION: make_state
+----------------------------------------------------------------------
+Signature: (user, odu)
+def make_state(user, odu):
+
+    """
+
+    Construct a 12-dimensional state vector.
+
+    Input:
+        user: dataset-derived user dictionary
+        odu: current O-DU resource controller
+
+    Output:
+        float32 state vector of dimension 12
+
+    All four models use this same state representation.
+
+    """
+
+    # --------------------------------------------------------
+    # A. Traffic type one-hot encoding
+    # --------------------------------------------------------
+
+    traffic_id = int(user["traffic_type"])
+
+    if traffic_id not in TRAFFIC_TO_INDEX:
+
+        raise ValueError(
+
+            f"Unsupported traffic type: {traffic_id}"
+
+        )
+
+
+    traffic_one_hot = np.zeros(
+
+        NUM_TRAFFIC_TYPES,
+
+        dtype=np.float32
+
+    )
+
+
+    traffic_one_hot[
+
+        TRAFFIC_TO_INDEX[traffic_id]
+
+    ] = 1.0
+
+
+    # --------------------------------------------------------
+    # B. Dataset-derived traffic characteristics
+    # --------------------------------------------------------
+
+    demand = float(
+
+        user["demand_mbps"]
+
+    )
+
+
+    throughput = float(
+
+        user["observed_throughput_mbps"]
+
+    )
+
+
+    latency = float(
+
+        user["observed_latency_ms"]
+
+    )
+
+
+    packet_loss = float(
+
+        user["packet_loss"]
+
+    )
+
+
+    channel = float(
+
+        user["channel"]
+
+    )
+
+
+    bandwidth_utilization = float(
+
+        user["bandwidth_utilization"]
+
+    )
+
+
+    # --------------------------------------------------------
+    # C. Normalize traffic characteristics
+    # --------------------------------------------------------
+
+    demand_norm = np.clip(
+
+        demand / STATE_SCALES["demand"],
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    throughput_norm = np.clip(
+
+        throughput / STATE_SCALES["throughput"],
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    latency_norm = np.clip(
+
+        latency / STATE_SCALES["latency"],
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    packet_loss_norm = np.clip(
+
+        packet_loss,
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    channel_norm = np.clip(
+
+        channel,
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    bandwidth_util_norm = np.clip(
+
+        bandwidth_utilization,
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    # --------------------------------------------------------
+    # D. Current O-DU resource conditions
+    # --------------------------------------------------------
+
+    remaining_rb_fraction = (
+
+        odu.remaining_rbs /
+
+        max(odu.total_rbs, 1)
+
+    )
+
+
+    remaining_power_fraction = (
+
+        odu.remaining_power /
+
+        max(odu.power_budget, 1e-8)
+
+    )
+
+
+    remaining_bandwidth = (
+
+        odu.remaining_rbs *
+
+        odu.bandwidth_per_rb
+
+    )
+
+
+    remaining_bandwidth_fraction = (
+
+        remaining_bandwidth /
+
+        max(odu.total_bandwidth_mhz, 1e-8)
+
+    )
+
+
+    # --------------------------------------------------------
+    # E. Construct final state vector
+    # --------------------------------------------------------
+
+    state = np.concatenate([
+
+        traffic_one_hot,
+
+        np.asarray([
+
+            demand_norm,
+
+            throughput_norm,
+
+            latency_norm,
+
+            packet_loss_norm,
+
+            channel_norm,
+
+            bandwidth_util_norm,
+
+            remaining_rb_fraction,
+
+            remaining_power_fraction,
+
+            remaining_bandwidth_fraction
+
+        ], dtype=np.float32)
+
+    ])
+
+
+    state = np.nan_to_num(
+
+        state,
+
+        nan=0.0,
+
+        posinf=1.0,
+
+        neginf=0.0
+
+    )
+
+
+    state = np.clip(
+
+        state,
+
+        0.0,
+
+        1.0
+
+    )
+
+
+    return state.astype(np.float32)
+
+
+----------------------------------------------------------------------
+FUNCTION: initialize_environment
+----------------------------------------------------------------------
+Signature: (traffic_name, num_users, seed=42)
+def initialize_environment(
+
+    traffic_name,
+
+    num_users,
+
+    seed=SEED
+
+):
+
+    """
+
+    Initialize the same radio environment for any model.
+
+    """
+
+    oru = ORU(seed=seed)
+
+    odu = ODU()
+
+
+    users = oru.connect_users(
+
+        num_users=num_users,
+
+        traffic_name=traffic_name,
+
+        seed=seed
+
+    )
+
+
+    return {
+
+        "traffic_name": traffic_name,
+
+        "num_users": num_users,
+
+        "users": users,
+
+        "oru": oru,
+
+        "odu": odu
+
+    }
+
+
+----------------------------------------------------------------------
+FUNCTION: run_environment_episode
+----------------------------------------------------------------------
+Signature: (traffic_name, num_users, seed=42)
+def run_environment_episode(
+    traffic_name,
+    num_users,
+    seed=SEED
+):
+    """
+    Execute one radio-resource allocation episode.
+
+    All models use the same environment initialization,
+    user generation, O-DU allocation, and reward calculation.
+    """
+
+    # --------------------------------------------------------
+    # 1. Initialize the environment
+    # --------------------------------------------------------
+
+    environment = initialize_environment(
+        traffic_name=traffic_name,
+        num_users=num_users,
+        seed=seed
+    )
+
+    odu = environment["odu"]
+    users = environment["users"]
+
+    # --------------------------------------------------------
+    # 2. Initialize episode records
+    # --------------------------------------------------------
+
+    user_records = []
+    state_records = []
+
+    # --------------------------------------------------------
+    # 3. Process users and allocate radio resources
+    # --------------------------------------------------------
+
+    for user_index, user in enumerate(users):
+
+        # Capture the user's state before allocation.
+        state = make_state(user, odu)
+
+        state_records.append(state.copy())
+
+        # Allocate radio resources to the current user.
+        odu.allocate(user)
+
+        # Calculate the user's reward after allocation.
+        reward_details = calculate_user_reward(user)
+
+        # Store user-level allocation and reward information.
+        user_records.append({
+
+            "user_index": user_index,
+
+            "traffic_name": traffic_name,
+
+            "demand_mbps": user.get(
+                "demand_mbps", np.nan
+            ),
+
+            "achieved_rate_mbps": user.get(
+                "achieved_rate_mbps", np.nan
+            ),
+
+            "requested_rbs": user.get(
+                "requested_rbs", np.nan
+            ),
+
+            "allocated_rbs": user.get(
+                "allocated_rbs", np.nan
+            ),
+
+            "allocated_power_w": user.get(
+                "allocated_power_w", np.nan
+            ),
+
+            "transmission_latency_ms": user.get(
+                "transmission_latency_ms", np.nan
+            ),
+
+            "energy_j": user.get(
+                "energy_j", np.nan
+            ),
+
+            "packet_loss_fraction": user.get(
+                "packet_loss_fraction", np.nan
+            ),
+
+            "served": user.get(
+                "served", False
+            ),
+
+            "reward": reward_details["reward"],
+
+            "throughput_satisfaction":
+                reward_details["throughput_satisfaction"],
+
+            "service_success":
+                reward_details["service_success"],
+
+            "resource_efficiency":
+                reward_details["resource_efficiency"],
+
+            "latency_score":
+                reward_details["latency_score"],
+
+            "energy_score":
+                reward_details["energy_score"],
+
+            "packet_loss_score":
+                reward_details["packet_loss_score"]
+        })
+
+    # --------------------------------------------------------
+    # 4. Calculate episode-level reward
+    # --------------------------------------------------------
+
+    episode_reward = calculate_episode_reward(users)
+
+    # --------------------------------------------------------
+    # 5. Retrieve O-DU resource utilization statistics
+    # --------------------------------------------------------
+
+    odu_summary = odu.get_summary()
+
+    # --------------------------------------------------------
+    # 6. Convert user records into a DataFrame
+    # --------------------------------------------------------
+
+    user_results = pd.DataFrame(user_records)
+
+    # --------------------------------------------------------
+    # 7. Return all episode information
+    # --------------------------------------------------------
+
+    episode_results = {
+
+        "traffic_name": traffic_name,
+
+        "num_users": len(users),
+
+        "episode_reward": episode_reward,
+
+        "odu_summary": odu_summary,
+
+        "user_results": user_results,
+
+        "states": state_records,
+
+        "users": users,
+
+        "odu": odu
+    }
+
+    return episode_results
+
+
+===========================================================================
+O-DU ALLOCATION IMPLEMENTATION
+===========================================================================
+(self, user, requested_rbs=None, requested_power=None)
+    def allocate(
+
+        self,
+
+        user,
+
+        requested_rbs=None,
+
+        requested_power=None
+
+    ):
+
+        """
+
+        Allocate available RBs and power to a user.
+
+        """
+
+        if requested_rbs is None:
+
+            requested_rbs = user["requested_rbs"]
+
+
+        if requested_power is None:
+
+            requested_power = user["requested_power"]
+
+
+        requested_rbs = max(
+
+            0,
+
+            int(requested_rbs)
+
+        )
+
+
+        requested_power = max(
+
+            0.0,
+
+            float(requested_power)
+
+        )
+
+
+        # Record requested resources before allocation.
+
+        self.total_requested_rbs += requested_rbs
+
+        self.total_requested_bandwidth_mhz += (
+
+            requested_rbs * self.bandwidth_per_rb
+
+        )
+
+        self.users_requested += 1
+
+
+        # Enforce O-DU resource constraints.
+
+        allocated_rbs = min(
+
+            requested_rbs,
+
+            self.remaining_rbs
+
+        )
+
+
+        allocated_power = min(
+
+            requested_power,
+
+            self.remaining_power
+
+        )
+
+
+        if allocated_rbs == 0:
+
+            allocated_power = 0.0
+
+
+        # Calculate allocated bandwidth.
+
+        allocated_bandwidth = (
+
+            allocated_rbs * self.bandwidth_per_rb
+
+        )
+
+
+        # Dataset-driven channel quality.
+
+        channel = float(
+
+            np.clip(user["channel"], 0.0, 1.0)
+
+        )
+
+
+        spectral_efficiency = (
+
+            0.5 + 4.5 * channel
+
+        )
+
+
+        # Simplified power-dependent rate model.
+
+        power_factor = (
+
+            min(np.sqrt(allocated_power / 4.0), 2.0)
+
+            if allocated_power > 0
+
+            else 0.0
+
+        )
+
+
+        data_rate_mbps = (
+
+            allocated_bandwidth *
+
+            spectral_efficiency *
+
+            power_factor
+
+        )
+
+
+        # Transmission latency.
+
+        data_volume = float(
+
+            user["data_volume_mbits"]
+
+        )
+
+
+        if data_rate_mbps > 0:
+
+            transmission_latency_ms = (
+
+                data_volume / data_rate_mbps
+
+            ) * 1000.0
+
+        else:
+
+            transmission_latency_ms = np.nan
+
+
+        # Scheduling energy.
+
+        energy_proxy = (
+
+            allocated_power * SLOT_SECONDS
+
+        )
+
+
+        # Successful service.
+
+        served = (
+
+            allocated_rbs > 0 and
+
+            data_rate_mbps >= user["demand_mbps"]
+
+        )
+
+
+        # Update O-DU resource budgets.
+
+        self.remaining_rbs -= allocated_rbs
+
+        self.remaining_power -= allocated_power
+
+
+        # Accumulate scheduling statistics.
+
+        self.total_allocated_rbs += allocated_rbs
+
+        self.total_allocated_bandwidth_mhz += (
+
+            allocated_bandwidth
+
+        )
+
+        self.total_allocated_power += allocated_power
+
+        self.total_throughput_mbps += data_rate_mbps
+
+        self.total_energy_proxy += energy_proxy
+
+
+        if served:
+
+            self.users_served += 1
+
+
+        if np.isfinite(transmission_latency_ms):
+
+            self.user_latencies_ms.append(
+
+                transmission_latency_ms
+
+            )
+
+
+        result = {
+
+            "user_id": user["user_id"],
+
+            "requested_rbs": requested_rbs,
+
+            "allocated_rbs": allocated_rbs,
+
+            "requested_power": requested_power,
+
+            "allocated_power": allocated_power,
+
+            "bandwidth_mhz": allocated_bandwidth,
+
+            "data_rate_mbps": data_rate_mbps,
+
+            "throughput_mbps": data_rate_mbps,
+
+            "demand_mbps": user["demand_mbps"],
+
+            "transmission_latency_ms": transmission_latency_ms,
+
+            "energy_proxy": energy_proxy,
+
+            "served": bool(served),
+
+            "packet_loss": user["packet_loss"],
+
+            "traffic_name": user["traffic_name"]
+
+        }
+
+
+        self.user_results.append(result)
+
+
+        return result
+
+
+===========================================================================
+BLOCK 13A COMPLETED
+===========================================================================
+
+===========================================================================
+BLOCK 13B: ACTION AND EPISODE REWARD INSPECTION
+===========================================================================
+
+----------------------------------------------------------------------
+FUNCTION: allocate_user_with_action
+----------------------------------------------------------------------
+Signature: (odu, user, action_id)
+def allocate_user_with_action(odu, user, action_id):
+    """
+    Apply an RL-selected action to one user and execute
+    resource allocation through the existing ODU.allocate().
+    """
+
+    # --------------------------------------------------------
+    # 1. Preserve the original user requirements
+    # --------------------------------------------------------
+
+    original_requested_rbs = int(
+        user.get("requested_rbs", 0)
+    )
+
+    original_requested_power = float(
+        user.get("requested_power_w", 4.0)
+    )
+
+    # --------------------------------------------------------
+    # 2. Decode the selected RL action
+    # --------------------------------------------------------
+
+    allocation = calculate_action_allocation(
+        user,
+        action_id
+    )
+
+    action_requested_rbs = allocation[
+        "action_requested_rbs"
+    ]
+
+    action_requested_power = allocation[
+        "action_requested_power_w"
+    ]
+
+    # --------------------------------------------------------
+    # 3. Apply the action to the user's allocation request
+    # --------------------------------------------------------
+
+    user["requested_rbs"] = action_requested_rbs
+
+    user["requested_power_w"] = action_requested_power
+
+    user["selected_action"] = int(action_id)
+
+    user["action_rb_ratio"] = allocation["rb_ratio"]
+
+    user["action_power_w"] = action_requested_power
+
+    # --------------------------------------------------------
+    # 4. Execute O-DU resource allocation
+    # --------------------------------------------------------
+
+    try:
+
+        odu.allocate(user)
+
+    finally:
+
+        # Restore the original requirements.
+        # Keep the actual allocation results unchanged.
+
+        user["requested_rbs"] = original_requested_rbs
+
+        user["requested_power_w"] = original_requested_power
+
+    # --------------------------------------------------------
+    # 5. Calculate reward using the actual allocation results
+    # --------------------------------------------------------
+
+    reward_details = calculate_user_reward(user)
+
+    # --------------------------------------------------------
+    # 6. Return action and allocation information
+    # --------------------------------------------------------
+
+    return {
+
+        "action_id": int(action_id),
+
+        "action_requested_rbs": action_requested_rbs,
+
+        "action_requested_power_w": action_requested_power,
+
+        "allocated_rbs": user.get("allocated_rbs", 0),
+
+        "allocated_power_w": user.get(
+            "allocated_power_w", 0.0
+        ),
+
+        "achieved_rate_mbps": user.get(
+            "achieved_rate_mbps", 0.0
+        ),
+
+        "transmission_latency_ms": user.get(
+            "transmission_latency_ms", 0.0
+        ),
+
+        "energy_j": user.get("energy_j", 0.0),
+
+        "served": user.get("served", False),
+
+        "reward": reward_details["reward"],
+
+        "reward_details": reward_details
+    }
+
+
+----------------------------------------------------------------------
+FUNCTION: calculate_episode_reward
+----------------------------------------------------------------------
+Signature: (users)
+def calculate_episode_reward(users):
+
+    if not users:
+
+        return {
+            "episode_reward": 0.0,
+            "mean_throughput_satisfaction": 0.0,
+            "service_success_probability": 0.0,
+            "mean_resource_efficiency": 0.0,
+            "mean_latency_score": 0.0,
+            "mean_energy_score": 0.0,
+            "mean_packet_loss_score": 0.0,
+            "num_users": 0
+        }
+
+    reward_records = []
+
+    for user in users:
+
+        reward_details = calculate_user_reward(user)
+
+        reward_records.append(reward_details)
+
+    reward_df = pd.DataFrame(reward_records)
+
+    episode_results = {
+
+        "episode_reward": float(
+            reward_df["reward"].mean()
+        ),
+
+        "mean_throughput_satisfaction": float(
+            reward_df["throughput_satisfaction"].mean()
+        ),
+
+        "service_success_probability": float(
+            reward_df["service_success"].mean()
+        ),
+
+        "mean_resource_efficiency": float(
+            reward_df["resource_efficiency"].mean()
+        ),
+
+        "mean_latency_score": float(
+            reward_df["latency_score"].mean()
+        ),
+
+        "mean_energy_score": float(
+            reward_df["energy_score"].mean()
+        ),
+
+        "mean_packet_loss_score": float(
+            reward_df["packet_loss_score"].mean()
+        ),
+
+        "num_users": len(users)
+    }
+
+    return episode_results
+
+
+===========================================================================
+ACTION SPACE CONFIGURATION
+===========================================================================
+
+ACTION_DIM:
+20
+
+ACTION_TABLE:
+[{'action_id': 0, 'rb_ratio': 0.0, 'power_w': 1.0}, {'action_id': 1, 'rb_ratio': 0.0, 'power_w': 2.0}, {'action_id': 2, 'rb_ratio': 0.0, 'power_w': 3.0}, {'action_id': 3, 'rb_ratio': 0.0, 'power_w': 4.0}, {'action_id': 4, 'rb_ratio': 0.25, 'power_w': 1.0}, {'action_id': 5, 'rb_ratio': 0.25, 'power_w': 2.0}, {'action_id': 6, 'rb_ratio': 0.25, 'power_w': 3.0}, {'action_id': 7, 'rb_ratio': 0.25, 'power_w': 4.0}, {'action_id': 8, 'rb_ratio': 0.5, 'power_w': 1.0}, {'action_id': 9, 'rb_ratio': 0.5, 'power_w': 2.0}, {'action_id': 10, 'rb_ratio': 0.5, 'power_w': 3.0}, {'action_id': 11, 'rb_ratio': 0.5, 'power_w': 4.0}, {'action_id': 12, 'rb_ratio': 0.75, 'power_w': 1.0}, {'action_id': 13, 'rb_ratio': 0.75, 'power_w': 2.0}, {'action_id': 14, 'rb_ratio': 0.75, 'power_w': 3.0}, {'action_id': 15, 'rb_ratio': 0.75, 'power_w': 4.0}, {'action_id': 16, 'rb_ratio': 1.0, 'power_w': 1.0}, {'action_id': 17, 'rb_ratio': 1.0, 'power_w': 2.0}, {'action_id': 18, 'rb_ratio': 1.0, 'power_w': 3.0}, {'action_id': 19, 'rb_ratio': 1.0, 'power_w': 4.0}]
+
+===========================================================================
+O-DU RESET AND SUMMARY INTERFACES
+===========================================================================
+
+reset(self)
+    def reset(self):
+
+        """
+
+        Reset resource budgets for a new scheduling interval.
+
+        """
+
+        self.remaining_rbs = self.total_rbs
+
+        self.remaining_power = self.power_budget
+
+        self.total_allocated_rbs = 0
+
+        self.total_allocated_bandwidth_mhz = 0.0
+
+        self.total_allocated_power = 0.0
+
+        self.total_throughput_mbps = 0.0
+
+        self.total_energy_proxy = 0.0
+
+        self.total_requested_bandwidth_mhz = 0.0
+
+        self.total_requested_rbs = 0
+
+        self.users_requested = 0
+
+        self.users_served = 0
+
+        self.user_latencies_ms = []
+
+        self.user_computation_latencies_ms = []
+
+        self.user_results = []
+
+
+get_summary(self)
+    def get_summary(self):
+
+        """
+
+        Return aggregate scheduling-interval metrics.
+
+        """
+
+        mean_latency = (
+
+            float(np.mean(self.user_latencies_ms))
+
+            if self.user_latencies_ms
+
+            else np.nan
+
+        )
+
+
+        bandwidth_acceptance = (
+
+            self.total_allocated_bandwidth_mhz /
+
+            self.total_requested_bandwidth_mhz
+
+            if self.total_requested_bandwidth_mhz > 0
+
+            else 0.0
+
+        )
+
+
+        service_success_probability = (
+
+            self.users_served /
+
+            self.users_requested
+
+            if self.users_requested > 0
+
+            else 0.0
+
+        )
+
+
+        rb_utilization = (
+
+            self.total_allocated_rbs /
+
+            max(self.total_rbs, 1)
+
+        )
+
+
+        return {
+
+            "allocated_rbs": self.total_allocated_rbs,
+
+            "remaining_rbs": self.remaining_rbs,
+
+            "allocated_bandwidth_mhz":
+
+                self.total_allocated_bandwidth_mhz,
+
+            "requested_bandwidth_mhz":
+
+                self.total_requested_bandwidth_mhz,
+
+            "bandwidth_acceptance_ratio":
+
+                bandwidth_acceptance,
+
+            "total_power":
+
+                self.total_allocated_power,
+
+            "throughput_mbps":
+
+                self.total_throughput_mbps,
+
+            "transmission_latency_ms":
+
+                mean_latency,
+
+            "energy_proxy_joules":
+
+                self.total_energy_proxy,
+
+            "users_requested":
+
+                self.users_requested,
+
+            "users_served":
+
+                self.users_served,
+
+            "service_success_probability":
+
+                service_success_probability,
+
+            "rb_utilization":
+
+                rb_utilization
+
+        }
+
+
+===========================================================================
+BLOCK 13B COMPLETED
+===========================================================================
+
+===========================================================================
+ACTION EXECUTION FUNCTION
+===========================================================================
+Signature: (odu, user, action_id)
+
+FUNCTION SOURCE:
+
+def allocate_user_with_action(odu, user, action_id):
+    """
+    Apply an RL-selected action to one user and execute
+    resource allocation through the existing ODU.allocate().
+    """
+
+    # --------------------------------------------------------
+    # 1. Preserve the original user requirements
+    # --------------------------------------------------------
+
+    original_requested_rbs = int(
+        user.get("requested_rbs", 0)
+    )
+
+    original_requested_power = float(
+        user.get("requested_power_w", 4.0)
+    )
+
+    # --------------------------------------------------------
+    # 2. Decode the selected RL action
+    # --------------------------------------------------------
+
+    allocation = calculate_action_allocation(
+        user,
+        action_id
+    )
+
+    action_requested_rbs = allocation[
+        "action_requested_rbs"
+    ]
+
+    action_requested_power = allocation[
+        "action_requested_power_w"
+    ]
+
+    # --------------------------------------------------------
+    # 3. Apply the action to the user's allocation request
+    # --------------------------------------------------------
+
+    user["requested_rbs"] = action_requested_rbs
+
+    user["requested_power_w"] = action_requested_power
+
+    user["selected_action"] = int(action_id)
+
+    user["action_rb_ratio"] = allocation["rb_ratio"]
+
+    user["action_power_w"] = action_requested_power
+
+    # --------------------------------------------------------
+    # 4. Execute O-DU resource allocation
+    # --------------------------------------------------------
+
+    try:
+
+        odu.allocate(user)
+
+    finally:
+
+        # Restore the original requirements.
+        # Keep the actual allocation results unchanged.
+
+        user["requested_rbs"] = original_requested_rbs
+
+        user["requested_power_w"] = original_requested_power
+
+    # --------------------------------------------------------
+    # 5. Calculate reward using the actual allocation results
+    # --------------------------------------------------------
+
+    reward_details = calculate_user_reward(user)
+
+    # --------------------------------------------------------
+    # 6. Return action and allocation information
+    # --------------------------------------------------------
+
+    return {
+
+        "action_id": int(action_id),
+
+        "action_requested_rbs": action_requested_rbs,
+
+        "action_requested_power_w": action_requested_power,
+
+        "allocated_rbs": user.get("allocated_rbs", 0),
+
+        "allocated_power_w": user.get(
+            "allocated_power_w", 0.0
+        ),
+
+        "achieved_rate_mbps": user.get(
+            "achieved_rate_mbps", 0.0
+        ),
+
+        "transmission_latency_ms": user.get(
+            "transmission_latency_ms", 0.0
+        ),
+
+        "energy_j": user.get("energy_j", 0.0),
+
+        "served": user.get("served", False),
+
+        "reward": reward_details["reward"],
+
+        "reward_details": reward_details
+    }
+
+
+===========================================================================
+BLOCK 13C COMPLETED
+===========================================================================
+
+===========================================================================
+BLOCK 14A: TRAINING CONFIGURATION
+===========================================================================
+Traffic experiment IDs: [1, 2, 3]
+Traffic names: {1: 'TP1', 2: 'TP2', 3: 'TP3'}
+Traffic experiment IDs: [1, 2, 3]
+Traffic names: {1: 'TP1', 2: 'TP2', 3: 'TP3'}
+Models: ['Ours', 'GGN-MADDQN', 'GCN-MADDQN', 'MADDQN']
+Traffic types: {1: {'name': 'TP1', 'priority': 'High', 'description': 'High-priority traffic'}, 2: {'name': 'TP2', 'priority': 'Medium', 'description': 'Medium-priority traffic'}, 3: {'name': 'TP3', 'priority': 'Low', 'description': 'Low-priority traffic'}}
+Episodes per model/traffic: 500
+Users per episode: 100
+State dimension: 12
+Action dimension: 20
+Batch size: 64
+Number of plotting metrics: 13
+
+BLOCK 14A COMPLETED
+
+BLOCK 14B COMPLETED
+
+===========================================================================
+BLOCK 14C: STARTING INDEPENDENT MODEL TRAINING
+===========================================================================
+
+BLOCK 14C TRAINING FUNCTION DEFINED
+
+===========================================================================
+BLOCK 14D: FOUR-MODEL / THREE-TRAFFIC TRAINING
+===========================================================================
+
+
+###########################################################################
+STARTING TRAFFIC EXPERIMENT: 1
+###########################################################################
+
+---------------------------------------------------------------------------
+TRAINING: Ours | 1
+---------------------------------------------------------------------------
+Ours         | 1 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.1145 Mbps | Served:    0/ 100 | Loss: 0.036050 | Epsilon: 0.99500 | Updates: 37
+Ours         | 1 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.2100 Mbps | Served:    0/ 100 | Loss: 0.050533 | Epsilon: 0.88222 | Updates: 100
+Ours         | 1 | Episode   50/500 | Reward:    25.0000 | Throughput:    4.0652 Mbps | Served:    0/ 100 | Loss: 0.084473 | Epsilon: 0.77831 | Updates: 100
+Ours         | 1 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.5497 Mbps | Served:    0/ 100 | Loss: 0.107481 | Epsilon: 0.68664 | Updates: 100
+Ours         | 1 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.1129 Mbps | Served:    0/ 100 | Loss: 0.129287 | Epsilon: 0.60577 | Updates: 100
+Ours         | 1 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.5042 Mbps | Served:    0/ 100 | Loss: 0.126510 | Epsilon: 0.53442 | Updates: 100
+Ours         | 1 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.4770 Mbps | Served:    0/ 100 | Loss: 0.129718 | Epsilon: 0.47148 | Updates: 100
+Ours         | 1 | Episode  175/500 | Reward:    25.0000 | Throughput:    4.9275 Mbps | Served:    0/ 100 | Loss: 0.124715 | Epsilon: 0.41595 | Updates: 100
+Ours         | 1 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.2248 Mbps | Served:    0/ 100 | Loss: 0.200104 | Epsilon: 0.36696 | Updates: 100
+Ours         | 1 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.9711 Mbps | Served:    0/ 100 | Loss: 0.140033 | Epsilon: 0.32374 | Updates: 100
+Ours         | 1 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.8561 Mbps | Served:    0/ 100 | Loss: 0.182431 | Epsilon: 0.28561 | Updates: 100
+Ours         | 1 | Episode  275/500 | Reward:    25.0000 | Throughput:    6.0606 Mbps | Served:    0/ 100 | Loss: 0.170114 | Epsilon: 0.25197 | Updates: 100
+Ours         | 1 | Episode  300/500 | Reward:    25.0000 | Throughput:    4.3267 Mbps | Served:    0/ 100 | Loss: 0.149449 | Epsilon: 0.22229 | Updates: 100
+Ours         | 1 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.9718 Mbps | Served:    0/ 100 | Loss: 0.162006 | Epsilon: 0.19611 | Updates: 100
+Ours         | 1 | Episode  350/500 | Reward:    25.0000 | Throughput:    4.2734 Mbps | Served:    0/ 100 | Loss: 0.163129 | Epsilon: 0.17301 | Updates: 100
+Ours         | 1 | Episode  375/500 | Reward:    25.0000 | Throughput:    4.8063 Mbps | Served:    0/ 100 | Loss: 0.182834 | Epsilon: 0.15264 | Updates: 100
+Ours         | 1 | Episode  400/500 | Reward:    25.0000 | Throughput:    4.5043 Mbps | Served:    0/ 100 | Loss: 0.193031 | Epsilon: 0.13466 | Updates: 100
+Ours         | 1 | Episode  425/500 | Reward:    25.0000 | Throughput:    4.1751 Mbps | Served:    0/ 100 | Loss: 0.188003 | Epsilon: 0.11880 | Updates: 100
+Ours         | 1 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.2551 Mbps | Served:    0/ 100 | Loss: 0.196815 | Epsilon: 0.10481 | Updates: 100
+Ours         | 1 | Episode  475/500 | Reward:    25.0000 | Throughput:    7.0234 Mbps | Served:    0/ 100 | Loss: 0.176599 | Epsilon: 0.09246 | Updates: 100
+Ours         | 1 | Episode  500/500 | Reward:    25.0000 | Throughput:    6.9473 Mbps | Served:    0/ 100 | Loss: 0.195734 | Epsilon: 0.08157 | Updates: 100
+
+Completed: Ours | 1
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: GGN-MADDQN | 1
+---------------------------------------------------------------------------
+GGN-MADDQN   | 1 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.1145 Mbps | Served:    0/ 100 | Loss: 0.013112 | Epsilon: 0.99500 | Updates: 37
+GGN-MADDQN   | 1 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.2100 Mbps | Served:    0/ 100 | Loss: 0.055435 | Epsilon: 0.88222 | Updates: 100
+GGN-MADDQN   | 1 | Episode   50/500 | Reward:    25.0000 | Throughput:    4.0652 Mbps | Served:    0/ 100 | Loss: 0.090011 | Epsilon: 0.77831 | Updates: 100
+GGN-MADDQN   | 1 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.5814 Mbps | Served:    0/ 100 | Loss: 0.124786 | Epsilon: 0.68664 | Updates: 100
+GGN-MADDQN   | 1 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.1415 Mbps | Served:    0/ 100 | Loss: 0.154170 | Epsilon: 0.60577 | Updates: 100
+GGN-MADDQN   | 1 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.1394 Mbps | Served:    0/ 100 | Loss: 0.149976 | Epsilon: 0.53442 | Updates: 100
+GGN-MADDQN   | 1 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3973 Mbps | Served:    0/ 100 | Loss: 0.171651 | Epsilon: 0.47148 | Updates: 100
+GGN-MADDQN   | 1 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.1118 Mbps | Served:    0/ 100 | Loss: 0.167790 | Epsilon: 0.41595 | Updates: 100
+GGN-MADDQN   | 1 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.4382 Mbps | Served:    0/ 100 | Loss: 0.237457 | Epsilon: 0.36696 | Updates: 100
+GGN-MADDQN   | 1 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.4461 Mbps | Served:    0/ 100 | Loss: 0.173855 | Epsilon: 0.32374 | Updates: 100
+GGN-MADDQN   | 1 | Episode  250/500 | Reward:    25.0000 | Throughput:    6.0054 Mbps | Served:    0/ 100 | Loss: 0.254208 | Epsilon: 0.28561 | Updates: 100
+GGN-MADDQN   | 1 | Episode  275/500 | Reward:    25.0000 | Throughput:    4.9528 Mbps | Served:    0/ 100 | Loss: 0.221169 | Epsilon: 0.25197 | Updates: 100
+GGN-MADDQN   | 1 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.3000 Mbps | Served:    0/ 100 | Loss: 0.193885 | Epsilon: 0.22229 | Updates: 100
+GGN-MADDQN   | 1 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.9718 Mbps | Served:    0/ 100 | Loss: 0.212013 | Epsilon: 0.19611 | Updates: 100
+GGN-MADDQN   | 1 | Episode  350/500 | Reward:    25.0000 | Throughput:    5.0669 Mbps | Served:    0/ 100 | Loss: 0.203113 | Epsilon: 0.17301 | Updates: 100
+GGN-MADDQN   | 1 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.8352 Mbps | Served:    0/ 100 | Loss: 0.215666 | Epsilon: 0.15264 | Updates: 100
+GGN-MADDQN   | 1 | Episode  400/500 | Reward:    25.0000 | Throughput:    3.7862 Mbps | Served:    0/ 100 | Loss: 0.228759 | Epsilon: 0.13466 | Updates: 100
+GGN-MADDQN   | 1 | Episode  425/500 | Reward:    25.0000 | Throughput:    4.2792 Mbps | Served:    0/ 100 | Loss: 0.209137 | Epsilon: 0.11880 | Updates: 100
+GGN-MADDQN   | 1 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.2551 Mbps | Served:    0/ 100 | Loss: 0.219003 | Epsilon: 0.10481 | Updates: 100
+GGN-MADDQN   | 1 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.6505 Mbps | Served:    0/ 100 | Loss: 0.189518 | Epsilon: 0.09246 | Updates: 100
+GGN-MADDQN   | 1 | Episode  500/500 | Reward:    25.0000 | Throughput:    6.3987 Mbps | Served:    0/ 100 | Loss: 0.219812 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GGN-MADDQN | 1
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: GCN-MADDQN | 1
+---------------------------------------------------------------------------
+GCN-MADDQN   | 1 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.1145 Mbps | Served:    0/ 100 | Loss: 0.017907 | Epsilon: 0.99500 | Updates: 37
+GCN-MADDQN   | 1 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.2100 Mbps | Served:    0/ 100 | Loss: 0.055514 | Epsilon: 0.88222 | Updates: 100
+GCN-MADDQN   | 1 | Episode   50/500 | Reward:    25.0000 | Throughput:    4.0652 Mbps | Served:    0/ 100 | Loss: 0.090662 | Epsilon: 0.77831 | Updates: 100
+GCN-MADDQN   | 1 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.5814 Mbps | Served:    0/ 100 | Loss: 0.117856 | Epsilon: 0.68664 | Updates: 100
+GCN-MADDQN   | 1 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.1415 Mbps | Served:    0/ 100 | Loss: 0.128166 | Epsilon: 0.60577 | Updates: 100
+GCN-MADDQN   | 1 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.6447 Mbps | Served:    0/ 100 | Loss: 0.120254 | Epsilon: 0.53442 | Updates: 100
+GCN-MADDQN   | 1 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3491 Mbps | Served:    0/ 100 | Loss: 0.121590 | Epsilon: 0.47148 | Updates: 100
+GCN-MADDQN   | 1 | Episode  175/500 | Reward:    25.0000 | Throughput:    4.4968 Mbps | Served:    0/ 100 | Loss: 0.117748 | Epsilon: 0.41595 | Updates: 100
+GCN-MADDQN   | 1 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.4382 Mbps | Served:    0/ 100 | Loss: 0.197942 | Epsilon: 0.36696 | Updates: 100
+GCN-MADDQN   | 1 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.5253 Mbps | Served:    0/ 100 | Loss: 0.146087 | Epsilon: 0.32374 | Updates: 100
+GCN-MADDQN   | 1 | Episode  250/500 | Reward:    25.0000 | Throughput:    6.2546 Mbps | Served:    0/ 100 | Loss: 0.178595 | Epsilon: 0.28561 | Updates: 100
+GCN-MADDQN   | 1 | Episode  275/500 | Reward:    25.0000 | Throughput:    4.8734 Mbps | Served:    0/ 100 | Loss: 0.169844 | Epsilon: 0.25197 | Updates: 100
+GCN-MADDQN   | 1 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.0585 Mbps | Served:    0/ 100 | Loss: 0.147677 | Epsilon: 0.22229 | Updates: 100
+GCN-MADDQN   | 1 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.0060 Mbps | Served:    0/ 100 | Loss: 0.162614 | Epsilon: 0.19611 | Updates: 100
+GCN-MADDQN   | 1 | Episode  350/500 | Reward:    25.0000 | Throughput:    5.1203 Mbps | Served:    0/ 100 | Loss: 0.171187 | Epsilon: 0.17301 | Updates: 100
+GCN-MADDQN   | 1 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.5808 Mbps | Served:    0/ 100 | Loss: 0.186100 | Epsilon: 0.15264 | Updates: 100
+GCN-MADDQN   | 1 | Episode  400/500 | Reward:    25.0000 | Throughput:    4.3569 Mbps | Served:    0/ 100 | Loss: 0.185833 | Epsilon: 0.13466 | Updates: 100
+GCN-MADDQN   | 1 | Episode  425/500 | Reward:    25.0000 | Throughput:    4.9937 Mbps | Served:    0/ 100 | Loss: 0.181368 | Epsilon: 0.11880 | Updates: 100
+GCN-MADDQN   | 1 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.8074 Mbps | Served:    0/ 100 | Loss: 0.199445 | Epsilon: 0.10481 | Updates: 100
+GCN-MADDQN   | 1 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.9257 Mbps | Served:    0/ 100 | Loss: 0.181783 | Epsilon: 0.09246 | Updates: 100
+GCN-MADDQN   | 1 | Episode  500/500 | Reward:    25.0000 | Throughput:    7.4698 Mbps | Served:    0/ 100 | Loss: 0.209148 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GCN-MADDQN | 1
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: MADDQN | 1
+---------------------------------------------------------------------------
+MADDQN       | 1 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.1145 Mbps | Served:    0/ 100 | Loss: 0.014166 | Epsilon: 0.99500 | Updates: 37
+MADDQN       | 1 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.2100 Mbps | Served:    0/ 100 | Loss: 0.076882 | Epsilon: 0.88222 | Updates: 100
+MADDQN       | 1 | Episode   50/500 | Reward:    25.0000 | Throughput:    4.0652 Mbps | Served:    0/ 100 | Loss: 0.176626 | Epsilon: 0.77831 | Updates: 100
+MADDQN       | 1 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.5814 Mbps | Served:    0/ 100 | Loss: 0.196028 | Epsilon: 0.68664 | Updates: 100
+MADDQN       | 1 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.1415 Mbps | Served:    0/ 100 | Loss: 0.218633 | Epsilon: 0.60577 | Updates: 100
+MADDQN       | 1 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.1394 Mbps | Served:    0/ 100 | Loss: 0.201503 | Epsilon: 0.53442 | Updates: 100
+MADDQN       | 1 | Episode  150/500 | Reward:    25.0000 | Throughput:    4.9738 Mbps | Served:    0/ 100 | Loss: 0.205486 | Epsilon: 0.47148 | Updates: 100
+MADDQN       | 1 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.4282 Mbps | Served:    0/ 100 | Loss: 0.191881 | Epsilon: 0.41595 | Updates: 100
+MADDQN       | 1 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.4382 Mbps | Served:    0/ 100 | Loss: 0.249812 | Epsilon: 0.36696 | Updates: 100
+MADDQN       | 1 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.8140 Mbps | Served:    0/ 100 | Loss: 0.187726 | Epsilon: 0.32374 | Updates: 100
+MADDQN       | 1 | Episode  250/500 | Reward:    25.0000 | Throughput:    4.5000 Mbps | Served:    0/ 100 | Loss: 0.216754 | Epsilon: 0.28561 | Updates: 100
+MADDQN       | 1 | Episode  275/500 | Reward:    25.0000 | Throughput:    6.6099 Mbps | Served:    0/ 100 | Loss: 0.231231 | Epsilon: 0.25197 | Updates: 100
+MADDQN       | 1 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.8077 Mbps | Served:    0/ 100 | Loss: 0.204205 | Epsilon: 0.22229 | Updates: 100
+MADDQN       | 1 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.9718 Mbps | Served:    0/ 100 | Loss: 0.198623 | Epsilon: 0.19611 | Updates: 100
+MADDQN       | 1 | Episode  350/500 | Reward:    25.0000 | Throughput:    4.4621 Mbps | Served:    0/ 100 | Loss: 0.218218 | Epsilon: 0.17301 | Updates: 100
+MADDQN       | 1 | Episode  375/500 | Reward:    25.0000 | Throughput:    4.8063 Mbps | Served:    0/ 100 | Loss: 0.227031 | Epsilon: 0.15264 | Updates: 100
+MADDQN       | 1 | Episode  400/500 | Reward:    25.0000 | Throughput:    4.8716 Mbps | Served:    0/ 100 | Loss: 0.194967 | Epsilon: 0.13466 | Updates: 100
+MADDQN       | 1 | Episode  425/500 | Reward:    25.0000 | Throughput:    4.9937 Mbps | Served:    0/ 100 | Loss: 0.211707 | Epsilon: 0.11880 | Updates: 100
+MADDQN       | 1 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.2846 Mbps | Served:    0/ 100 | Loss: 0.210329 | Epsilon: 0.10481 | Updates: 100
+MADDQN       | 1 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.9257 Mbps | Served:    0/ 100 | Loss: 0.197302 | Epsilon: 0.09246 | Updates: 100
+MADDQN       | 1 | Episode  500/500 | Reward:    25.0000 | Throughput:    6.5171 Mbps | Served:    0/ 100 | Loss: 0.209482 | Epsilon: 0.08157 | Updates: 100
+
+Completed: MADDQN | 1
+Total episodes: 500
+Total learning updates: 49937
+
+1 EXPERIMENT COMPLETED
+
+
+###########################################################################
+STARTING TRAFFIC EXPERIMENT: 2
+###########################################################################
+
+---------------------------------------------------------------------------
+TRAINING: Ours | 2
+---------------------------------------------------------------------------
+Ours         | 2 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.2567 Mbps | Served:    0/ 100 | Loss: 0.034407 | Epsilon: 0.99500 | Updates: 37
+Ours         | 2 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.3712 Mbps | Served:    0/ 100 | Loss: 0.038523 | Epsilon: 0.88222 | Updates: 100
+Ours         | 2 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.3991 Mbps | Served:    0/ 100 | Loss: 0.068457 | Epsilon: 0.77831 | Updates: 100
+Ours         | 2 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.4372 Mbps | Served:    0/ 100 | Loss: 0.113649 | Epsilon: 0.68664 | Updates: 100
+Ours         | 2 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.3334 Mbps | Served:    0/ 100 | Loss: 0.122170 | Epsilon: 0.60577 | Updates: 100
+Ours         | 2 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.1889 Mbps | Served:    0/ 100 | Loss: 0.149833 | Epsilon: 0.53442 | Updates: 100
+Ours         | 2 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.2932 Mbps | Served:    0/ 100 | Loss: 0.171431 | Epsilon: 0.47148 | Updates: 100
+Ours         | 2 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.7436 Mbps | Served:    0/ 100 | Loss: 0.148874 | Epsilon: 0.41595 | Updates: 100
+Ours         | 2 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.1515 Mbps | Served:    0/ 100 | Loss: 0.176182 | Epsilon: 0.36696 | Updates: 100
+Ours         | 2 | Episode  225/500 | Reward:    25.0000 | Throughput:    5.7110 Mbps | Served:    0/ 100 | Loss: 0.171321 | Epsilon: 0.32374 | Updates: 100
+Ours         | 2 | Episode  250/500 | Reward:    25.0000 | Throughput:    6.9383 Mbps | Served:    0/ 100 | Loss: 0.146180 | Epsilon: 0.28561 | Updates: 100
+Ours         | 2 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.0171 Mbps | Served:    0/ 100 | Loss: 0.152230 | Epsilon: 0.25197 | Updates: 100
+Ours         | 2 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.2944 Mbps | Served:    0/ 100 | Loss: 0.146148 | Epsilon: 0.22229 | Updates: 100
+Ours         | 2 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.7211 Mbps | Served:    0/ 100 | Loss: 0.163764 | Epsilon: 0.19611 | Updates: 100
+Ours         | 2 | Episode  350/500 | Reward:    25.0000 | Throughput:    5.2564 Mbps | Served:    0/ 100 | Loss: 0.174352 | Epsilon: 0.17301 | Updates: 100
+Ours         | 2 | Episode  375/500 | Reward:    25.0000 | Throughput:    6.0574 Mbps | Served:    0/ 100 | Loss: 0.212761 | Epsilon: 0.15264 | Updates: 100
+Ours         | 2 | Episode  400/500 | Reward:    25.0000 | Throughput:    5.0754 Mbps | Served:    0/ 100 | Loss: 0.194634 | Epsilon: 0.13466 | Updates: 100
+Ours         | 2 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.3416 Mbps | Served:    0/ 100 | Loss: 0.193272 | Epsilon: 0.11880 | Updates: 100
+Ours         | 2 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.5176 Mbps | Served:    0/ 100 | Loss: 0.213947 | Epsilon: 0.10481 | Updates: 100
+Ours         | 2 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.1766 Mbps | Served:    0/ 100 | Loss: 0.154835 | Epsilon: 0.09246 | Updates: 100
+Ours         | 2 | Episode  500/500 | Reward:    25.0000 | Throughput:    4.5937 Mbps | Served:    0/ 100 | Loss: 0.165059 | Epsilon: 0.08157 | Updates: 100
+
+Completed: Ours | 2
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: GGN-MADDQN | 2
+---------------------------------------------------------------------------
+GGN-MADDQN   | 2 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.2567 Mbps | Served:    0/ 100 | Loss: 0.017495 | Epsilon: 0.99500 | Updates: 37
+GGN-MADDQN   | 2 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.5182 Mbps | Served:    0/ 100 | Loss: 0.033674 | Epsilon: 0.88222 | Updates: 100
+GGN-MADDQN   | 2 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.6151 Mbps | Served:    0/ 100 | Loss: 0.070411 | Epsilon: 0.77831 | Updates: 100
+GGN-MADDQN   | 2 | Episode   75/500 | Reward:    25.0000 | Throughput:    3.6336 Mbps | Served:    0/ 100 | Loss: 0.114430 | Epsilon: 0.68664 | Updates: 100
+GGN-MADDQN   | 2 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.5859 Mbps | Served:    0/ 100 | Loss: 0.113512 | Epsilon: 0.60577 | Updates: 100
+GGN-MADDQN   | 2 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.2358 Mbps | Served:    0/ 100 | Loss: 0.153497 | Epsilon: 0.53442 | Updates: 100
+GGN-MADDQN   | 2 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3296 Mbps | Served:    0/ 100 | Loss: 0.190340 | Epsilon: 0.47148 | Updates: 100
+GGN-MADDQN   | 2 | Episode  175/500 | Reward:    25.0000 | Throughput:    6.4322 Mbps | Served:    0/ 100 | Loss: 0.163402 | Epsilon: 0.41595 | Updates: 100
+GGN-MADDQN   | 2 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.2537 Mbps | Served:    0/ 100 | Loss: 0.189259 | Epsilon: 0.36696 | Updates: 100
+GGN-MADDQN   | 2 | Episode  225/500 | Reward:    25.0000 | Throughput:    6.0600 Mbps | Served:    0/ 100 | Loss: 0.167337 | Epsilon: 0.32374 | Updates: 100
+GGN-MADDQN   | 2 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.9349 Mbps | Served:    0/ 100 | Loss: 0.151595 | Epsilon: 0.28561 | Updates: 100
+GGN-MADDQN   | 2 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.6633 Mbps | Served:    0/ 100 | Loss: 0.153194 | Epsilon: 0.25197 | Updates: 100
+GGN-MADDQN   | 2 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.6273 Mbps | Served:    0/ 100 | Loss: 0.170289 | Epsilon: 0.22229 | Updates: 100
+GGN-MADDQN   | 2 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.9634 Mbps | Served:    0/ 100 | Loss: 0.169845 | Epsilon: 0.19611 | Updates: 100
+GGN-MADDQN   | 2 | Episode  350/500 | Reward:    25.0000 | Throughput:    6.0251 Mbps | Served:    0/ 100 | Loss: 0.190037 | Epsilon: 0.17301 | Updates: 100
+GGN-MADDQN   | 2 | Episode  375/500 | Reward:    25.0000 | Throughput:    6.2723 Mbps | Served:    0/ 100 | Loss: 0.221813 | Epsilon: 0.15264 | Updates: 100
+GGN-MADDQN   | 2 | Episode  400/500 | Reward:    25.0000 | Throughput:    5.0754 Mbps | Served:    0/ 100 | Loss: 0.221103 | Epsilon: 0.13466 | Updates: 100
+GGN-MADDQN   | 2 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.5034 Mbps | Served:    0/ 100 | Loss: 0.219635 | Epsilon: 0.11880 | Updates: 100
+GGN-MADDQN   | 2 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.7625 Mbps | Served:    0/ 100 | Loss: 0.224143 | Epsilon: 0.10481 | Updates: 100
+GGN-MADDQN   | 2 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.3842 Mbps | Served:    0/ 100 | Loss: 0.171320 | Epsilon: 0.09246 | Updates: 100
+GGN-MADDQN   | 2 | Episode  500/500 | Reward:    25.0000 | Throughput:    3.6172 Mbps | Served:    0/ 100 | Loss: 0.170022 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GGN-MADDQN | 2
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: GCN-MADDQN | 2
+---------------------------------------------------------------------------
+GCN-MADDQN   | 2 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.2567 Mbps | Served:    0/ 100 | Loss: 0.018228 | Epsilon: 0.99500 | Updates: 37
+GCN-MADDQN   | 2 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.5182 Mbps | Served:    0/ 100 | Loss: 0.042496 | Epsilon: 0.88222 | Updates: 100
+GCN-MADDQN   | 2 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.6151 Mbps | Served:    0/ 100 | Loss: 0.079063 | Epsilon: 0.77831 | Updates: 100
+GCN-MADDQN   | 2 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.3720 Mbps | Served:    0/ 100 | Loss: 0.124285 | Epsilon: 0.68664 | Updates: 100
+GCN-MADDQN   | 2 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.9648 Mbps | Served:    0/ 100 | Loss: 0.136774 | Epsilon: 0.60577 | Updates: 100
+GCN-MADDQN   | 2 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.0385 Mbps | Served:    0/ 100 | Loss: 0.170027 | Epsilon: 0.53442 | Updates: 100
+GCN-MADDQN   | 2 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.8321 Mbps | Served:    0/ 100 | Loss: 0.192280 | Epsilon: 0.47148 | Updates: 100
+GCN-MADDQN   | 2 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.1394 Mbps | Served:    0/ 100 | Loss: 0.154962 | Epsilon: 0.41595 | Updates: 100
+GCN-MADDQN   | 2 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.2087 Mbps | Served:    0/ 100 | Loss: 0.208697 | Epsilon: 0.36696 | Updates: 100
+GCN-MADDQN   | 2 | Episode  225/500 | Reward:    25.0000 | Throughput:    5.9706 Mbps | Served:    0/ 100 | Loss: 0.185979 | Epsilon: 0.32374 | Updates: 100
+GCN-MADDQN   | 2 | Episode  250/500 | Reward:    25.0000 | Throughput:    7.4541 Mbps | Served:    0/ 100 | Loss: 0.176386 | Epsilon: 0.28561 | Updates: 100
+GCN-MADDQN   | 2 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.2494 Mbps | Served:    0/ 100 | Loss: 0.190255 | Epsilon: 0.25197 | Updates: 100
+GCN-MADDQN   | 2 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.6110 Mbps | Served:    0/ 100 | Loss: 0.172774 | Epsilon: 0.22229 | Updates: 100
+GCN-MADDQN   | 2 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.8544 Mbps | Served:    0/ 100 | Loss: 0.174638 | Epsilon: 0.19611 | Updates: 100
+GCN-MADDQN   | 2 | Episode  350/500 | Reward:    25.0000 | Throughput:    6.5933 Mbps | Served:    0/ 100 | Loss: 0.193664 | Epsilon: 0.17301 | Updates: 100
+GCN-MADDQN   | 2 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.7892 Mbps | Served:    0/ 100 | Loss: 0.233610 | Epsilon: 0.15264 | Updates: 100
+GCN-MADDQN   | 2 | Episode  400/500 | Reward:    25.0000 | Throughput:    5.7990 Mbps | Served:    0/ 100 | Loss: 0.227023 | Epsilon: 0.13466 | Updates: 100
+GCN-MADDQN   | 2 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.0708 Mbps | Served:    0/ 100 | Loss: 0.217280 | Epsilon: 0.11880 | Updates: 100
+GCN-MADDQN   | 2 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.7556 Mbps | Served:    0/ 100 | Loss: 0.229791 | Epsilon: 0.10481 | Updates: 100
+GCN-MADDQN   | 2 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.4135 Mbps | Served:    0/ 100 | Loss: 0.160909 | Epsilon: 0.09246 | Updates: 100
+GCN-MADDQN   | 2 | Episode  500/500 | Reward:    25.0000 | Throughput:    3.8910 Mbps | Served:    0/ 100 | Loss: 0.159388 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GCN-MADDQN | 2
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: MADDQN | 2
+---------------------------------------------------------------------------
+MADDQN       | 2 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.2567 Mbps | Served:    0/ 100 | Loss: 0.024890 | Epsilon: 0.99500 | Updates: 37
+MADDQN       | 2 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.3712 Mbps | Served:    0/ 100 | Loss: 0.034208 | Epsilon: 0.88222 | Updates: 100
+MADDQN       | 2 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.6151 Mbps | Served:    0/ 100 | Loss: 0.091553 | Epsilon: 0.77831 | Updates: 100
+MADDQN       | 2 | Episode   75/500 | Reward:    25.0000 | Throughput:    3.6336 Mbps | Served:    0/ 100 | Loss: 0.188646 | Epsilon: 0.68664 | Updates: 100
+MADDQN       | 2 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.3334 Mbps | Served:    0/ 100 | Loss: 0.294946 | Epsilon: 0.60577 | Updates: 100
+MADDQN       | 2 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.2358 Mbps | Served:    0/ 100 | Loss: 0.462187 | Epsilon: 0.53442 | Updates: 100
+MADDQN       | 2 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3484 Mbps | Served:    0/ 100 | Loss: 0.490940 | Epsilon: 0.47148 | Updates: 100
+MADDQN       | 2 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.9809 Mbps | Served:    0/ 100 | Loss: 0.441316 | Epsilon: 0.41595 | Updates: 100
+MADDQN       | 2 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.0376 Mbps | Served:    0/ 100 | Loss: 0.495042 | Epsilon: 0.36696 | Updates: 100
+MADDQN       | 2 | Episode  225/500 | Reward:    25.0000 | Throughput:    6.3724 Mbps | Served:    0/ 100 | Loss: 0.444486 | Epsilon: 0.32374 | Updates: 100
+MADDQN       | 2 | Episode  250/500 | Reward:    25.0000 | Throughput:    7.9236 Mbps | Served:    0/ 100 | Loss: 0.390647 | Epsilon: 0.28561 | Updates: 100
+MADDQN       | 2 | Episode  275/500 | Reward:    25.0000 | Throughput:    4.9749 Mbps | Served:    0/ 100 | Loss: 0.370071 | Epsilon: 0.25197 | Updates: 100
+MADDQN       | 2 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.3872 Mbps | Served:    0/ 100 | Loss: 0.391796 | Epsilon: 0.22229 | Updates: 100
+MADDQN       | 2 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.1258 Mbps | Served:    0/ 100 | Loss: 0.401613 | Epsilon: 0.19611 | Updates: 100
+MADDQN       | 2 | Episode  350/500 | Reward:    25.0000 | Throughput:    5.2989 Mbps | Served:    0/ 100 | Loss: 0.430792 | Epsilon: 0.17301 | Updates: 100
+MADDQN       | 2 | Episode  375/500 | Reward:    25.0000 | Throughput:    6.0574 Mbps | Served:    0/ 100 | Loss: 0.475109 | Epsilon: 0.15264 | Updates: 100
+MADDQN       | 2 | Episode  400/500 | Reward:    25.0000 | Throughput:    5.0754 Mbps | Served:    0/ 100 | Loss: 0.457146 | Epsilon: 0.13466 | Updates: 100
+MADDQN       | 2 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.5167 Mbps | Served:    0/ 100 | Loss: 0.366975 | Epsilon: 0.11880 | Updates: 100
+MADDQN       | 2 | Episode  450/500 | Reward:    25.0000 | Throughput:    6.7564 Mbps | Served:    0/ 100 | Loss: 0.340407 | Epsilon: 0.10481 | Updates: 100
+MADDQN       | 2 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.3960 Mbps | Served:    0/ 100 | Loss: 0.245923 | Epsilon: 0.09246 | Updates: 100
+MADDQN       | 2 | Episode  500/500 | Reward:    25.0000 | Throughput:    3.6172 Mbps | Served:    0/ 100 | Loss: 0.227232 | Epsilon: 0.08157 | Updates: 100
+
+Completed: MADDQN | 2
+Total episodes: 500
+Total learning updates: 49937
+
+2 EXPERIMENT COMPLETED
+
+
+###########################################################################
+STARTING TRAFFIC EXPERIMENT: 3
+###########################################################################
+
+---------------------------------------------------------------------------
+TRAINING: Ours | 3
+---------------------------------------------------------------------------
+Ours         | 3 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.6688 Mbps | Served:    0/ 100 | Loss: 0.043668 | Epsilon: 0.99500 | Updates: 37
+Ours         | 3 | Episode   25/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.050988 | Epsilon: 0.88222 | Updates: 100
+Ours         | 3 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.9560 Mbps | Served:    0/ 100 | Loss: 0.077932 | Epsilon: 0.77831 | Updates: 100
+Ours         | 3 | Episode   75/500 | Reward:    25.0000 | Throughput:    4.5032 Mbps | Served:    0/ 100 | Loss: 0.109222 | Epsilon: 0.68664 | Updates: 100
+Ours         | 3 | Episode  100/500 | Reward:    25.0000 | Throughput:    3.9662 Mbps | Served:    0/ 100 | Loss: 0.113890 | Epsilon: 0.60577 | Updates: 100
+Ours         | 3 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.2264 Mbps | Served:    0/ 100 | Loss: 0.126405 | Epsilon: 0.53442 | Updates: 100
+Ours         | 3 | Episode  150/500 | Reward:    25.0000 | Throughput:    6.2071 Mbps | Served:    0/ 100 | Loss: 0.181894 | Epsilon: 0.47148 | Updates: 100
+Ours         | 3 | Episode  175/500 | Reward:    25.0000 | Throughput:    4.7060 Mbps | Served:    0/ 100 | Loss: 0.204273 | Epsilon: 0.41595 | Updates: 100
+Ours         | 3 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.1484 Mbps | Served:    0/ 100 | Loss: 0.205401 | Epsilon: 0.36696 | Updates: 100
+Ours         | 3 | Episode  225/500 | Reward:    25.0000 | Throughput:    5.6953 Mbps | Served:    0/ 100 | Loss: 0.157850 | Epsilon: 0.32374 | Updates: 100
+Ours         | 3 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.8445 Mbps | Served:    0/ 100 | Loss: 0.167210 | Epsilon: 0.28561 | Updates: 100
+Ours         | 3 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.0384 Mbps | Served:    0/ 100 | Loss: 0.224411 | Epsilon: 0.25197 | Updates: 100
+Ours         | 3 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.9957 Mbps | Served:    0/ 100 | Loss: 0.193874 | Epsilon: 0.22229 | Updates: 100
+Ours         | 3 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.6708 Mbps | Served:    0/ 100 | Loss: 0.159670 | Epsilon: 0.19611 | Updates: 100
+Ours         | 3 | Episode  350/500 | Reward:    25.0000 | Throughput:    3.7594 Mbps | Served:    0/ 100 | Loss: 0.238698 | Epsilon: 0.17301 | Updates: 100
+Ours         | 3 | Episode  375/500 | Reward:    25.0000 | Throughput:    3.9805 Mbps | Served:    0/ 100 | Loss: 0.220071 | Epsilon: 0.15264 | Updates: 100
+Ours         | 3 | Episode  400/500 | Reward:    25.0000 | Throughput:    7.3914 Mbps | Served:    0/ 100 | Loss: 0.199938 | Epsilon: 0.13466 | Updates: 100
+Ours         | 3 | Episode  425/500 | Reward:    25.0000 | Throughput:    6.3350 Mbps | Served:    0/ 100 | Loss: 0.181776 | Epsilon: 0.11880 | Updates: 100
+Ours         | 3 | Episode  450/500 | Reward:    25.0000 | Throughput:    6.0901 Mbps | Served:    0/ 100 | Loss: 0.195339 | Epsilon: 0.10481 | Updates: 100
+Ours         | 3 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.4030 Mbps | Served:    0/ 100 | Loss: 0.225732 | Epsilon: 0.09246 | Updates: 100
+Ours         | 3 | Episode  500/500 | Reward:    25.0000 | Throughput:    4.3970 Mbps | Served:    0/ 100 | Loss: 0.166627 | Epsilon: 0.08157 | Updates: 100
+
+Completed: Ours | 3
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: GGN-MADDQN | 3
+---------------------------------------------------------------------------
+GGN-MADDQN   | 3 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.6688 Mbps | Served:    0/ 100 | Loss: 0.009032 | Epsilon: 0.99500 | Updates: 37
+GGN-MADDQN   | 3 | Episode   25/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.051776 | Epsilon: 0.88222 | Updates: 100
+GGN-MADDQN   | 3 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.9560 Mbps | Served:    0/ 100 | Loss: 0.084223 | Epsilon: 0.77831 | Updates: 100
+GGN-MADDQN   | 3 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.3865 Mbps | Served:    0/ 100 | Loss: 0.127349 | Epsilon: 0.68664 | Updates: 100
+GGN-MADDQN   | 3 | Episode  100/500 | Reward:    25.0000 | Throughput:    3.7040 Mbps | Served:    0/ 100 | Loss: 0.137431 | Epsilon: 0.60577 | Updates: 100
+GGN-MADDQN   | 3 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.0633 Mbps | Served:    0/ 100 | Loss: 0.160269 | Epsilon: 0.53442 | Updates: 100
+GGN-MADDQN   | 3 | Episode  150/500 | Reward:    25.0000 | Throughput:    6.1577 Mbps | Served:    0/ 100 | Loss: 0.241912 | Epsilon: 0.47148 | Updates: 100
+GGN-MADDQN   | 3 | Episode  175/500 | Reward:    25.0000 | Throughput:    4.6141 Mbps | Served:    0/ 100 | Loss: 0.239680 | Epsilon: 0.41595 | Updates: 100
+GGN-MADDQN   | 3 | Episode  200/500 | Reward:    25.0000 | Throughput:    6.3623 Mbps | Served:    0/ 100 | Loss: 0.232678 | Epsilon: 0.36696 | Updates: 100
+GGN-MADDQN   | 3 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.183276 | Epsilon: 0.32374 | Updates: 100
+GGN-MADDQN   | 3 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.4397 Mbps | Served:    0/ 100 | Loss: 0.166073 | Epsilon: 0.28561 | Updates: 100
+GGN-MADDQN   | 3 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.1849 Mbps | Served:    0/ 100 | Loss: 0.233024 | Epsilon: 0.25197 | Updates: 100
+GGN-MADDQN   | 3 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.1697 Mbps | Served:    0/ 100 | Loss: 0.210929 | Epsilon: 0.22229 | Updates: 100
+GGN-MADDQN   | 3 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.1326 Mbps | Served:    0/ 100 | Loss: 0.170525 | Epsilon: 0.19611 | Updates: 100
+GGN-MADDQN   | 3 | Episode  350/500 | Reward:    25.0000 | Throughput:    4.4714 Mbps | Served:    0/ 100 | Loss: 0.251083 | Epsilon: 0.17301 | Updates: 100
+GGN-MADDQN   | 3 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.3749 Mbps | Served:    0/ 100 | Loss: 0.212743 | Epsilon: 0.15264 | Updates: 100
+GGN-MADDQN   | 3 | Episode  400/500 | Reward:    25.0000 | Throughput:    7.1768 Mbps | Served:    0/ 100 | Loss: 0.209118 | Epsilon: 0.13466 | Updates: 100
+GGN-MADDQN   | 3 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.8262 Mbps | Served:    0/ 100 | Loss: 0.167648 | Epsilon: 0.11880 | Updates: 100
+GGN-MADDQN   | 3 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.8379 Mbps | Served:    0/ 100 | Loss: 0.187983 | Epsilon: 0.10481 | Updates: 100
+GGN-MADDQN   | 3 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.0014 Mbps | Served:    0/ 100 | Loss: 0.219254 | Epsilon: 0.09246 | Updates: 100
+GGN-MADDQN   | 3 | Episode  500/500 | Reward:    25.0000 | Throughput:    4.4163 Mbps | Served:    0/ 100 | Loss: 0.170478 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GGN-MADDQN | 3
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: GCN-MADDQN | 3
+---------------------------------------------------------------------------
+GCN-MADDQN   | 3 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.6688 Mbps | Served:    0/ 100 | Loss: 0.017330 | Epsilon: 0.99500 | Updates: 37
+GCN-MADDQN   | 3 | Episode   25/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.053144 | Epsilon: 0.88222 | Updates: 100
+GCN-MADDQN   | 3 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.9560 Mbps | Served:    0/ 100 | Loss: 0.094682 | Epsilon: 0.77831 | Updates: 100
+GCN-MADDQN   | 3 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.3865 Mbps | Served:    0/ 100 | Loss: 0.125477 | Epsilon: 0.68664 | Updates: 100
+GCN-MADDQN   | 3 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.4060 Mbps | Served:    0/ 100 | Loss: 0.145232 | Epsilon: 0.60577 | Updates: 100
+GCN-MADDQN   | 3 | Episode  125/500 | Reward:    25.0000 | Throughput:    4.5713 Mbps | Served:    0/ 100 | Loss: 0.158151 | Epsilon: 0.53442 | Updates: 100
+GCN-MADDQN   | 3 | Episode  150/500 | Reward:    25.0000 | Throughput:    6.2071 Mbps | Served:    0/ 100 | Loss: 0.195421 | Epsilon: 0.47148 | Updates: 100
+GCN-MADDQN   | 3 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.3055 Mbps | Served:    0/ 100 | Loss: 0.234370 | Epsilon: 0.41595 | Updates: 100
+GCN-MADDQN   | 3 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.9076 Mbps | Served:    0/ 100 | Loss: 0.221568 | Epsilon: 0.36696 | Updates: 100
+GCN-MADDQN   | 3 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.9672 Mbps | Served:    0/ 100 | Loss: 0.175444 | Epsilon: 0.32374 | Updates: 100
+GCN-MADDQN   | 3 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.1602 Mbps | Served:    0/ 100 | Loss: 0.185021 | Epsilon: 0.28561 | Updates: 100
+GCN-MADDQN   | 3 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.1717 Mbps | Served:    0/ 100 | Loss: 0.229988 | Epsilon: 0.25197 | Updates: 100
+GCN-MADDQN   | 3 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.3083 Mbps | Served:    0/ 100 | Loss: 0.191404 | Epsilon: 0.22229 | Updates: 100
+GCN-MADDQN   | 3 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.4740 Mbps | Served:    0/ 100 | Loss: 0.166718 | Epsilon: 0.19611 | Updates: 100
+GCN-MADDQN   | 3 | Episode  350/500 | Reward:    25.0000 | Throughput:    4.8613 Mbps | Served:    0/ 100 | Loss: 0.233012 | Epsilon: 0.17301 | Updates: 100
+GCN-MADDQN   | 3 | Episode  375/500 | Reward:    25.0000 | Throughput:    4.3546 Mbps | Served:    0/ 100 | Loss: 0.194847 | Epsilon: 0.15264 | Updates: 100
+GCN-MADDQN   | 3 | Episode  400/500 | Reward:    25.0000 | Throughput:    7.1506 Mbps | Served:    0/ 100 | Loss: 0.183335 | Epsilon: 0.13466 | Updates: 100
+GCN-MADDQN   | 3 | Episode  425/500 | Reward:    25.0000 | Throughput:    6.0296 Mbps | Served:    0/ 100 | Loss: 0.169330 | Epsilon: 0.11880 | Updates: 100
+GCN-MADDQN   | 3 | Episode  450/500 | Reward:    25.0000 | Throughput:    6.4146 Mbps | Served:    0/ 100 | Loss: 0.172897 | Epsilon: 0.10481 | Updates: 100
+GCN-MADDQN   | 3 | Episode  475/500 | Reward:    25.0000 | Throughput:    4.1108 Mbps | Served:    0/ 100 | Loss: 0.229690 | Epsilon: 0.09246 | Updates: 100
+GCN-MADDQN   | 3 | Episode  500/500 | Reward:    25.0000 | Throughput:    5.1790 Mbps | Served:    0/ 100 | Loss: 0.178236 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GCN-MADDQN | 3
+Total episodes: 500
+Total learning updates: 49937
+
+---------------------------------------------------------------------------
+TRAINING: MADDQN | 3
+---------------------------------------------------------------------------
+MADDQN       | 3 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.6688 Mbps | Served:    0/ 100 | Loss: 0.012585 | Epsilon: 0.99500 | Updates: 37
+MADDQN       | 3 | Episode   25/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.048230 | Epsilon: 0.88222 | Updates: 100
+MADDQN       | 3 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.9560 Mbps | Served:    0/ 100 | Loss: 0.115628 | Epsilon: 0.77831 | Updates: 100
+MADDQN       | 3 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.3865 Mbps | Served:    0/ 100 | Loss: 0.171390 | Epsilon: 0.68664 | Updates: 100
+MADDQN       | 3 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.4060 Mbps | Served:    0/ 100 | Loss: 0.175742 | Epsilon: 0.60577 | Updates: 100
+MADDQN       | 3 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.3303 Mbps | Served:    0/ 100 | Loss: 0.186643 | Epsilon: 0.53442 | Updates: 100
+MADDQN       | 3 | Episode  150/500 | Reward:    25.0000 | Throughput:    6.2071 Mbps | Served:    0/ 100 | Loss: 0.239290 | Epsilon: 0.47148 | Updates: 100
+MADDQN       | 3 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.2174 Mbps | Served:    0/ 100 | Loss: 0.263794 | Epsilon: 0.41595 | Updates: 100
+MADDQN       | 3 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.9076 Mbps | Served:    0/ 100 | Loss: 0.291170 | Epsilon: 0.36696 | Updates: 100
+MADDQN       | 3 | Episode  225/500 | Reward:    25.0000 | Throughput:    5.0378 Mbps | Served:    0/ 100 | Loss: 0.273062 | Epsilon: 0.32374 | Updates: 100
+MADDQN       | 3 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.7813 Mbps | Served:    0/ 100 | Loss: 0.237748 | Epsilon: 0.28561 | Updates: 100
+MADDQN       | 3 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.0384 Mbps | Served:    0/ 100 | Loss: 0.373085 | Epsilon: 0.25197 | Updates: 100
+MADDQN       | 3 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.1565 Mbps | Served:    0/ 100 | Loss: 0.369708 | Epsilon: 0.22229 | Updates: 100
+MADDQN       | 3 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.2440 Mbps | Served:    0/ 100 | Loss: 0.300357 | Epsilon: 0.19611 | Updates: 100
+MADDQN       | 3 | Episode  350/500 | Reward:    25.0000 | Throughput:    3.9566 Mbps | Served:    0/ 100 | Loss: 0.357458 | Epsilon: 0.17301 | Updates: 100
+MADDQN       | 3 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.6190 Mbps | Served:    0/ 100 | Loss: 0.335662 | Epsilon: 0.15264 | Updates: 100
+MADDQN       | 3 | Episode  400/500 | Reward:    25.0000 | Throughput:    8.0666 Mbps | Served:    0/ 100 | Loss: 0.356254 | Epsilon: 0.13466 | Updates: 100
+MADDQN       | 3 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.9101 Mbps | Served:    0/ 100 | Loss: 0.320647 | Epsilon: 0.11880 | Updates: 100
+MADDQN       | 3 | Episode  450/500 | Reward:    25.0000 | Throughput:    6.4565 Mbps | Served:    0/ 100 | Loss: 0.352460 | Epsilon: 0.10481 | Updates: 100
+MADDQN       | 3 | Episode  475/500 | Reward:    25.0000 | Throughput:    4.1108 Mbps | Served:    0/ 100 | Loss: 0.478682 | Epsilon: 0.09246 | Updates: 100
+MADDQN       | 3 | Episode  500/500 | Reward:    25.0000 | Throughput:    4.4163 Mbps | Served:    0/ 100 | Loss: 0.456025 | Epsilon: 0.08157 | Updates: 100
+
+Completed: MADDQN | 3
+Total episodes: 500
+Total learning updates: 49937
+
+3 EXPERIMENT COMPLETED
+
+===========================================================================
+BLOCK 14D: FOUR-MODEL / THREE-TRAFFIC TRAINING
+===========================================================================
+
+###########################################################################
+STARTING TRAFFIC EXPERIMENT: TP1
+###########################################################################
+
+---------------------------------------------------------------------------
+TRAINING: Ours | 1
+---------------------------------------------------------------------------
+Ours         | 1 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.1145 Mbps | Served:    0/ 100 | Loss: 0.024268 | Epsilon: 0.99500 | Updates: 37
+Ours         | 1 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.2100 Mbps | Served:    0/ 100 | Loss: 0.055944 | Epsilon: 0.88222 | Updates: 100
+Ours         | 1 | Episode   50/500 | Reward:    25.0000 | Throughput:    4.0652 Mbps | Served:    0/ 100 | Loss: 0.086172 | Epsilon: 0.77831 | Updates: 100
+Ours         | 1 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.5814 Mbps | Served:    0/ 100 | Loss: 0.109381 | Epsilon: 0.68664 | Updates: 100
+Ours         | 1 | Episode  100/500 | Reward:    25.0000 | Throughput:    3.8738 Mbps | Served:    0/ 100 | Loss: 0.125738 | Epsilon: 0.60577 | Updates: 100
+Ours         | 1 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.5593 Mbps | Served:    0/ 100 | Loss: 0.128178 | Epsilon: 0.53442 | Updates: 100
+Ours         | 1 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3491 Mbps | Served:    0/ 100 | Loss: 0.122647 | Epsilon: 0.47148 | Updates: 100
+Ours         | 1 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.1428 Mbps | Served:    0/ 100 | Loss: 0.132752 | Epsilon: 0.41595 | Updates: 100
+Ours         | 1 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.1602 Mbps | Served:    0/ 100 | Loss: 0.216044 | Epsilon: 0.36696 | Updates: 100
+Ours         | 1 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.4867 Mbps | Served:    0/ 100 | Loss: 0.162417 | Epsilon: 0.32374 | Updates: 100
+Ours         | 1 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.7155 Mbps | Served:    0/ 100 | Loss: 0.193413 | Epsilon: 0.28561 | Updates: 100
+Ours         | 1 | Episode  275/500 | Reward:    25.0000 | Throughput:    6.2536 Mbps | Served:    0/ 100 | Loss: 0.184161 | Epsilon: 0.25197 | Updates: 100
+Ours         | 1 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.0316 Mbps | Served:    0/ 100 | Loss: 0.158245 | Epsilon: 0.22229 | Updates: 100
+Ours         | 1 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.8311 Mbps | Served:    0/ 100 | Loss: 0.178039 | Epsilon: 0.19611 | Updates: 100
+Ours         | 1 | Episode  350/500 | Reward:    25.0000 | Throughput:    3.9708 Mbps | Served:    0/ 100 | Loss: 0.192120 | Epsilon: 0.17301 | Updates: 100
+Ours         | 1 | Episode  375/500 | Reward:    25.0000 | Throughput:    4.8063 Mbps | Served:    0/ 100 | Loss: 0.197766 | Epsilon: 0.15264 | Updates: 100
+Ours         | 1 | Episode  400/500 | Reward:    25.0000 | Throughput:    4.1364 Mbps | Served:    0/ 100 | Loss: 0.204503 | Epsilon: 0.13466 | Updates: 100
+Ours         | 1 | Episode  425/500 | Reward:    25.0000 | Throughput:    4.6804 Mbps | Served:    0/ 100 | Loss: 0.201648 | Epsilon: 0.11880 | Updates: 100
+Ours         | 1 | Episode  450/500 | Reward:    25.0000 | Throughput:    4.5446 Mbps | Served:    0/ 100 | Loss: 0.216543 | Epsilon: 0.10481 | Updates: 100
+Ours         | 1 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.8002 Mbps | Served:    0/ 100 | Loss: 0.184739 | Epsilon: 0.09246 | Updates: 100
+Ours         | 1 | Episode  500/500 | Reward:    25.0000 | Throughput:    6.6370 Mbps | Served:    0/ 100 | Loss: 0.200632 | Epsilon: 0.08157 | Updates: 100
+
+Completed: Ours | 1
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: GGN-MADDQN | 1
+---------------------------------------------------------------------------
+GGN-MADDQN   | 1 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.1145 Mbps | Served:    0/ 100 | Loss: 0.013112 | Epsilon: 0.99500 | Updates: 37
+GGN-MADDQN   | 1 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.2100 Mbps | Served:    0/ 100 | Loss: 0.055435 | Epsilon: 0.88222 | Updates: 100
+GGN-MADDQN   | 1 | Episode   50/500 | Reward:    25.0000 | Throughput:    4.0652 Mbps | Served:    0/ 100 | Loss: 0.090011 | Epsilon: 0.77831 | Updates: 100
+GGN-MADDQN   | 1 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.5814 Mbps | Served:    0/ 100 | Loss: 0.124786 | Epsilon: 0.68664 | Updates: 100
+GGN-MADDQN   | 1 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.1415 Mbps | Served:    0/ 100 | Loss: 0.154170 | Epsilon: 0.60577 | Updates: 100
+GGN-MADDQN   | 1 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.1394 Mbps | Served:    0/ 100 | Loss: 0.149976 | Epsilon: 0.53442 | Updates: 100
+GGN-MADDQN   | 1 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3973 Mbps | Served:    0/ 100 | Loss: 0.171651 | Epsilon: 0.47148 | Updates: 100
+GGN-MADDQN   | 1 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.1118 Mbps | Served:    0/ 100 | Loss: 0.167790 | Epsilon: 0.41595 | Updates: 100
+GGN-MADDQN   | 1 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.4382 Mbps | Served:    0/ 100 | Loss: 0.237457 | Epsilon: 0.36696 | Updates: 100
+GGN-MADDQN   | 1 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.4461 Mbps | Served:    0/ 100 | Loss: 0.173855 | Epsilon: 0.32374 | Updates: 100
+GGN-MADDQN   | 1 | Episode  250/500 | Reward:    25.0000 | Throughput:    6.0054 Mbps | Served:    0/ 100 | Loss: 0.254208 | Epsilon: 0.28561 | Updates: 100
+GGN-MADDQN   | 1 | Episode  275/500 | Reward:    25.0000 | Throughput:    4.9528 Mbps | Served:    0/ 100 | Loss: 0.221169 | Epsilon: 0.25197 | Updates: 100
+GGN-MADDQN   | 1 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.3000 Mbps | Served:    0/ 100 | Loss: 0.193885 | Epsilon: 0.22229 | Updates: 100
+GGN-MADDQN   | 1 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.9718 Mbps | Served:    0/ 100 | Loss: 0.212013 | Epsilon: 0.19611 | Updates: 100
+GGN-MADDQN   | 1 | Episode  350/500 | Reward:    25.0000 | Throughput:    5.0669 Mbps | Served:    0/ 100 | Loss: 0.203113 | Epsilon: 0.17301 | Updates: 100
+GGN-MADDQN   | 1 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.8352 Mbps | Served:    0/ 100 | Loss: 0.215666 | Epsilon: 0.15264 | Updates: 100
+GGN-MADDQN   | 1 | Episode  400/500 | Reward:    25.0000 | Throughput:    3.7862 Mbps | Served:    0/ 100 | Loss: 0.228759 | Epsilon: 0.13466 | Updates: 100
+GGN-MADDQN   | 1 | Episode  425/500 | Reward:    25.0000 | Throughput:    4.2792 Mbps | Served:    0/ 100 | Loss: 0.209137 | Epsilon: 0.11880 | Updates: 100
+GGN-MADDQN   | 1 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.2551 Mbps | Served:    0/ 100 | Loss: 0.219003 | Epsilon: 0.10481 | Updates: 100
+GGN-MADDQN   | 1 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.6505 Mbps | Served:    0/ 100 | Loss: 0.189518 | Epsilon: 0.09246 | Updates: 100
+GGN-MADDQN   | 1 | Episode  500/500 | Reward:    25.0000 | Throughput:    6.3987 Mbps | Served:    0/ 100 | Loss: 0.219812 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GGN-MADDQN | 1
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: GCN-MADDQN | 1
+---------------------------------------------------------------------------
+GCN-MADDQN   | 1 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.1145 Mbps | Served:    0/ 100 | Loss: 0.017907 | Epsilon: 0.99500 | Updates: 37
+GCN-MADDQN   | 1 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.2100 Mbps | Served:    0/ 100 | Loss: 0.055514 | Epsilon: 0.88222 | Updates: 100
+GCN-MADDQN   | 1 | Episode   50/500 | Reward:    25.0000 | Throughput:    4.0652 Mbps | Served:    0/ 100 | Loss: 0.090662 | Epsilon: 0.77831 | Updates: 100
+GCN-MADDQN   | 1 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.5814 Mbps | Served:    0/ 100 | Loss: 0.117856 | Epsilon: 0.68664 | Updates: 100
+GCN-MADDQN   | 1 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.1415 Mbps | Served:    0/ 100 | Loss: 0.128166 | Epsilon: 0.60577 | Updates: 100
+GCN-MADDQN   | 1 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.6447 Mbps | Served:    0/ 100 | Loss: 0.120254 | Epsilon: 0.53442 | Updates: 100
+GCN-MADDQN   | 1 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3491 Mbps | Served:    0/ 100 | Loss: 0.121590 | Epsilon: 0.47148 | Updates: 100
+GCN-MADDQN   | 1 | Episode  175/500 | Reward:    25.0000 | Throughput:    4.4968 Mbps | Served:    0/ 100 | Loss: 0.117748 | Epsilon: 0.41595 | Updates: 100
+GCN-MADDQN   | 1 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.4382 Mbps | Served:    0/ 100 | Loss: 0.197942 | Epsilon: 0.36696 | Updates: 100
+GCN-MADDQN   | 1 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.5253 Mbps | Served:    0/ 100 | Loss: 0.146087 | Epsilon: 0.32374 | Updates: 100
+GCN-MADDQN   | 1 | Episode  250/500 | Reward:    25.0000 | Throughput:    6.2546 Mbps | Served:    0/ 100 | Loss: 0.178595 | Epsilon: 0.28561 | Updates: 100
+GCN-MADDQN   | 1 | Episode  275/500 | Reward:    25.0000 | Throughput:    4.8734 Mbps | Served:    0/ 100 | Loss: 0.169844 | Epsilon: 0.25197 | Updates: 100
+GCN-MADDQN   | 1 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.0585 Mbps | Served:    0/ 100 | Loss: 0.147677 | Epsilon: 0.22229 | Updates: 100
+GCN-MADDQN   | 1 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.0060 Mbps | Served:    0/ 100 | Loss: 0.162614 | Epsilon: 0.19611 | Updates: 100
+GCN-MADDQN   | 1 | Episode  350/500 | Reward:    25.0000 | Throughput:    5.1203 Mbps | Served:    0/ 100 | Loss: 0.171187 | Epsilon: 0.17301 | Updates: 100
+GCN-MADDQN   | 1 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.5808 Mbps | Served:    0/ 100 | Loss: 0.186100 | Epsilon: 0.15264 | Updates: 100
+GCN-MADDQN   | 1 | Episode  400/500 | Reward:    25.0000 | Throughput:    4.3569 Mbps | Served:    0/ 100 | Loss: 0.185833 | Epsilon: 0.13466 | Updates: 100
+GCN-MADDQN   | 1 | Episode  425/500 | Reward:    25.0000 | Throughput:    4.9937 Mbps | Served:    0/ 100 | Loss: 0.181368 | Epsilon: 0.11880 | Updates: 100
+GCN-MADDQN   | 1 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.8074 Mbps | Served:    0/ 100 | Loss: 0.199445 | Epsilon: 0.10481 | Updates: 100
+GCN-MADDQN   | 1 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.9257 Mbps | Served:    0/ 100 | Loss: 0.181783 | Epsilon: 0.09246 | Updates: 100
+GCN-MADDQN   | 1 | Episode  500/500 | Reward:    25.0000 | Throughput:    7.4698 Mbps | Served:    0/ 100 | Loss: 0.209148 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GCN-MADDQN | 1
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: MADDQN | 1
+---------------------------------------------------------------------------
+MADDQN       | 1 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.1145 Mbps | Served:    0/ 100 | Loss: 0.014166 | Epsilon: 0.99500 | Updates: 37
+MADDQN       | 1 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.2100 Mbps | Served:    0/ 100 | Loss: 0.076882 | Epsilon: 0.88222 | Updates: 100
+MADDQN       | 1 | Episode   50/500 | Reward:    25.0000 | Throughput:    4.0652 Mbps | Served:    0/ 100 | Loss: 0.176626 | Epsilon: 0.77831 | Updates: 100
+MADDQN       | 1 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.5814 Mbps | Served:    0/ 100 | Loss: 0.196028 | Epsilon: 0.68664 | Updates: 100
+MADDQN       | 1 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.1415 Mbps | Served:    0/ 100 | Loss: 0.218633 | Epsilon: 0.60577 | Updates: 100
+MADDQN       | 1 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.1394 Mbps | Served:    0/ 100 | Loss: 0.201503 | Epsilon: 0.53442 | Updates: 100
+MADDQN       | 1 | Episode  150/500 | Reward:    25.0000 | Throughput:    4.9738 Mbps | Served:    0/ 100 | Loss: 0.205486 | Epsilon: 0.47148 | Updates: 100
+MADDQN       | 1 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.4282 Mbps | Served:    0/ 100 | Loss: 0.191881 | Epsilon: 0.41595 | Updates: 100
+MADDQN       | 1 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.4382 Mbps | Served:    0/ 100 | Loss: 0.249812 | Epsilon: 0.36696 | Updates: 100
+MADDQN       | 1 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.8140 Mbps | Served:    0/ 100 | Loss: 0.187726 | Epsilon: 0.32374 | Updates: 100
+MADDQN       | 1 | Episode  250/500 | Reward:    25.0000 | Throughput:    4.5000 Mbps | Served:    0/ 100 | Loss: 0.216754 | Epsilon: 0.28561 | Updates: 100
+MADDQN       | 1 | Episode  275/500 | Reward:    25.0000 | Throughput:    6.6099 Mbps | Served:    0/ 100 | Loss: 0.231231 | Epsilon: 0.25197 | Updates: 100
+MADDQN       | 1 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.8077 Mbps | Served:    0/ 100 | Loss: 0.204205 | Epsilon: 0.22229 | Updates: 100
+MADDQN       | 1 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.9718 Mbps | Served:    0/ 100 | Loss: 0.198623 | Epsilon: 0.19611 | Updates: 100
+MADDQN       | 1 | Episode  350/500 | Reward:    25.0000 | Throughput:    4.4621 Mbps | Served:    0/ 100 | Loss: 0.218218 | Epsilon: 0.17301 | Updates: 100
+MADDQN       | 1 | Episode  375/500 | Reward:    25.0000 | Throughput:    4.8063 Mbps | Served:    0/ 100 | Loss: 0.227031 | Epsilon: 0.15264 | Updates: 100
+MADDQN       | 1 | Episode  400/500 | Reward:    25.0000 | Throughput:    4.8716 Mbps | Served:    0/ 100 | Loss: 0.194967 | Epsilon: 0.13466 | Updates: 100
+MADDQN       | 1 | Episode  425/500 | Reward:    25.0000 | Throughput:    4.9937 Mbps | Served:    0/ 100 | Loss: 0.211707 | Epsilon: 0.11880 | Updates: 100
+MADDQN       | 1 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.2846 Mbps | Served:    0/ 100 | Loss: 0.210329 | Epsilon: 0.10481 | Updates: 100
+MADDQN       | 1 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.9257 Mbps | Served:    0/ 100 | Loss: 0.197302 | Epsilon: 0.09246 | Updates: 100
+MADDQN       | 1 | Episode  500/500 | Reward:    25.0000 | Throughput:    6.5171 Mbps | Served:    0/ 100 | Loss: 0.209482 | Epsilon: 0.08157 | Updates: 100
+
+Completed: MADDQN | 1
+Total episodes: 1000
+Total learning updates: 99874
+
+TP1 EXPERIMENT COMPLETED
+
+###########################################################################
+STARTING TRAFFIC EXPERIMENT: TP2
+###########################################################################
+
+---------------------------------------------------------------------------
+TRAINING: Ours | 2
+---------------------------------------------------------------------------
+Ours         | 2 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.2567 Mbps | Served:    0/ 100 | Loss: 0.034407 | Epsilon: 0.99500 | Updates: 37
+Ours         | 2 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.3712 Mbps | Served:    0/ 100 | Loss: 0.038523 | Epsilon: 0.88222 | Updates: 100
+Ours         | 2 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.3991 Mbps | Served:    0/ 100 | Loss: 0.068457 | Epsilon: 0.77831 | Updates: 100
+Ours         | 2 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.4372 Mbps | Served:    0/ 100 | Loss: 0.113649 | Epsilon: 0.68664 | Updates: 100
+Ours         | 2 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.3334 Mbps | Served:    0/ 100 | Loss: 0.122170 | Epsilon: 0.60577 | Updates: 100
+Ours         | 2 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.1889 Mbps | Served:    0/ 100 | Loss: 0.149833 | Epsilon: 0.53442 | Updates: 100
+Ours         | 2 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.2932 Mbps | Served:    0/ 100 | Loss: 0.171431 | Epsilon: 0.47148 | Updates: 100
+Ours         | 2 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.7436 Mbps | Served:    0/ 100 | Loss: 0.148874 | Epsilon: 0.41595 | Updates: 100
+Ours         | 2 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.1515 Mbps | Served:    0/ 100 | Loss: 0.176182 | Epsilon: 0.36696 | Updates: 100
+Ours         | 2 | Episode  225/500 | Reward:    25.0000 | Throughput:    5.7110 Mbps | Served:    0/ 100 | Loss: 0.171321 | Epsilon: 0.32374 | Updates: 100
+Ours         | 2 | Episode  250/500 | Reward:    25.0000 | Throughput:    6.9383 Mbps | Served:    0/ 100 | Loss: 0.146180 | Epsilon: 0.28561 | Updates: 100
+Ours         | 2 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.0171 Mbps | Served:    0/ 100 | Loss: 0.152230 | Epsilon: 0.25197 | Updates: 100
+Ours         | 2 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.2944 Mbps | Served:    0/ 100 | Loss: 0.146148 | Epsilon: 0.22229 | Updates: 100
+Ours         | 2 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.7211 Mbps | Served:    0/ 100 | Loss: 0.163764 | Epsilon: 0.19611 | Updates: 100
+Ours         | 2 | Episode  350/500 | Reward:    25.0000 | Throughput:    5.2564 Mbps | Served:    0/ 100 | Loss: 0.174352 | Epsilon: 0.17301 | Updates: 100
+Ours         | 2 | Episode  375/500 | Reward:    25.0000 | Throughput:    6.0574 Mbps | Served:    0/ 100 | Loss: 0.212761 | Epsilon: 0.15264 | Updates: 100
+Ours         | 2 | Episode  400/500 | Reward:    25.0000 | Throughput:    5.0754 Mbps | Served:    0/ 100 | Loss: 0.194634 | Epsilon: 0.13466 | Updates: 100
+Ours         | 2 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.3416 Mbps | Served:    0/ 100 | Loss: 0.193272 | Epsilon: 0.11880 | Updates: 100
+Ours         | 2 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.5176 Mbps | Served:    0/ 100 | Loss: 0.213947 | Epsilon: 0.10481 | Updates: 100
+Ours         | 2 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.1766 Mbps | Served:    0/ 100 | Loss: 0.154835 | Epsilon: 0.09246 | Updates: 100
+Ours         | 2 | Episode  500/500 | Reward:    25.0000 | Throughput:    4.5937 Mbps | Served:    0/ 100 | Loss: 0.165059 | Epsilon: 0.08157 | Updates: 100
+
+Completed: Ours | 2
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: GGN-MADDQN | 2
+---------------------------------------------------------------------------
+GGN-MADDQN   | 2 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.2567 Mbps | Served:    0/ 100 | Loss: 0.017495 | Epsilon: 0.99500 | Updates: 37
+GGN-MADDQN   | 2 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.5182 Mbps | Served:    0/ 100 | Loss: 0.033674 | Epsilon: 0.88222 | Updates: 100
+GGN-MADDQN   | 2 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.6151 Mbps | Served:    0/ 100 | Loss: 0.070411 | Epsilon: 0.77831 | Updates: 100
+GGN-MADDQN   | 2 | Episode   75/500 | Reward:    25.0000 | Throughput:    3.6336 Mbps | Served:    0/ 100 | Loss: 0.114430 | Epsilon: 0.68664 | Updates: 100
+GGN-MADDQN   | 2 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.5859 Mbps | Served:    0/ 100 | Loss: 0.113512 | Epsilon: 0.60577 | Updates: 100
+GGN-MADDQN   | 2 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.2358 Mbps | Served:    0/ 100 | Loss: 0.153497 | Epsilon: 0.53442 | Updates: 100
+GGN-MADDQN   | 2 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3296 Mbps | Served:    0/ 100 | Loss: 0.190340 | Epsilon: 0.47148 | Updates: 100
+GGN-MADDQN   | 2 | Episode  175/500 | Reward:    25.0000 | Throughput:    6.4322 Mbps | Served:    0/ 100 | Loss: 0.163402 | Epsilon: 0.41595 | Updates: 100
+GGN-MADDQN   | 2 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.2537 Mbps | Served:    0/ 100 | Loss: 0.189259 | Epsilon: 0.36696 | Updates: 100
+GGN-MADDQN   | 2 | Episode  225/500 | Reward:    25.0000 | Throughput:    6.0600 Mbps | Served:    0/ 100 | Loss: 0.167337 | Epsilon: 0.32374 | Updates: 100
+GGN-MADDQN   | 2 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.9349 Mbps | Served:    0/ 100 | Loss: 0.151595 | Epsilon: 0.28561 | Updates: 100
+GGN-MADDQN   | 2 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.6633 Mbps | Served:    0/ 100 | Loss: 0.153194 | Epsilon: 0.25197 | Updates: 100
+GGN-MADDQN   | 2 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.6273 Mbps | Served:    0/ 100 | Loss: 0.170289 | Epsilon: 0.22229 | Updates: 100
+GGN-MADDQN   | 2 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.9634 Mbps | Served:    0/ 100 | Loss: 0.169845 | Epsilon: 0.19611 | Updates: 100
+GGN-MADDQN   | 2 | Episode  350/500 | Reward:    25.0000 | Throughput:    6.0251 Mbps | Served:    0/ 100 | Loss: 0.190037 | Epsilon: 0.17301 | Updates: 100
+GGN-MADDQN   | 2 | Episode  375/500 | Reward:    25.0000 | Throughput:    6.2723 Mbps | Served:    0/ 100 | Loss: 0.221813 | Epsilon: 0.15264 | Updates: 100
+GGN-MADDQN   | 2 | Episode  400/500 | Reward:    25.0000 | Throughput:    5.0754 Mbps | Served:    0/ 100 | Loss: 0.221103 | Epsilon: 0.13466 | Updates: 100
+GGN-MADDQN   | 2 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.5034 Mbps | Served:    0/ 100 | Loss: 0.219635 | Epsilon: 0.11880 | Updates: 100
+GGN-MADDQN   | 2 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.7625 Mbps | Served:    0/ 100 | Loss: 0.224143 | Epsilon: 0.10481 | Updates: 100
+GGN-MADDQN   | 2 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.3842 Mbps | Served:    0/ 100 | Loss: 0.171320 | Epsilon: 0.09246 | Updates: 100
+GGN-MADDQN   | 2 | Episode  500/500 | Reward:    25.0000 | Throughput:    3.6172 Mbps | Served:    0/ 100 | Loss: 0.170022 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GGN-MADDQN | 2
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: GCN-MADDQN | 2
+---------------------------------------------------------------------------
+GCN-MADDQN   | 2 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.2567 Mbps | Served:    0/ 100 | Loss: 0.018228 | Epsilon: 0.99500 | Updates: 37
+GCN-MADDQN   | 2 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.5182 Mbps | Served:    0/ 100 | Loss: 0.042496 | Epsilon: 0.88222 | Updates: 100
+GCN-MADDQN   | 2 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.6151 Mbps | Served:    0/ 100 | Loss: 0.079063 | Epsilon: 0.77831 | Updates: 100
+GCN-MADDQN   | 2 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.3720 Mbps | Served:    0/ 100 | Loss: 0.124285 | Epsilon: 0.68664 | Updates: 100
+GCN-MADDQN   | 2 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.9648 Mbps | Served:    0/ 100 | Loss: 0.136774 | Epsilon: 0.60577 | Updates: 100
+GCN-MADDQN   | 2 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.0385 Mbps | Served:    0/ 100 | Loss: 0.170027 | Epsilon: 0.53442 | Updates: 100
+GCN-MADDQN   | 2 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.8321 Mbps | Served:    0/ 100 | Loss: 0.192280 | Epsilon: 0.47148 | Updates: 100
+GCN-MADDQN   | 2 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.1394 Mbps | Served:    0/ 100 | Loss: 0.154962 | Epsilon: 0.41595 | Updates: 100
+GCN-MADDQN   | 2 | Episode  200/500 | Reward:    25.0000 | Throughput:    4.2087 Mbps | Served:    0/ 100 | Loss: 0.208697 | Epsilon: 0.36696 | Updates: 100
+GCN-MADDQN   | 2 | Episode  225/500 | Reward:    25.0000 | Throughput:    5.9706 Mbps | Served:    0/ 100 | Loss: 0.185979 | Epsilon: 0.32374 | Updates: 100
+GCN-MADDQN   | 2 | Episode  250/500 | Reward:    25.0000 | Throughput:    7.4541 Mbps | Served:    0/ 100 | Loss: 0.176386 | Epsilon: 0.28561 | Updates: 100
+GCN-MADDQN   | 2 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.2494 Mbps | Served:    0/ 100 | Loss: 0.190255 | Epsilon: 0.25197 | Updates: 100
+GCN-MADDQN   | 2 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.6110 Mbps | Served:    0/ 100 | Loss: 0.172774 | Epsilon: 0.22229 | Updates: 100
+GCN-MADDQN   | 2 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.8544 Mbps | Served:    0/ 100 | Loss: 0.174638 | Epsilon: 0.19611 | Updates: 100
+GCN-MADDQN   | 2 | Episode  350/500 | Reward:    25.0000 | Throughput:    6.5933 Mbps | Served:    0/ 100 | Loss: 0.193664 | Epsilon: 0.17301 | Updates: 100
+GCN-MADDQN   | 2 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.7892 Mbps | Served:    0/ 100 | Loss: 0.233610 | Epsilon: 0.15264 | Updates: 100
+GCN-MADDQN   | 2 | Episode  400/500 | Reward:    25.0000 | Throughput:    5.7990 Mbps | Served:    0/ 100 | Loss: 0.227023 | Epsilon: 0.13466 | Updates: 100
+GCN-MADDQN   | 2 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.0708 Mbps | Served:    0/ 100 | Loss: 0.217280 | Epsilon: 0.11880 | Updates: 100
+GCN-MADDQN   | 2 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.7556 Mbps | Served:    0/ 100 | Loss: 0.229791 | Epsilon: 0.10481 | Updates: 100
+GCN-MADDQN   | 2 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.4135 Mbps | Served:    0/ 100 | Loss: 0.160909 | Epsilon: 0.09246 | Updates: 100
+GCN-MADDQN   | 2 | Episode  500/500 | Reward:    25.0000 | Throughput:    3.8910 Mbps | Served:    0/ 100 | Loss: 0.159388 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GCN-MADDQN | 2
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: MADDQN | 2
+---------------------------------------------------------------------------
+MADDQN       | 2 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.2567 Mbps | Served:    0/ 100 | Loss: 0.024890 | Epsilon: 0.99500 | Updates: 37
+MADDQN       | 2 | Episode   25/500 | Reward:    25.0000 | Throughput:    5.3712 Mbps | Served:    0/ 100 | Loss: 0.034208 | Epsilon: 0.88222 | Updates: 100
+MADDQN       | 2 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.6151 Mbps | Served:    0/ 100 | Loss: 0.091553 | Epsilon: 0.77831 | Updates: 100
+MADDQN       | 2 | Episode   75/500 | Reward:    25.0000 | Throughput:    3.6336 Mbps | Served:    0/ 100 | Loss: 0.188646 | Epsilon: 0.68664 | Updates: 100
+MADDQN       | 2 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.3334 Mbps | Served:    0/ 100 | Loss: 0.294946 | Epsilon: 0.60577 | Updates: 100
+MADDQN       | 2 | Episode  125/500 | Reward:    25.0000 | Throughput:    6.2358 Mbps | Served:    0/ 100 | Loss: 0.462187 | Epsilon: 0.53442 | Updates: 100
+MADDQN       | 2 | Episode  150/500 | Reward:    25.0000 | Throughput:    5.3484 Mbps | Served:    0/ 100 | Loss: 0.490940 | Epsilon: 0.47148 | Updates: 100
+MADDQN       | 2 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.9809 Mbps | Served:    0/ 100 | Loss: 0.441316 | Epsilon: 0.41595 | Updates: 100
+MADDQN       | 2 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.0376 Mbps | Served:    0/ 100 | Loss: 0.495042 | Epsilon: 0.36696 | Updates: 100
+MADDQN       | 2 | Episode  225/500 | Reward:    25.0000 | Throughput:    6.3724 Mbps | Served:    0/ 100 | Loss: 0.444486 | Epsilon: 0.32374 | Updates: 100
+MADDQN       | 2 | Episode  250/500 | Reward:    25.0000 | Throughput:    7.9236 Mbps | Served:    0/ 100 | Loss: 0.390647 | Epsilon: 0.28561 | Updates: 100
+MADDQN       | 2 | Episode  275/500 | Reward:    25.0000 | Throughput:    4.9749 Mbps | Served:    0/ 100 | Loss: 0.370071 | Epsilon: 0.25197 | Updates: 100
+MADDQN       | 2 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.3872 Mbps | Served:    0/ 100 | Loss: 0.391796 | Epsilon: 0.22229 | Updates: 100
+MADDQN       | 2 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.1258 Mbps | Served:    0/ 100 | Loss: 0.401613 | Epsilon: 0.19611 | Updates: 100
+MADDQN       | 2 | Episode  350/500 | Reward:    25.0000 | Throughput:    5.2989 Mbps | Served:    0/ 100 | Loss: 0.430792 | Epsilon: 0.17301 | Updates: 100
+MADDQN       | 2 | Episode  375/500 | Reward:    25.0000 | Throughput:    6.0574 Mbps | Served:    0/ 100 | Loss: 0.475109 | Epsilon: 0.15264 | Updates: 100
+MADDQN       | 2 | Episode  400/500 | Reward:    25.0000 | Throughput:    5.0754 Mbps | Served:    0/ 100 | Loss: 0.457146 | Epsilon: 0.13466 | Updates: 100
+MADDQN       | 2 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.5167 Mbps | Served:    0/ 100 | Loss: 0.366975 | Epsilon: 0.11880 | Updates: 100
+MADDQN       | 2 | Episode  450/500 | Reward:    25.0000 | Throughput:    6.7564 Mbps | Served:    0/ 100 | Loss: 0.340407 | Epsilon: 0.10481 | Updates: 100
+MADDQN       | 2 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.3960 Mbps | Served:    0/ 100 | Loss: 0.245923 | Epsilon: 0.09246 | Updates: 100
+MADDQN       | 2 | Episode  500/500 | Reward:    25.0000 | Throughput:    3.6172 Mbps | Served:    0/ 100 | Loss: 0.227232 | Epsilon: 0.08157 | Updates: 100
+
+Completed: MADDQN | 2
+Total episodes: 1000
+Total learning updates: 99874
+
+TP2 EXPERIMENT COMPLETED
+
+###########################################################################
+STARTING TRAFFIC EXPERIMENT: TP3
+###########################################################################
+
+---------------------------------------------------------------------------
+TRAINING: Ours | 3
+---------------------------------------------------------------------------
+Ours         | 3 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.6688 Mbps | Served:    0/ 100 | Loss: 0.043668 | Epsilon: 0.99500 | Updates: 37
+Ours         | 3 | Episode   25/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.050988 | Epsilon: 0.88222 | Updates: 100
+Ours         | 3 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.9560 Mbps | Served:    0/ 100 | Loss: 0.077932 | Epsilon: 0.77831 | Updates: 100
+Ours         | 3 | Episode   75/500 | Reward:    25.0000 | Throughput:    4.5032 Mbps | Served:    0/ 100 | Loss: 0.109222 | Epsilon: 0.68664 | Updates: 100
+Ours         | 3 | Episode  100/500 | Reward:    25.0000 | Throughput:    3.9662 Mbps | Served:    0/ 100 | Loss: 0.113890 | Epsilon: 0.60577 | Updates: 100
+Ours         | 3 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.2264 Mbps | Served:    0/ 100 | Loss: 0.126405 | Epsilon: 0.53442 | Updates: 100
+Ours         | 3 | Episode  150/500 | Reward:    25.0000 | Throughput:    6.2071 Mbps | Served:    0/ 100 | Loss: 0.181894 | Epsilon: 0.47148 | Updates: 100
+Ours         | 3 | Episode  175/500 | Reward:    25.0000 | Throughput:    4.7060 Mbps | Served:    0/ 100 | Loss: 0.204273 | Epsilon: 0.41595 | Updates: 100
+Ours         | 3 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.1484 Mbps | Served:    0/ 100 | Loss: 0.205401 | Epsilon: 0.36696 | Updates: 100
+Ours         | 3 | Episode  225/500 | Reward:    25.0000 | Throughput:    5.6953 Mbps | Served:    0/ 100 | Loss: 0.157850 | Epsilon: 0.32374 | Updates: 100
+Ours         | 3 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.8445 Mbps | Served:    0/ 100 | Loss: 0.167210 | Epsilon: 0.28561 | Updates: 100
+Ours         | 3 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.0384 Mbps | Served:    0/ 100 | Loss: 0.224411 | Epsilon: 0.25197 | Updates: 100
+Ours         | 3 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.9957 Mbps | Served:    0/ 100 | Loss: 0.193874 | Epsilon: 0.22229 | Updates: 100
+Ours         | 3 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.6708 Mbps | Served:    0/ 100 | Loss: 0.159670 | Epsilon: 0.19611 | Updates: 100
+Ours         | 3 | Episode  350/500 | Reward:    25.0000 | Throughput:    3.7594 Mbps | Served:    0/ 100 | Loss: 0.238698 | Epsilon: 0.17301 | Updates: 100
+Ours         | 3 | Episode  375/500 | Reward:    25.0000 | Throughput:    3.9805 Mbps | Served:    0/ 100 | Loss: 0.220071 | Epsilon: 0.15264 | Updates: 100
+Ours         | 3 | Episode  400/500 | Reward:    25.0000 | Throughput:    7.3914 Mbps | Served:    0/ 100 | Loss: 0.199938 | Epsilon: 0.13466 | Updates: 100
+Ours         | 3 | Episode  425/500 | Reward:    25.0000 | Throughput:    6.3350 Mbps | Served:    0/ 100 | Loss: 0.181776 | Epsilon: 0.11880 | Updates: 100
+Ours         | 3 | Episode  450/500 | Reward:    25.0000 | Throughput:    6.0901 Mbps | Served:    0/ 100 | Loss: 0.195339 | Epsilon: 0.10481 | Updates: 100
+Ours         | 3 | Episode  475/500 | Reward:    25.0000 | Throughput:    5.4030 Mbps | Served:    0/ 100 | Loss: 0.225732 | Epsilon: 0.09246 | Updates: 100
+Ours         | 3 | Episode  500/500 | Reward:    25.0000 | Throughput:    4.3970 Mbps | Served:    0/ 100 | Loss: 0.166627 | Epsilon: 0.08157 | Updates: 100
+
+Completed: Ours | 3
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: GGN-MADDQN | 3
+---------------------------------------------------------------------------
+GGN-MADDQN   | 3 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.6688 Mbps | Served:    0/ 100 | Loss: 0.009032 | Epsilon: 0.99500 | Updates: 37
+GGN-MADDQN   | 3 | Episode   25/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.051776 | Epsilon: 0.88222 | Updates: 100
+GGN-MADDQN   | 3 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.9560 Mbps | Served:    0/ 100 | Loss: 0.084223 | Epsilon: 0.77831 | Updates: 100
+GGN-MADDQN   | 3 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.3865 Mbps | Served:    0/ 100 | Loss: 0.127349 | Epsilon: 0.68664 | Updates: 100
+GGN-MADDQN   | 3 | Episode  100/500 | Reward:    25.0000 | Throughput:    3.7040 Mbps | Served:    0/ 100 | Loss: 0.137431 | Epsilon: 0.60577 | Updates: 100
+GGN-MADDQN   | 3 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.0633 Mbps | Served:    0/ 100 | Loss: 0.160269 | Epsilon: 0.53442 | Updates: 100
+GGN-MADDQN   | 3 | Episode  150/500 | Reward:    25.0000 | Throughput:    6.1577 Mbps | Served:    0/ 100 | Loss: 0.241912 | Epsilon: 0.47148 | Updates: 100
+GGN-MADDQN   | 3 | Episode  175/500 | Reward:    25.0000 | Throughput:    4.6141 Mbps | Served:    0/ 100 | Loss: 0.239680 | Epsilon: 0.41595 | Updates: 100
+GGN-MADDQN   | 3 | Episode  200/500 | Reward:    25.0000 | Throughput:    6.3623 Mbps | Served:    0/ 100 | Loss: 0.232678 | Epsilon: 0.36696 | Updates: 100
+GGN-MADDQN   | 3 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.183276 | Epsilon: 0.32374 | Updates: 100
+GGN-MADDQN   | 3 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.4397 Mbps | Served:    0/ 100 | Loss: 0.166073 | Epsilon: 0.28561 | Updates: 100
+GGN-MADDQN   | 3 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.1849 Mbps | Served:    0/ 100 | Loss: 0.233024 | Epsilon: 0.25197 | Updates: 100
+GGN-MADDQN   | 3 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.1697 Mbps | Served:    0/ 100 | Loss: 0.210929 | Epsilon: 0.22229 | Updates: 100
+GGN-MADDQN   | 3 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.1326 Mbps | Served:    0/ 100 | Loss: 0.170525 | Epsilon: 0.19611 | Updates: 100
+GGN-MADDQN   | 3 | Episode  350/500 | Reward:    25.0000 | Throughput:    4.4714 Mbps | Served:    0/ 100 | Loss: 0.251083 | Epsilon: 0.17301 | Updates: 100
+GGN-MADDQN   | 3 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.3749 Mbps | Served:    0/ 100 | Loss: 0.212743 | Epsilon: 0.15264 | Updates: 100
+GGN-MADDQN   | 3 | Episode  400/500 | Reward:    25.0000 | Throughput:    7.1768 Mbps | Served:    0/ 100 | Loss: 0.209118 | Epsilon: 0.13466 | Updates: 100
+GGN-MADDQN   | 3 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.8262 Mbps | Served:    0/ 100 | Loss: 0.167648 | Epsilon: 0.11880 | Updates: 100
+GGN-MADDQN   | 3 | Episode  450/500 | Reward:    25.0000 | Throughput:    5.8379 Mbps | Served:    0/ 100 | Loss: 0.187983 | Epsilon: 0.10481 | Updates: 100
+GGN-MADDQN   | 3 | Episode  475/500 | Reward:    25.0000 | Throughput:    6.0014 Mbps | Served:    0/ 100 | Loss: 0.219254 | Epsilon: 0.09246 | Updates: 100
+GGN-MADDQN   | 3 | Episode  500/500 | Reward:    25.0000 | Throughput:    4.4163 Mbps | Served:    0/ 100 | Loss: 0.170478 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GGN-MADDQN | 3
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: GCN-MADDQN | 3
+---------------------------------------------------------------------------
+GCN-MADDQN   | 3 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.6688 Mbps | Served:    0/ 100 | Loss: 0.017330 | Epsilon: 0.99500 | Updates: 37
+GCN-MADDQN   | 3 | Episode   25/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.053144 | Epsilon: 0.88222 | Updates: 100
+GCN-MADDQN   | 3 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.9560 Mbps | Served:    0/ 100 | Loss: 0.094682 | Epsilon: 0.77831 | Updates: 100
+GCN-MADDQN   | 3 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.3865 Mbps | Served:    0/ 100 | Loss: 0.125477 | Epsilon: 0.68664 | Updates: 100
+GCN-MADDQN   | 3 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.4060 Mbps | Served:    0/ 100 | Loss: 0.145232 | Epsilon: 0.60577 | Updates: 100
+GCN-MADDQN   | 3 | Episode  125/500 | Reward:    25.0000 | Throughput:    4.5713 Mbps | Served:    0/ 100 | Loss: 0.158151 | Epsilon: 0.53442 | Updates: 100
+GCN-MADDQN   | 3 | Episode  150/500 | Reward:    25.0000 | Throughput:    6.2071 Mbps | Served:    0/ 100 | Loss: 0.195421 | Epsilon: 0.47148 | Updates: 100
+GCN-MADDQN   | 3 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.3055 Mbps | Served:    0/ 100 | Loss: 0.234370 | Epsilon: 0.41595 | Updates: 100
+GCN-MADDQN   | 3 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.9076 Mbps | Served:    0/ 100 | Loss: 0.221568 | Epsilon: 0.36696 | Updates: 100
+GCN-MADDQN   | 3 | Episode  225/500 | Reward:    25.0000 | Throughput:    4.9672 Mbps | Served:    0/ 100 | Loss: 0.175444 | Epsilon: 0.32374 | Updates: 100
+GCN-MADDQN   | 3 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.1602 Mbps | Served:    0/ 100 | Loss: 0.185021 | Epsilon: 0.28561 | Updates: 100
+GCN-MADDQN   | 3 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.1717 Mbps | Served:    0/ 100 | Loss: 0.229988 | Epsilon: 0.25197 | Updates: 100
+GCN-MADDQN   | 3 | Episode  300/500 | Reward:    25.0000 | Throughput:    6.3083 Mbps | Served:    0/ 100 | Loss: 0.191404 | Epsilon: 0.22229 | Updates: 100
+GCN-MADDQN   | 3 | Episode  325/500 | Reward:    25.0000 | Throughput:    6.4740 Mbps | Served:    0/ 100 | Loss: 0.166718 | Epsilon: 0.19611 | Updates: 100
+GCN-MADDQN   | 3 | Episode  350/500 | Reward:    25.0000 | Throughput:    4.8613 Mbps | Served:    0/ 100 | Loss: 0.233012 | Epsilon: 0.17301 | Updates: 100
+GCN-MADDQN   | 3 | Episode  375/500 | Reward:    25.0000 | Throughput:    4.3546 Mbps | Served:    0/ 100 | Loss: 0.194847 | Epsilon: 0.15264 | Updates: 100
+GCN-MADDQN   | 3 | Episode  400/500 | Reward:    25.0000 | Throughput:    7.1506 Mbps | Served:    0/ 100 | Loss: 0.183335 | Epsilon: 0.13466 | Updates: 100
+GCN-MADDQN   | 3 | Episode  425/500 | Reward:    25.0000 | Throughput:    6.0296 Mbps | Served:    0/ 100 | Loss: 0.169330 | Epsilon: 0.11880 | Updates: 100
+GCN-MADDQN   | 3 | Episode  450/500 | Reward:    25.0000 | Throughput:    6.4146 Mbps | Served:    0/ 100 | Loss: 0.172897 | Epsilon: 0.10481 | Updates: 100
+GCN-MADDQN   | 3 | Episode  475/500 | Reward:    25.0000 | Throughput:    4.1108 Mbps | Served:    0/ 100 | Loss: 0.229690 | Epsilon: 0.09246 | Updates: 100
+GCN-MADDQN   | 3 | Episode  500/500 | Reward:    25.0000 | Throughput:    5.1790 Mbps | Served:    0/ 100 | Loss: 0.178236 | Epsilon: 0.08157 | Updates: 100
+
+Completed: GCN-MADDQN | 3
+Total episodes: 1000
+Total learning updates: 99874
+
+---------------------------------------------------------------------------
+TRAINING: MADDQN | 3
+---------------------------------------------------------------------------
+MADDQN       | 3 | Episode    1/500 | Reward:    25.0000 | Throughput:    5.6688 Mbps | Served:    0/ 100 | Loss: 0.012585 | Epsilon: 0.99500 | Updates: 37
+MADDQN       | 3 | Episode   25/500 | Reward:    25.0000 | Throughput:    4.9834 Mbps | Served:    0/ 100 | Loss: 0.048230 | Epsilon: 0.88222 | Updates: 100
+MADDQN       | 3 | Episode   50/500 | Reward:    25.0000 | Throughput:    5.9560 Mbps | Served:    0/ 100 | Loss: 0.115628 | Epsilon: 0.77831 | Updates: 100
+MADDQN       | 3 | Episode   75/500 | Reward:    25.0000 | Throughput:    5.3865 Mbps | Served:    0/ 100 | Loss: 0.171390 | Epsilon: 0.68664 | Updates: 100
+MADDQN       | 3 | Episode  100/500 | Reward:    25.0000 | Throughput:    4.4060 Mbps | Served:    0/ 100 | Loss: 0.175742 | Epsilon: 0.60577 | Updates: 100
+MADDQN       | 3 | Episode  125/500 | Reward:    25.0000 | Throughput:    5.3303 Mbps | Served:    0/ 100 | Loss: 0.186643 | Epsilon: 0.53442 | Updates: 100
+MADDQN       | 3 | Episode  150/500 | Reward:    25.0000 | Throughput:    6.2071 Mbps | Served:    0/ 100 | Loss: 0.239290 | Epsilon: 0.47148 | Updates: 100
+MADDQN       | 3 | Episode  175/500 | Reward:    25.0000 | Throughput:    5.2174 Mbps | Served:    0/ 100 | Loss: 0.263794 | Epsilon: 0.41595 | Updates: 100
+MADDQN       | 3 | Episode  200/500 | Reward:    25.0000 | Throughput:    5.9076 Mbps | Served:    0/ 100 | Loss: 0.291170 | Epsilon: 0.36696 | Updates: 100
+MADDQN       | 3 | Episode  225/500 | Reward:    25.0000 | Throughput:    5.0378 Mbps | Served:    0/ 100 | Loss: 0.273062 | Epsilon: 0.32374 | Updates: 100
+MADDQN       | 3 | Episode  250/500 | Reward:    25.0000 | Throughput:    5.7813 Mbps | Served:    0/ 100 | Loss: 0.237748 | Epsilon: 0.28561 | Updates: 100
+MADDQN       | 3 | Episode  275/500 | Reward:    25.0000 | Throughput:    5.0384 Mbps | Served:    0/ 100 | Loss: 0.373085 | Epsilon: 0.25197 | Updates: 100
+MADDQN       | 3 | Episode  300/500 | Reward:    25.0000 | Throughput:    5.1565 Mbps | Served:    0/ 100 | Loss: 0.369708 | Epsilon: 0.22229 | Updates: 100
+MADDQN       | 3 | Episode  325/500 | Reward:    25.0000 | Throughput:    5.2440 Mbps | Served:    0/ 100 | Loss: 0.300357 | Epsilon: 0.19611 | Updates: 100
+MADDQN       | 3 | Episode  350/500 | Reward:    25.0000 | Throughput:    3.9566 Mbps | Served:    0/ 100 | Loss: 0.357458 | Epsilon: 0.17301 | Updates: 100
+MADDQN       | 3 | Episode  375/500 | Reward:    25.0000 | Throughput:    5.6190 Mbps | Served:    0/ 100 | Loss: 0.335662 | Epsilon: 0.15264 | Updates: 100
+MADDQN       | 3 | Episode  400/500 | Reward:    25.0000 | Throughput:    8.0666 Mbps | Served:    0/ 100 | Loss: 0.356254 | Epsilon: 0.13466 | Updates: 100
+MADDQN       | 3 | Episode  425/500 | Reward:    25.0000 | Throughput:    5.9101 Mbps | Served:    0/ 100 | Loss: 0.320647 | Epsilon: 0.11880 | Updates: 100
+MADDQN       | 3 | Episode  450/500 | Reward:    25.0000 | Throughput:    6.4565 Mbps | Served:    0/ 100 | Loss: 0.352460 | Epsilon: 0.10481 | Updates: 100
+MADDQN       | 3 | Episode  475/500 | Reward:    25.0000 | Throughput:    4.1108 Mbps | Served:    0/ 100 | Loss: 0.478682 | Epsilon: 0.09246 | Updates: 100
+MADDQN       | 3 | Episode  500/500 | Reward:    25.0000 | Throughput:    4.4163 Mbps | Served:    0/ 100 | Loss: 0.456025 | Epsilon: 0.08157 | Updates: 100
+
+Completed: MADDQN | 3
+Total episodes: 1000
+Total learning updates: 99874
+
+TP3 EXPERIMENT COMPLETED
+Traceback (most recent call last):
+  File "E:\Abrokwa\PycharmProjects\pythonProject1\pythonProject3\main.py", line 8743, in <module>
+    assert len(history["episode"]) == TRAINING_EPISODES
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+Process finished with exit code 1
